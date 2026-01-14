@@ -1,567 +1,613 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Briink EQA Custom Renderer</title>
-    <style>
-        :root {
-            --bg-color: #1a1a2e;
-            --card-bg: #16213e;
-            --text-color: #e8e8e8;
-            --text-muted: #a0a0a0;
-            --border-color: #2d3a5c;
-            --accent-color: #4cc9f0;
-            --success-color: #4ade80;
-            --warning-color: #fbbf24;
-            --error-color: #f87171;
-            --diff-added-bg: rgba(74, 222, 128, 0.15);
-            --diff-removed-bg: rgba(248, 113, 113, 0.15);
-            --diff-added-text: #4ade80;
-            --diff-removed-text: #f87171;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Briink EQA Custom Renderer</title>
+        <style>
+            :root {
+                --bg-color: #1a1a2e;
+                --card-bg: #16213e;
+                --text-color: #e8e8e8;
+                --text-muted: #a0a0a0;
+                --border-color: #2d3a5c;
+                --accent-color: #4cc9f0;
+                --success-color: #4ade80;
+                --warning-color: #fbbf24;
+                --error-color: #f87171;
+                --diff-added-bg: rgba(74, 222, 128, 0.15);
+                --diff-removed-bg: rgba(248, 113, 113, 0.15);
+                --diff-added-text: #4ade80;
+                --diff-removed-text: #f87171;
+            }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 16px;
-            line-height: 1.5;
-        }
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    "Helvetica Neue", Arial, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                padding: 16px;
+                line-height: 1.5;
+            }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+            .container {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
 
-        .panel {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-        }
+            .panel {
+                background-color: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                overflow: hidden;
+            }
 
-        .panel-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-        }
+            .panel-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+                background-color: rgba(0, 0, 0, 0.2);
+                border-bottom: 1px solid var(--border-color);
+                font-weight: 600;
+            }
 
-        .panel-header .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
+            .panel-header .badge {
+                font-size: 11px;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-weight: 500;
+            }
 
-        .badge-output {
-            background-color: var(--accent-color);
-            color: #000;
-        }
+            .badge-output {
+                background-color: var(--accent-color);
+                color: #000;
+            }
 
-        .badge-reference {
-            background-color: var(--success-color);
-            color: #000;
-        }
+            .badge-reference {
+                background-color: var(--success-color);
+                color: #000;
+            }
 
-        .panel-content {
-            padding: 16px;
-        }
+            .panel-content {
+                padding: 16px;
+            }
 
-        /* Question Display */
-        .question-section {
-            margin-bottom: 16px;
-        }
+            /* Question Display */
+            .question-section {
+                margin-bottom: 16px;
+            }
 
-        .question-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-        }
+            .question-label {
+                font-size: 12px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+                letter-spacing: 0.5px;
+            }
 
-        .question-text {
-            font-size: 14px;
-            color: var(--text-color);
-        }
+            .question-text {
+                font-size: 14px;
+                color: var(--text-color);
+            }
 
-        /* EQA Answer Display */
-        .answer-section {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 12px;
-        }
+            /* EQA Answer Display */
+            .answer-section {
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 6px;
+                padding: 12px;
+                margin-top: 12px;
+            }
 
-        .response-text {
-            font-size: 14px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+            .response-text {
+                font-size: 14px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
 
-        .choices-list {
-            margin-top: 8px;
-        }
+            .choices-list {
+                margin-top: 8px;
+            }
 
-        .choice-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            padding: 8px;
-            border-radius: 4px;
-            margin-bottom: 4px;
-        }
+            .choice-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 8px;
+                border-radius: 4px;
+                margin-bottom: 4px;
+            }
 
-        .choice-item.selected {
-            background-color: rgba(74, 222, 128, 0.1);
-            border-left: 3px solid var(--success-color);
-        }
+            .choice-item.selected {
+                background-color: rgba(74, 222, 128, 0.1);
+                border-left: 3px solid var(--success-color);
+            }
 
-        .choice-item.not-selected {
-            opacity: 0.6;
-        }
+            .choice-item.not-selected {
+                opacity: 0.6;
+            }
 
-        .choice-indicator {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
+            .choice-indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                flex-shrink: 0;
+            }
 
-        .choice-indicator.selected {
-            background-color: var(--success-color);
-            color: #000;
-        }
+            .choice-indicator.selected {
+                background-color: var(--success-color);
+                color: #000;
+            }
 
-        .choice-indicator.not-selected {
-            background-color: var(--border-color);
-            color: var(--text-muted);
-        }
+            .choice-indicator.not-selected {
+                background-color: var(--border-color);
+                color: var(--text-muted);
+            }
 
-        .choice-content {
-            flex: 1;
-        }
+            .choice-content {
+                flex: 1;
+            }
 
-        .choice-label {
-            font-weight: 500;
-            font-size: 13px;
-        }
+            .choice-label {
+                font-weight: 500;
+                font-size: 13px;
+            }
 
-        .choice-reasoning {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
+            .choice-reasoning {
+                font-size: 12px;
+                color: var(--text-muted);
+                margin-top: 4px;
+            }
 
-        /* Table Display */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 12px;
-        }
+            /* Table Display */
+            .table-container {
+                overflow-x: auto;
+                margin-top: 12px;
+            }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 13px;
+            }
 
-        th, td {
-            padding: 10px 12px;
-            text-align: left;
-            border: 1px solid var(--border-color);
-        }
+            th,
+            td {
+                padding: 10px 12px;
+                text-align: left;
+                border: 1px solid var(--border-color);
+            }
 
-        th {
-            background-color: rgba(0, 0, 0, 0.3);
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: var(--accent-color);
-        }
+            th {
+                background-color: rgba(0, 0, 0, 0.3);
+                font-weight: 600;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                color: var(--accent-color);
+            }
 
-        td {
-            background-color: rgba(0, 0, 0, 0.1);
-        }
+            td {
+                background-color: rgba(0, 0, 0, 0.1);
+            }
 
-        /* Table Diff Display */
-        .diff-view {
-            margin-top: 24px;
-        }
+            /* Table Diff Display */
+            .diff-view {
+                margin-top: 24px;
+            }
 
-        .diff-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 12px;
-        }
+            .diff-header {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 12px;
+            }
 
-        .diff-legend {
-            display: flex;
-            gap: 16px;
-            font-size: 12px;
-        }
+            .diff-legend {
+                display: flex;
+                gap: 16px;
+                font-size: 12px;
+            }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
 
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-        }
+            .legend-color {
+                width: 12px;
+                height: 12px;
+                border-radius: 2px;
+            }
 
-        .legend-color.match {
-            background-color: var(--success-color);
-        }
+            .legend-color.match {
+                background-color: var(--success-color);
+            }
 
-        .legend-color.diff {
-            background-color: var(--error-color);
-        }
+            .legend-color.diff {
+                background-color: var(--error-color);
+            }
 
-        .legend-color.missing {
-            background-color: var(--warning-color);
-        }
+            .legend-color.missing {
+                background-color: var(--warning-color);
+            }
 
-        .diff-table td.match {
-            background-color: rgba(74, 222, 128, 0.1);
-        }
+            .diff-table td.match {
+                background-color: rgba(74, 222, 128, 0.1);
+            }
 
-        .diff-table td.diff {
-            background-color: var(--diff-removed-bg);
-        }
+            .diff-table td.diff {
+                background-color: var(--diff-removed-bg);
+            }
 
-        .diff-table td.missing {
-            background-color: rgba(251, 191, 36, 0.1);
-        }
+            .diff-table td.missing {
+                background-color: rgba(251, 191, 36, 0.1);
+            }
 
-        .diff-table td.extra {
-            background-color: rgba(76, 201, 240, 0.1);
-        }
+            .diff-table td.extra {
+                background-color: rgba(76, 201, 240, 0.1);
+            }
 
-        .cell-comparison {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+            .cell-comparison {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
 
-        .cell-output {
-            color: var(--text-color);
-        }
+            .cell-output {
+                color: var(--text-color);
+            }
 
-        .cell-reference {
-            font-size: 11px;
-            color: var(--text-muted);
-            padding-top: 4px;
-            border-top: 1px dashed var(--border-color);
-        }
+            .cell-reference {
+                font-size: 11px;
+                color: var(--text-muted);
+                padding-top: 4px;
+                border-top: 1px dashed var(--border-color);
+            }
 
-        .cell-reference::before {
-            content: "Expected: ";
-            color: var(--warning-color);
-            font-weight: 500;
-        }
+            .cell-reference::before {
+                content: "Expected: ";
+                color: var(--warning-color);
+                font-weight: 500;
+            }
 
-        /* Stats Summary */
-        .stats-summary {
-            display: flex;
-            gap: 24px;
-            padding: 12px 16px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
+            /* Stats Summary */
+            .stats-summary {
+                display: flex;
+                gap: 24px;
+                padding: 12px 16px;
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 6px;
+                margin-bottom: 16px;
+            }
 
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+            .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-        }
+            .stat-value {
+                font-size: 24px;
+                font-weight: 700;
+            }
 
-        .stat-value.good {
-            color: var(--success-color);
-        }
+            .stat-value.good {
+                color: var(--success-color);
+            }
 
-        .stat-value.bad {
-            color: var(--error-color);
-        }
+            .stat-value.bad {
+                color: var(--error-color);
+            }
 
-        .stat-value.neutral {
-            color: var(--warning-color);
-        }
+            .stat-value.neutral {
+                color: var(--warning-color);
+            }
 
-        .stat-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-        }
+            .stat-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                letter-spacing: 0.5px;
+            }
 
-        /* Side-by-side view */
-        .side-by-side {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        @media (max-width: 900px) {
+            /* Side-by-side view */
             .side-by-side {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Loading state */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        .loading::after {
-            content: '';
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border-color);
-            border-top-color: var(--accent-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* No data state */
-        .no-data {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-        }
-
-        /* Metadata section */
-        .metadata-section {
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .metadata-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 8px;
-        }
-
-        .metadata-item {
-            font-size: 12px;
-        }
-
-        .metadata-key {
-            color: var(--text-muted);
-        }
-
-        .metadata-value {
-            color: var(--text-color);
-            font-family: monospace;
-        }
-
-        /* JSON Fallback */
-        .json-fallback {
-            background-color: rgba(0, 0, 0, 0.3);
-            border-radius: 6px;
-            padding: 12px;
-            overflow-x: auto;
-        }
-
-        .json-fallback pre {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        /* Diff highlighting for text */
-        .text-diff {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .text-diff .output-value {
-            padding: 8px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-            border-left: 3px solid var(--accent-color);
-        }
-
-        .text-diff .reference-value {
-            padding: 8px;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-            border-left: 3px solid var(--success-color);
-        }
-
-        .text-diff .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container" id="content">
-        <div class="loading">Waiting for data from LangSmith</div>
-    </div>
-
-    <script>
-        // Store received data
-        let outputData = null;
-        let referenceData = null;
-        let metadata = null;
-
-        // Listen for messages from LangSmith
-        window.addEventListener('message', (event) => {
-            const message = event.data;
-
-            if (!message || typeof message !== 'object') return;
-
-            if (message.type === 'output') {
-                outputData = message.data;
-                metadata = message.metadata;
-            } else if (message.type === 'reference') {
-                referenceData = message.data;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
             }
 
-            renderContent();
-        });
-
-        function renderContent() {
-            const container = document.getElementById('content');
-
-            if (!outputData && !referenceData) {
-                return; // Still loading
+            @media (max-width: 900px) {
+                .side-by-side {
+                    grid-template-columns: 1fr;
+                }
             }
 
-            // Detect data type and render accordingly
-            const dataType = detectDataType(outputData || referenceData);
-
-            let html = '';
-
-            switch (dataType) {
-                case 'table_response':
-                    html = renderTableResponse(outputData, referenceData, metadata);
-                    break;
-                case 'eqa_answer':
-                    html = renderEQAAnswer(outputData, referenceData, metadata);
-                    break;
-                default:
-                    html = renderGenericJson(outputData, referenceData, metadata);
+            /* Loading state */
+            .loading {
+                text-align: center;
+                padding: 40px;
+                color: var(--text-muted);
             }
 
-            container.innerHTML = html;
-        }
-
-        function detectDataType(data) {
-            if (!data) return 'unknown';
-
-            // Check for TableResponse structure
-            if (data.column_headers && Array.isArray(data.rows)) {
-                return 'table_response';
+            .loading::after {
+                content: "";
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid var(--border-color);
+                border-top-color: var(--accent-color);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-left: 8px;
+                vertical-align: middle;
             }
 
-            // Check for EQAAnswer structure
-            if (data.response_text !== undefined ||
-                (data.choices && Array.isArray(data.choices))) {
-                return 'eqa_answer';
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
             }
 
-            return 'unknown';
-        }
+            /* No data state */
+            .no-data {
+                text-align: center;
+                padding: 40px;
+                color: var(--text-muted);
+            }
 
-        function renderTableResponse(output, reference, meta) {
-            let html = '';
+            /* Metadata section */
+            .metadata-section {
+                margin-top: 16px;
+                padding-top: 12px;
+                border-top: 1px solid var(--border-color);
+            }
 
-            // Show question if available in metadata
-            if (meta?.inputs?.question || meta?.inputs?.table_question) {
-                const question = meta.inputs.table_question || meta.inputs.question;
-                html += `
+            .metadata-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 8px;
+            }
+
+            .metadata-item {
+                font-size: 12px;
+            }
+
+            .metadata-key {
+                color: var(--text-muted);
+            }
+
+            .metadata-value {
+                color: var(--text-color);
+                font-family: monospace;
+            }
+
+            /* JSON Fallback */
+            .json-fallback {
+                background-color: rgba(0, 0, 0, 0.3);
+                border-radius: 6px;
+                padding: 12px;
+                overflow-x: auto;
+            }
+
+            .json-fallback pre {
+                font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+
+            /* Diff highlighting for text */
+            .text-diff {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .text-diff .output-value {
+                padding: 8px;
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 4px;
+                border-left: 3px solid var(--accent-color);
+            }
+
+            .text-diff .reference-value {
+                padding: 8px;
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 4px;
+                border-left: 3px solid var(--success-color);
+            }
+
+            .text-diff .label {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container" id="content">
+            <div class="loading">Waiting for data from LangSmith</div>
+        </div>
+
+        <script>
+            // Store received data
+            let outputData = null;
+            let referenceData = null;
+            let metadata = null;
+
+            // Unwrap data if nested in an "output" key
+            function unwrapData(data) {
+                if (!data || typeof data !== "object") return data;
+
+                // If data has an "output" key and it looks like the actual payload, unwrap it
+                if (data.output && typeof data.output === "object") {
+                    // Check if the nested output has the expected structure
+                    const nested = data.output;
+                    if (
+                        nested.column_headers ||
+                        nested.rows ||
+                        nested.response_text !== undefined ||
+                        nested.choices
+                    ) {
+                        return nested;
+                    }
+                }
+
+                return data;
+            }
+
+            // Listen for messages from LangSmith
+            window.addEventListener("message", (event) => {
+                const message = event.data;
+
+                if (!message || typeof message !== "object") return;
+
+                if (message.type === "output") {
+                    outputData = unwrapData(message.data);
+                    metadata = message.metadata;
+                } else if (message.type === "reference") {
+                    referenceData = unwrapData(message.data);
+                }
+
+                renderContent();
+            });
+
+            function renderContent() {
+                const container = document.getElementById("content");
+
+                if (!outputData && !referenceData) {
+                    return; // Still loading
+                }
+
+                // Detect data type and render accordingly
+                const dataType = detectDataType(outputData || referenceData);
+
+                let html = "";
+
+                switch (dataType) {
+                    case "table_response":
+                        html = renderTableResponse(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                        break;
+                    case "eqa_answer":
+                        html = renderEQAAnswer(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                        break;
+                    default:
+                        html = renderGenericJson(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                }
+
+                container.innerHTML = html;
+            }
+
+            function detectDataType(data) {
+                if (!data) return "unknown";
+
+                // Check for TableResponse structure
+                if (data.column_headers && Array.isArray(data.rows)) {
+                    return "table_response";
+                }
+
+                // Check for EQAAnswer structure
+                if (
+                    data.response_text !== undefined ||
+                    (data.choices && Array.isArray(data.choices))
+                ) {
+                    return "eqa_answer";
+                }
+
+                return "unknown";
+            }
+
+            function renderTableResponse(output, reference, meta) {
+                let html = "";
+
+                // Show question if available in metadata
+                if (meta?.inputs?.question || meta?.inputs?.table_question) {
+                    const question =
+                        meta.inputs.table_question || meta.inputs.question;
+                    html += `
                     <div class="panel">
                         <div class="panel-header">
                             <span>Question</span>
                         </div>
                         <div class="panel-content">
                             <div class="question-text">${escapeHtml(question.text || question.parent_question?.text || JSON.stringify(question))}</div>
-                            ${question.cell_questions ? renderColumnQuestions(question.cell_questions) : ''}
+                            ${question.cell_questions ? renderColumnQuestions(question.cell_questions) : ""}
                         </div>
                     </div>
                 `;
+                }
+
+                // If we have both output and reference, show diff view
+                if (output && reference) {
+                    html += renderTableDiff(output, reference);
+                } else if (output) {
+                    html += renderSingleTable(output, "Output", "output");
+                } else if (reference) {
+                    html += renderSingleTable(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                }
+
+                return html;
             }
 
-            // If we have both output and reference, show diff view
-            if (output && reference) {
-                html += renderTableDiff(output, reference);
-            } else if (output) {
-                html += renderSingleTable(output, 'Output', 'output');
-            } else if (reference) {
-                html += renderSingleTable(reference, 'Reference', 'reference');
-            }
+            function renderColumnQuestions(cellQuestions) {
+                if (!cellQuestions || cellQuestions.length === 0) return "";
 
-            return html;
-        }
-
-        function renderColumnQuestions(cellQuestions) {
-            if (!cellQuestions || cellQuestions.length === 0) return '';
-
-            let html = '<div class="metadata-section"><div class="question-label">Column Definitions</div><div class="choices-list">';
-            cellQuestions.forEach((q, idx) => {
-                html += `
+                let html =
+                    '<div class="metadata-section"><div class="question-label">Column Definitions</div><div class="choices-list">';
+                cellQuestions.forEach((q, idx) => {
+                    html += `
                     <div class="choice-item">
                         <div class="choice-indicator not-selected">${idx}</div>
                         <div class="choice-content">
-                            <div class="choice-label">${escapeHtml(q.text || '')}</div>
-                            ${q.data_type ? `<div class="choice-reasoning">Type: ${escapeHtml(q.data_type)}</div>` : ''}
+                            <div class="choice-label">${escapeHtml(q.text || "")}</div>
+                            ${q.data_type ? `<div class="choice-reasoning">Type: ${escapeHtml(q.data_type)}</div>` : ""}
                         </div>
                     </div>
                 `;
-            });
-            html += '</div></div>';
-            return html;
-        }
+                });
+                html += "</div></div>";
+                return html;
+            }
 
-        function renderTableDiff(output, reference) {
-            // Calculate diff statistics
-            const stats = calculateTableDiffStats(output, reference);
+            function renderTableDiff(output, reference) {
+                // Calculate diff statistics
+                const stats = calculateTableDiffStats(output, reference);
 
-            let html = `
+                let html = `
                 <div class="panel">
                     <div class="panel-header">
                         <span>Table Comparison</span>
@@ -586,7 +632,7 @@
                                 <span class="stat-label">Extra</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value ${stats.accuracy >= 80 ? 'good' : stats.accuracy >= 50 ? 'neutral' : 'bad'}">${stats.accuracy.toFixed(1)}%</span>
+                                <span class="stat-value ${stats.accuracy >= 80 ? "good" : stats.accuracy >= 50 ? "neutral" : "bad"}">${stats.accuracy.toFixed(1)}%</span>
                                 <span class="stat-label">Accuracy</span>
                             </div>
                         </div>
@@ -604,141 +650,166 @@
                 </div>
             `;
 
-            return html;
-        }
-
-        function calculateTableDiffStats(output, reference) {
-            let matchingCells = 0;
-            let differentCells = 0;
-            let missingCells = 0;
-            let extraCells = 0;
-
-            const outputRows = output.rows || [];
-            const refRows = reference.rows || [];
-            const maxRows = Math.max(outputRows.length, refRows.length);
-            const maxCols = Math.max(
-                output.column_headers?.length || 0,
-                reference.column_headers?.length || 0
-            );
-
-            for (let i = 0; i < maxRows; i++) {
-                const outRow = outputRows[i] || [];
-                const refRow = refRows[i] || [];
-
-                for (let j = 0; j < maxCols; j++) {
-                    const outCell = outRow[j];
-                    const refCell = refRow[j];
-
-                    if (outCell === undefined && refCell !== undefined) {
-                        missingCells++;
-                    } else if (outCell !== undefined && refCell === undefined) {
-                        extraCells++;
-                    } else if (normalizeValue(outCell) === normalizeValue(refCell)) {
-                        matchingCells++;
-                    } else {
-                        differentCells++;
-                    }
-                }
+                return html;
             }
 
-            const totalComparable = matchingCells + differentCells;
-            const accuracy = totalComparable > 0 ? (matchingCells / totalComparable) * 100 : 0;
+            function calculateTableDiffStats(output, reference) {
+                let matchingCells = 0;
+                let differentCells = 0;
+                let missingCells = 0;
+                let extraCells = 0;
 
-            return { matchingCells, differentCells, missingCells, extraCells, accuracy };
-        }
+                const outputRows = output.rows || [];
+                const refRows = reference.rows || [];
+                const maxRows = Math.max(outputRows.length, refRows.length);
+                const maxCols = Math.max(
+                    output.column_headers?.length || 0,
+                    reference.column_headers?.length || 0,
+                );
 
-        function normalizeValue(val) {
-            if (val === null || val === undefined) return '';
-            return String(val).trim().toLowerCase();
-        }
+                for (let i = 0; i < maxRows; i++) {
+                    const outRow = outputRows[i] || [];
+                    const refRow = refRows[i] || [];
 
-        function renderDiffTable(output, reference) {
-            const outputHeaders = output.column_headers || [];
-            const refHeaders = reference.column_headers || [];
-            const headers = outputHeaders.length >= refHeaders.length ? outputHeaders : refHeaders;
+                    for (let j = 0; j < maxCols; j++) {
+                        const outCell = outRow[j];
+                        const refCell = refRow[j];
 
-            const outputRows = output.rows || [];
-            const refRows = reference.rows || [];
-            const maxRows = Math.max(outputRows.length, refRows.length);
+                        if (outCell === undefined && refCell !== undefined) {
+                            missingCells++;
+                        } else if (
+                            outCell !== undefined &&
+                            refCell === undefined
+                        ) {
+                            extraCells++;
+                        } else if (
+                            normalizeValue(outCell) === normalizeValue(refCell)
+                        ) {
+                            matchingCells++;
+                        } else {
+                            differentCells++;
+                        }
+                    }
+                }
 
-            let html = '<table class="diff-table"><thead><tr>';
-            html += '<th>#</th>';
-            headers.forEach(h => {
-                html += `<th>${escapeHtml(h)}</th>`;
-            });
-            html += '</tr></thead><tbody>';
+                const totalComparable = matchingCells + differentCells;
+                const accuracy =
+                    totalComparable > 0
+                        ? (matchingCells / totalComparable) * 100
+                        : 0;
 
-            for (let i = 0; i < maxRows; i++) {
-                const outRow = outputRows[i] || [];
-                const refRow = refRows[i] || [];
+                return {
+                    matchingCells,
+                    differentCells,
+                    missingCells,
+                    extraCells,
+                    accuracy,
+                };
+            }
 
-                html += `<tr><td>${i + 1}</td>`;
+            function normalizeValue(val) {
+                if (val === null || val === undefined) return "";
+                return String(val).trim().toLowerCase();
+            }
 
-                for (let j = 0; j < headers.length; j++) {
-                    const outCell = outRow[j];
-                    const refCell = refRow[j];
-                    const cellClass = getCellDiffClass(outCell, refCell);
+            function renderDiffTable(output, reference) {
+                const outputHeaders = output.column_headers || [];
+                const refHeaders = reference.column_headers || [];
+                const headers =
+                    outputHeaders.length >= refHeaders.length
+                        ? outputHeaders
+                        : refHeaders;
 
-                    html += `<td class="${cellClass}">`;
+                const outputRows = output.rows || [];
+                const refRows = reference.rows || [];
+                const maxRows = Math.max(outputRows.length, refRows.length);
 
-                    if (cellClass === 'match') {
-                        html += `<span class="cell-output">${escapeHtml(outCell || '')}</span>`;
-                    } else if (cellClass === 'diff') {
-                        html += `
+                let html = '<table class="diff-table"><thead><tr>';
+                html += "<th>#</th>";
+                headers.forEach((h) => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += "</tr></thead><tbody>";
+
+                for (let i = 0; i < maxRows; i++) {
+                    const outRow = outputRows[i] || [];
+                    const refRow = refRows[i] || [];
+
+                    html += `<tr><td>${i + 1}</td>`;
+
+                    for (let j = 0; j < headers.length; j++) {
+                        const outCell = outRow[j];
+                        const refCell = refRow[j];
+                        const cellClass = getCellDiffClass(outCell, refCell);
+
+                        html += `<td class="${cellClass}">`;
+
+                        if (cellClass === "match") {
+                            html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
+                        } else if (cellClass === "diff") {
+                            html += `
                             <div class="cell-comparison">
-                                <span class="cell-output">${escapeHtml(outCell || '')}</span>
-                                <span class="cell-reference">${escapeHtml(refCell || '')}</span>
+                                <span class="cell-output">${escapeHtml(outCell || "")}</span>
+                                <span class="cell-reference">${escapeHtml(refCell || "")}</span>
                             </div>
                         `;
-                    } else if (cellClass === 'missing') {
-                        html += `<span class="cell-reference">${escapeHtml(refCell || '')}</span>`;
-                    } else {
-                        html += `<span class="cell-output">${escapeHtml(outCell || '')}</span>`;
+                        } else if (cellClass === "missing") {
+                            html += `<span class="cell-reference">${escapeHtml(refCell || "")}</span>`;
+                        } else {
+                            html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
+                        }
+
+                        html += "</td>";
                     }
 
-                    html += '</td>';
+                    html += "</tr>";
                 }
 
-                html += '</tr>';
+                html += "</tbody></table>";
+                return html;
             }
 
-            html += '</tbody></table>';
-            return html;
-        }
+            function getCellDiffClass(outCell, refCell) {
+                if (outCell === undefined && refCell !== undefined)
+                    return "missing";
+                if (outCell !== undefined && refCell === undefined)
+                    return "extra";
+                if (normalizeValue(outCell) === normalizeValue(refCell))
+                    return "match";
+                return "diff";
+            }
 
-        function getCellDiffClass(outCell, refCell) {
-            if (outCell === undefined && refCell !== undefined) return 'missing';
-            if (outCell !== undefined && refCell === undefined) return 'extra';
-            if (normalizeValue(outCell) === normalizeValue(refCell)) return 'match';
-            return 'diff';
-        }
+            function renderSingleTable(data, title, type) {
+                const badgeClass =
+                    type === "output" ? "badge-output" : "badge-reference";
 
-        function renderSingleTable(data, title, type) {
-            const badgeClass = type === 'output' ? 'badge-output' : 'badge-reference';
-
-            let html = `
+                let html = `
                 <div class="panel">
                     <div class="panel-header">
                         <span>Table ${title}</span>
                         <span class="badge ${badgeClass}">${type}</span>
                     </div>
                     <div class="panel-content">
-                        ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ''}
+                        ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
                         <div class="table-container">
                             <table>
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        ${(data.column_headers || []).map(h => `<th>${escapeHtml(h)}</th>`).join('')}
+                                        ${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${(data.rows || []).map((row, i) => `
+                                    ${(data.rows || [])
+                                        .map(
+                                            (row, i) => `
                                         <tr>
                                             <td>${i + 1}</td>
-                                            ${row.map(cell => `<td>${escapeHtml(cell || '')}</td>`).join('')}
+                                            ${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}
                                         </tr>
-                                    `).join('')}
+                                    `,
+                                        )
+                                        .join("")}
                                 </tbody>
                             </table>
                         </div>
@@ -746,67 +817,77 @@
                 </div>
             `;
 
-            return html;
-        }
+                return html;
+            }
 
-        function renderEQAAnswer(output, reference, meta) {
-            let html = '';
+            function renderEQAAnswer(output, reference, meta) {
+                let html = "";
 
-            // Show question if available
-            if (meta?.inputs?.question) {
-                const question = meta.inputs.question;
-                html += `
+                // Show question if available
+                if (meta?.inputs?.question) {
+                    const question = meta.inputs.question;
+                    html += `
                     <div class="panel">
                         <div class="panel-header">
                             <span>Question</span>
-                            ${question.data_type ? `<span class="badge badge-output">${escapeHtml(question.data_type)}</span>` : ''}
+                            ${question.data_type ? `<span class="badge badge-output">${escapeHtml(question.data_type)}</span>` : ""}
                         </div>
                         <div class="panel-content">
-                            <div class="question-text">${escapeHtml(question.text || '')}</div>
-                            ${question.choices && question.choices.length > 0 ? renderQuestionChoices(question.choices) : ''}
+                            <div class="question-text">${escapeHtml(question.text || "")}</div>
+                            ${question.choices && question.choices.length > 0 ? renderQuestionChoices(question.choices) : ""}
                         </div>
                     </div>
                 `;
+                }
+
+                // Render answers side by side if both available
+                if (output && reference) {
+                    html += `<div class="side-by-side">`;
+                    html += renderSingleEQAAnswer(output, "Output", "output");
+                    html += renderSingleEQAAnswer(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                    html += `</div>`;
+
+                    // Add comparison summary
+                    html += renderEQAComparison(output, reference);
+                } else if (output) {
+                    html += renderSingleEQAAnswer(output, "Output", "output");
+                } else if (reference) {
+                    html += renderSingleEQAAnswer(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                }
+
+                return html;
             }
 
-            // Render answers side by side if both available
-            if (output && reference) {
-                html += `<div class="side-by-side">`;
-                html += renderSingleEQAAnswer(output, 'Output', 'output');
-                html += renderSingleEQAAnswer(reference, 'Reference', 'reference');
-                html += `</div>`;
-
-                // Add comparison summary
-                html += renderEQAComparison(output, reference);
-            } else if (output) {
-                html += renderSingleEQAAnswer(output, 'Output', 'output');
-            } else if (reference) {
-                html += renderSingleEQAAnswer(reference, 'Reference', 'reference');
-            }
-
-            return html;
-        }
-
-        function renderQuestionChoices(choices) {
-            let html = '<div class="metadata-section"><div class="question-label">Available Choices</div><div class="choices-list">';
-            choices.forEach(choice => {
-                html += `
+            function renderQuestionChoices(choices) {
+                let html =
+                    '<div class="metadata-section"><div class="question-label">Available Choices</div><div class="choices-list">';
+                choices.forEach((choice) => {
+                    html += `
                     <div class="choice-item">
                         <div class="choice-content">
-                            <div class="choice-label">${escapeHtml(choice.label || '')}</div>
-                            ${choice.description ? `<div class="choice-reasoning">${escapeHtml(choice.description)}</div>` : ''}
+                            <div class="choice-label">${escapeHtml(choice.label || "")}</div>
+                            ${choice.description ? `<div class="choice-reasoning">${escapeHtml(choice.description)}</div>` : ""}
                         </div>
                     </div>
                 `;
-            });
-            html += '</div></div>';
-            return html;
-        }
+                });
+                html += "</div></div>";
+                return html;
+            }
 
-        function renderSingleEQAAnswer(data, title, type) {
-            const badgeClass = type === 'output' ? 'badge-output' : 'badge-reference';
+            function renderSingleEQAAnswer(data, title, type) {
+                const badgeClass =
+                    type === "output" ? "badge-output" : "badge-reference";
 
-            let html = `
+                let html = `
                 <div class="panel">
                     <div class="panel-header">
                         <span>${title}</span>
@@ -815,142 +896,162 @@
                     <div class="panel-content">
             `;
 
-            // Response text
-            if (data.response_text) {
-                html += `
+                // Response text
+                if (data.response_text) {
+                    html += `
                     <div class="answer-section">
                         <div class="question-label">Response</div>
                         <div class="response-text">${escapeHtml(data.response_text)}</div>
                     </div>
                 `;
-            }
+                }
 
-            // Reasoning
-            if (data.reasoning) {
-                html += `
+                // Reasoning
+                if (data.reasoning) {
+                    html += `
                     <div class="answer-section">
                         <div class="question-label">Reasoning</div>
                         <div class="response-text">${escapeHtml(data.reasoning)}</div>
                     </div>
                 `;
-            }
+                }
 
-            // Choices
-            if (data.choices && data.choices.length > 0) {
-                html += `
+                // Choices
+                if (data.choices && data.choices.length > 0) {
+                    html += `
                     <div class="answer-section">
                         <div class="question-label">Choices</div>
                         <div class="choices-list">
-                            ${data.choices.map(choice => `
-                                <div class="choice-item ${choice.is_selected ? 'selected' : 'not-selected'}">
-                                    <div class="choice-indicator ${choice.is_selected ? 'selected' : 'not-selected'}">
-                                        ${choice.is_selected ? '&#10003;' : ''}
+                            ${data.choices
+                                .map(
+                                    (choice) => `
+                                <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
+                                    <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">
+                                        ${choice.is_selected ? "&#10003;" : ""}
                                     </div>
                                     <div class="choice-content">
-                                        <div class="choice-label">${escapeHtml(choice.label || '')}</div>
-                                        ${choice.reasoning ? `<div class="choice-reasoning">${escapeHtml(choice.reasoning)}</div>` : ''}
+                                        <div class="choice-label">${escapeHtml(choice.label || "")}</div>
+                                        ${choice.reasoning ? `<div class="choice-reasoning">${escapeHtml(choice.reasoning)}</div>` : ""}
                                     </div>
                                 </div>
-                            `).join('')}
+                            `,
+                                )
+                                .join("")}
                         </div>
                     </div>
                 `;
-            }
-
-            // Response objects (metrics, etc.)
-            if (data.response_objects && Object.keys(data.response_objects).length > 0) {
-                html += renderResponseObjects(data.response_objects);
-            }
-
-            html += `</div></div>`;
-            return html;
-        }
-
-        function renderResponseObjects(responseObjects) {
-            let html = '<div class="answer-section"><div class="question-label">Additional Data</div>';
-
-            // Metrics
-            if (responseObjects.metrics) {
-                const metrics = responseObjects.metrics;
-                html += `<div class="metadata-grid">`;
-                if (metrics.full_string_answers) {
-                    html += `<div class="metadata-item"><span class="metadata-key">Answer: </span><span class="metadata-value">${escapeHtml(metrics.full_string_answers)}</span></div>`;
                 }
-                if (metrics.structured_data && metrics.structured_data.length > 0) {
-                    metrics.structured_data.forEach(m => {
-                        html += `<div class="metadata-item"><span class="metadata-key">${escapeHtml(m.metric_name)}: </span><span class="metadata-value">${m.value} ${escapeHtml(m.unit)} ${m.time_period ? `(${escapeHtml(m.time_period)})` : ''}</span></div>`;
-                    });
+
+                // Response objects (metrics, etc.)
+                if (
+                    data.response_objects &&
+                    Object.keys(data.response_objects).length > 0
+                ) {
+                    html += renderResponseObjects(data.response_objects);
                 }
-                html += `</div>`;
+
+                html += `</div></div>`;
+                return html;
             }
 
-            // Gap analysis
-            if (responseObjects.gap_analysis) {
-                const ga = responseObjects.gap_analysis;
-                html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${escapeHtml(ga.tag)}</span></div>`;
-                if (ga.gap_analysis_reasoning) {
-                    html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(ga.gap_analysis_reasoning)}</span></div>`;
+            function renderResponseObjects(responseObjects) {
+                let html =
+                    '<div class="answer-section"><div class="question-label">Additional Data</div>';
+
+                // Metrics
+                if (responseObjects.metrics) {
+                    const metrics = responseObjects.metrics;
+                    html += `<div class="metadata-grid">`;
+                    if (metrics.full_string_answers) {
+                        html += `<div class="metadata-item"><span class="metadata-key">Answer: </span><span class="metadata-value">${escapeHtml(metrics.full_string_answers)}</span></div>`;
+                    }
+                    if (
+                        metrics.structured_data &&
+                        metrics.structured_data.length > 0
+                    ) {
+                        metrics.structured_data.forEach((m) => {
+                            html += `<div class="metadata-item"><span class="metadata-key">${escapeHtml(m.metric_name)}: </span><span class="metadata-value">${m.value} ${escapeHtml(m.unit)} ${m.time_period ? `(${escapeHtml(m.time_period)})` : ""}</span></div>`;
+                        });
+                    }
+                    html += `</div>`;
                 }
-            }
 
-            // Scoring
-            if (responseObjects.scoring) {
-                const scoring = responseObjects.scoring;
-                html += `<div class="metadata-item"><span class="metadata-key">Score: </span><span class="metadata-value">${escapeHtml(scoring.score)}</span></div>`;
-                if (scoring.scoring_reasoning) {
-                    html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(scoring.scoring_reasoning)}</span></div>`;
+                // Gap analysis
+                if (responseObjects.gap_analysis) {
+                    const ga = responseObjects.gap_analysis;
+                    html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${escapeHtml(ga.tag)}</span></div>`;
+                    if (ga.gap_analysis_reasoning) {
+                        html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(ga.gap_analysis_reasoning)}</span></div>`;
+                    }
                 }
+
+                // Scoring
+                if (responseObjects.scoring) {
+                    const scoring = responseObjects.scoring;
+                    html += `<div class="metadata-item"><span class="metadata-key">Score: </span><span class="metadata-value">${escapeHtml(scoring.score)}</span></div>`;
+                    if (scoring.scoring_reasoning) {
+                        html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(scoring.scoring_reasoning)}</span></div>`;
+                    }
+                }
+
+                html += "</div>";
+                return html;
             }
 
-            html += '</div>';
-            return html;
-        }
+            function renderEQAComparison(output, reference) {
+                // Compare response texts
+                const outputText = normalizeValue(output.response_text);
+                const refText = normalizeValue(reference.response_text);
+                const textMatch = outputText === refText;
 
-        function renderEQAComparison(output, reference) {
-            // Compare response texts
-            const outputText = normalizeValue(output.response_text);
-            const refText = normalizeValue(reference.response_text);
-            const textMatch = outputText === refText;
+                // Compare choices
+                const outputChoices = new Set(
+                    (output.choices || [])
+                        .filter((c) => c.is_selected)
+                        .map((c) => normalizeValue(c.label)),
+                );
+                const refChoices = new Set(
+                    (reference.choices || [])
+                        .filter((c) => c.is_selected)
+                        .map((c) => normalizeValue(c.label)),
+                );
 
-            // Compare choices
-            const outputChoices = new Set((output.choices || []).filter(c => c.is_selected).map(c => normalizeValue(c.label)));
-            const refChoices = new Set((reference.choices || []).filter(c => c.is_selected).map(c => normalizeValue(c.label)));
+                let choiceMatch = true;
+                if (outputChoices.size > 0 || refChoices.size > 0) {
+                    choiceMatch =
+                        outputChoices.size === refChoices.size &&
+                        [...outputChoices].every((c) => refChoices.has(c));
+                }
 
-            let choiceMatch = true;
-            if (outputChoices.size > 0 || refChoices.size > 0) {
-                choiceMatch = outputChoices.size === refChoices.size &&
-                    [...outputChoices].every(c => refChoices.has(c));
-            }
+                const overallMatch = textMatch && choiceMatch;
 
-            const overallMatch = textMatch && choiceMatch;
-
-            return `
+                return `
                 <div class="panel">
                     <div class="panel-header">
                         <span>Comparison Summary</span>
-                        <span class="badge ${overallMatch ? 'badge-reference' : 'badge-output'}">${overallMatch ? 'Match' : 'Mismatch'}</span>
+                        <span class="badge ${overallMatch ? "badge-reference" : "badge-output"}">${overallMatch ? "Match" : "Mismatch"}</span>
                     </div>
                     <div class="panel-content">
                         <div class="stats-summary">
                             <div class="stat-item">
-                                <span class="stat-value ${textMatch ? 'good' : 'bad'}">${textMatch ? '&#10003;' : '&#10007;'}</span>
+                                <span class="stat-value ${textMatch ? "good" : "bad"}">${textMatch ? "&#10003;" : "&#10007;"}</span>
                                 <span class="stat-label">Response Text</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-value ${choiceMatch ? 'good' : 'bad'}">${choiceMatch ? '&#10003;' : '&#10007;'}</span>
+                                <span class="stat-value ${choiceMatch ? "good" : "bad"}">${choiceMatch ? "&#10003;" : "&#10007;"}</span>
                                 <span class="stat-label">Choices</span>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
-        }
+            }
 
-        function renderGenericJson(output, reference, meta) {
-            let html = '';
+            function renderGenericJson(output, reference, meta) {
+                let html = "";
 
-            if (output) {
-                html += `
+                if (output) {
+                    html += `
                     <div class="panel">
                         <div class="panel-header">
                             <span>Output</span>
@@ -963,10 +1064,10 @@
                         </div>
                     </div>
                 `;
-            }
+                }
 
-            if (reference) {
-                html += `
+                if (reference) {
+                    html += `
                     <div class="panel">
                         <div class="panel-header">
                             <span>Reference</span>
@@ -979,10 +1080,10 @@
                         </div>
                     </div>
                 `;
-            }
+                }
 
-            if (meta) {
-                html += `
+                if (meta) {
+                    html += `
                     <div class="panel">
                         <div class="panel-header">
                             <span>Metadata</span>
@@ -994,21 +1095,21 @@
                         </div>
                     </div>
                 `;
+                }
+
+                return html;
             }
 
-            return html;
-        }
+            function escapeHtml(text) {
+                if (text === null || text === undefined) return "";
+                const div = document.createElement("div");
+                div.textContent = String(text);
+                return div.innerHTML;
+            }
 
-        function escapeHtml(text) {
-            if (text === null || text === undefined) return '';
-            const div = document.createElement('div');
-            div.textContent = String(text);
-            return div.innerHTML;
-        }
-
-        // For testing locally without LangSmith
-        // Uncomment to test with mock data:
-        /*
+            // For testing locally without LangSmith
+            // Uncomment to test with mock data:
+            /*
         window.postMessage({
             type: 'output',
             data: {
@@ -1049,6 +1150,6 @@
             }, '*');
         }, 500);
         */
-    </script>
-</body>
+        </script>
+    </body>
 </html>
