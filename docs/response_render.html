@@ -83,7 +83,6 @@
                 padding: 16px;
             }
 
-            /* Question Display */
             .question-section {
                 margin-bottom: 16px;
             }
@@ -101,7 +100,6 @@
                 color: var(--text-color);
             }
 
-            /* EQA Answer Display */
             .answer-section {
                 background-color: rgba(0, 0, 0, 0.2);
                 border-radius: 6px;
@@ -173,7 +171,6 @@
                 margin-top: 4px;
             }
 
-            /* Table Display */
             .table-container {
                 overflow-x: auto;
                 margin-top: 12px;
@@ -205,22 +202,11 @@
                 background-color: rgba(0, 0, 0, 0.1);
             }
 
-            /* Table Diff Display */
-            .diff-view {
-                margin-top: 24px;
-            }
-
-            .diff-header {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                margin-bottom: 12px;
-            }
-
             .diff-legend {
                 display: flex;
                 gap: 16px;
                 font-size: 12px;
+                margin-bottom: 12px;
             }
 
             .legend-item {
@@ -286,7 +272,6 @@
                 font-weight: 500;
             }
 
-            /* Stats Summary */
             .stats-summary {
                 display: flex;
                 gap: 24px;
@@ -310,11 +295,9 @@
             .stat-value.good {
                 color: var(--success-color);
             }
-
             .stat-value.bad {
                 color: var(--error-color);
             }
-
             .stat-value.neutral {
                 color: var(--warning-color);
             }
@@ -326,7 +309,6 @@
                 letter-spacing: 0.5px;
             }
 
-            /* Side-by-side view */
             .side-by-side {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -339,40 +321,12 @@
                 }
             }
 
-            /* Loading state */
             .loading {
                 text-align: center;
                 padding: 40px;
                 color: var(--text-muted);
             }
 
-            .loading::after {
-                content: "";
-                display: inline-block;
-                width: 20px;
-                height: 20px;
-                border: 2px solid var(--border-color);
-                border-top-color: var(--accent-color);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin-left: 8px;
-                vertical-align: middle;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            /* No data state */
-            .no-data {
-                text-align: center;
-                padding: 40px;
-                color: var(--text-muted);
-            }
-
-            /* Metadata section */
             .metadata-section {
                 margin-top: 16px;
                 padding-top: 12px;
@@ -398,7 +352,6 @@
                 font-family: monospace;
             }
 
-            /* JSON Fallback */
             .json-fallback {
                 background-color: rgba(0, 0, 0, 0.3);
                 border-radius: 6px;
@@ -413,45 +366,25 @@
                 word-wrap: break-word;
             }
 
-            /* Diff highlighting for text */
-            .text-diff {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .text-diff .output-value {
-                padding: 8px;
-                background-color: rgba(0, 0, 0, 0.2);
-                border-radius: 4px;
-                border-left: 3px solid var(--accent-color);
-            }
-
-            .text-diff .reference-value {
-                padding: 8px;
-                background-color: rgba(0, 0, 0, 0.2);
-                border-radius: 4px;
-                border-left: 3px solid var(--success-color);
-            }
-
-            .text-diff .label {
-                font-size: 11px;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                margin-bottom: 4px;
+            .debug-panel {
+                border: 2px solid #f0f !important;
             }
         </style>
     </head>
     <body>
         <div class="container" id="content">
-            <div class="loading">Waiting for data from LangSmith</div>
+            <div class="loading">Waiting for data from LangSmith...</div>
         </div>
 
         <script>
+            // Set to true to show debug info on page
+            const DEBUG_MODE = true;
+
             // Store received data
             let outputData = null;
             let referenceData = null;
             let metadata = null;
+            let rawMessage = null;
 
             // Unwrap data if nested in an "output" key
             function unwrapData(data) {
@@ -459,7 +392,6 @@
 
                 // If data has an "output" key and it looks like the actual payload, unwrap it
                 if (data.output && typeof data.output === "object") {
-                    // Check if the nested output has the expected structure for TableResponse or EQAAnswer
                     const nested = data.output;
                     const isTableResponse =
                         "column_headers" in nested ||
@@ -485,26 +417,13 @@
 
                 if (!message || typeof message !== "object") return;
 
-                // Debug: log raw message to console
-                console.log(
-                    "LangSmith message received:",
-                    JSON.stringify(message, null, 2),
-                );
+                rawMessage = message;
 
                 if (message.type === "output") {
                     outputData = unwrapData(message.data);
-                    console.log(
-                        "Unwrapped output data:",
-                        JSON.stringify(outputData, null, 2),
-                    );
-                    console.log("Detected type:", detectDataType(outputData));
                     metadata = message.metadata;
                 } else if (message.type === "reference") {
                     referenceData = unwrapData(message.data);
-                    console.log(
-                        "Unwrapped reference data:",
-                        JSON.stringify(referenceData, null, 2),
-                    );
                 }
 
                 renderContent();
@@ -514,31 +433,53 @@
                 const container = document.getElementById("content");
 
                 if (!outputData && !referenceData) {
-                    return; // Still loading
+                    return;
                 }
 
-                // Detect data type and render accordingly
                 const dataType = detectDataType(outputData || referenceData);
 
                 let html = "";
 
+                // Debug panel
+                if (DEBUG_MODE) {
+                    html += `
+                    <div class="panel debug-panel">
+                        <div class="panel-header">
+                            <span>DEBUG INFO</span>
+                        </div>
+                        <div class="panel-content">
+                            <div><strong>Detected Type:</strong> ${dataType}</div>
+                            <div><strong>Has outputData:</strong> ${!!outputData}</div>
+                            <div><strong>Has referenceData:</strong> ${!!referenceData}</div>
+                            <div><strong>outputData keys:</strong> ${outputData ? Object.keys(outputData).join(", ") : "N/A"}</div>
+                            <div><strong>"column_headers" in outputData:</strong> ${outputData ? "column_headers" in outputData : "N/A"}</div>
+                            <div><strong>"rows" in outputData:</strong> ${outputData ? "rows" in outputData : "N/A"}</div>
+                            <div style="margin-top: 10px;"><strong>Raw message.data:</strong></div>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #000; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
+                            <div style="margin-top: 10px;"><strong>Unwrapped outputData:</strong></div>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #000; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(outputData, null, 2))}</pre>
+                        </div>
+                    </div>
+                `;
+                }
+
                 switch (dataType) {
                     case "table_response":
-                        html = renderTableResponse(
+                        html += renderTableResponse(
                             outputData,
                             referenceData,
                             metadata,
                         );
                         break;
                     case "eqa_answer":
-                        html = renderEQAAnswer(
+                        html += renderEQAAnswer(
                             outputData,
                             referenceData,
                             metadata,
                         );
                         break;
                     default:
-                        html = renderGenericJson(
+                        html += renderGenericJson(
                             outputData,
                             referenceData,
                             metadata,
@@ -551,8 +492,6 @@
             function detectDataType(data) {
                 if (!data) return "unknown";
 
-                // Check for TableResponse structure
-                // TableResponse has: column_headers, rows, question_text, table_question_id
                 if (
                     "column_headers" in data ||
                     ("rows" in data && Array.isArray(data.rows))
@@ -560,8 +499,6 @@
                     return "table_response";
                 }
 
-                // Check for EQAAnswer structure
-                // EQAAnswer has: response_text, choices, response_objects, reasoning
                 if (
                     "response_text" in data ||
                     ("choices" in data && Array.isArray(data.choices)) ||
@@ -576,15 +513,12 @@
             function renderTableResponse(output, reference, meta) {
                 let html = "";
 
-                // Show question if available in metadata
                 if (meta?.inputs?.question || meta?.inputs?.table_question) {
                     const question =
                         meta.inputs.table_question || meta.inputs.question;
                     html += `
                     <div class="panel">
-                        <div class="panel-header">
-                            <span>Question</span>
-                        </div>
+                        <div class="panel-header"><span>Question</span></div>
                         <div class="panel-content">
                             <div class="question-text">${escapeHtml(question.text || question.parent_question?.text || JSON.stringify(question))}</div>
                             ${question.cell_questions ? renderColumnQuestions(question.cell_questions) : ""}
@@ -593,7 +527,6 @@
                 `;
                 }
 
-                // If we have both output and reference, show diff view
                 if (output && reference) {
                     html += renderTableDiff(output, reference);
                 } else if (output) {
@@ -611,7 +544,6 @@
 
             function renderColumnQuestions(cellQuestions) {
                 if (!cellQuestions || cellQuestions.length === 0) return "";
-
                 let html =
                     '<div class="metadata-section"><div class="question-label">Column Definitions</div><div class="choices-list">';
                 cellQuestions.forEach((q, idx) => {
@@ -630,10 +562,9 @@
             }
 
             function renderTableDiff(output, reference) {
-                // Calculate diff statistics
                 const stats = calculateTableDiffStats(output, reference);
 
-                let html = `
+                return `
                 <div class="panel">
                     <div class="panel-header">
                         <span>Table Comparison</span>
@@ -662,28 +593,22 @@
                                 <span class="stat-label">Accuracy</span>
                             </div>
                         </div>
-
                         <div class="diff-legend">
                             <div class="legend-item"><div class="legend-color match"></div> Match</div>
                             <div class="legend-item"><div class="legend-color diff"></div> Different</div>
                             <div class="legend-item"><div class="legend-color missing"></div> Missing/Extra</div>
                         </div>
-
-                        <div class="table-container">
-                            ${renderDiffTable(output, reference)}
-                        </div>
+                        <div class="table-container">${renderDiffTable(output, reference)}</div>
                     </div>
                 </div>
             `;
-
-                return html;
             }
 
             function calculateTableDiffStats(output, reference) {
-                let matchingCells = 0;
-                let differentCells = 0;
-                let missingCells = 0;
-                let extraCells = 0;
+                let matchingCells = 0,
+                    differentCells = 0,
+                    missingCells = 0,
+                    extraCells = 0;
 
                 const outputRows = output.rows || [];
                 const refRows = reference.rows || [];
@@ -701,20 +626,15 @@
                         const outCell = outRow[j];
                         const refCell = refRow[j];
 
-                        if (outCell === undefined && refCell !== undefined) {
+                        if (outCell === undefined && refCell !== undefined)
                             missingCells++;
-                        } else if (
-                            outCell !== undefined &&
-                            refCell === undefined
-                        ) {
+                        else if (outCell !== undefined && refCell === undefined)
                             extraCells++;
-                        } else if (
+                        else if (
                             normalizeValue(outCell) === normalizeValue(refCell)
-                        ) {
+                        )
                             matchingCells++;
-                        } else {
-                            differentCells++;
-                        }
+                        else differentCells++;
                     }
                 }
 
@@ -750,8 +670,7 @@
                 const refRows = reference.rows || [];
                 const maxRows = Math.max(outputRows.length, refRows.length);
 
-                let html = '<table class="diff-table"><thead><tr>';
-                html += "<th>#</th>";
+                let html = '<table class="diff-table"><thead><tr><th>#</th>';
                 headers.forEach((h) => {
                     html += `<th>${escapeHtml(h)}</th>`;
                 });
@@ -760,7 +679,6 @@
                 for (let i = 0; i < maxRows; i++) {
                     const outRow = outputRows[i] || [];
                     const refRow = refRows[i] || [];
-
                     html += `<tr><td>${i + 1}</td>`;
 
                     for (let j = 0; j < headers.length; j++) {
@@ -769,25 +687,17 @@
                         const cellClass = getCellDiffClass(outCell, refCell);
 
                         html += `<td class="${cellClass}">`;
-
                         if (cellClass === "match") {
                             html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
                         } else if (cellClass === "diff") {
-                            html += `
-                            <div class="cell-comparison">
-                                <span class="cell-output">${escapeHtml(outCell || "")}</span>
-                                <span class="cell-reference">${escapeHtml(refCell || "")}</span>
-                            </div>
-                        `;
+                            html += `<div class="cell-comparison"><span class="cell-output">${escapeHtml(outCell || "")}</span><span class="cell-reference">${escapeHtml(refCell || "")}</span></div>`;
                         } else if (cellClass === "missing") {
                             html += `<span class="cell-reference">${escapeHtml(refCell || "")}</span>`;
                         } else {
                             html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
                         }
-
                         html += "</td>";
                     }
-
                     html += "</tr>";
                 }
 
@@ -809,7 +719,7 @@
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
 
-                let html = `
+                return `
                 <div class="panel">
                     <div class="panel-header">
                         <span>Table ${title}</span>
@@ -819,37 +729,18 @@
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
                         <div class="table-container">
                             <table>
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        ${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${(data.rows || [])
-                                        .map(
-                                            (row, i) => `
-                                        <tr>
-                                            <td>${i + 1}</td>
-                                            ${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}
-                                        </tr>
-                                    `,
-                                        )
-                                        .join("")}
-                                </tbody>
+                                <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+                                <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             `;
-
-                return html;
             }
 
             function renderEQAAnswer(output, reference, meta) {
                 let html = "";
 
-                // Show question if available
                 if (meta?.inputs?.question) {
                     const question = meta.inputs.question;
                     html += `
@@ -866,7 +757,6 @@
                 `;
                 }
 
-                // Render answers side by side if both available
                 if (output && reference) {
                     html += `<div class="side-by-side">`;
                     html += renderSingleEQAAnswer(output, "Output", "output");
@@ -876,8 +766,6 @@
                         "reference",
                     );
                     html += `</div>`;
-
-                    // Add comparison summary
                     html += renderEQAComparison(output, reference);
                 } else if (output) {
                     html += renderSingleEQAAnswer(output, "Output", "output");
@@ -922,53 +810,30 @@
                     <div class="panel-content">
             `;
 
-                // Response text
                 if (data.response_text) {
-                    html += `
-                    <div class="answer-section">
-                        <div class="question-label">Response</div>
-                        <div class="response-text">${escapeHtml(data.response_text)}</div>
-                    </div>
-                `;
+                    html += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${escapeHtml(data.response_text)}</div></div>`;
                 }
 
-                // Reasoning
                 if (data.reasoning) {
-                    html += `
-                    <div class="answer-section">
-                        <div class="question-label">Reasoning</div>
-                        <div class="response-text">${escapeHtml(data.reasoning)}</div>
-                    </div>
-                `;
+                    html += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${escapeHtml(data.reasoning)}</div></div>`;
                 }
 
-                // Choices
                 if (data.choices && data.choices.length > 0) {
-                    html += `
-                    <div class="answer-section">
-                        <div class="question-label">Choices</div>
-                        <div class="choices-list">
-                            ${data.choices
-                                .map(
-                                    (choice) => `
-                                <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
-                                    <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">
-                                        ${choice.is_selected ? "&#10003;" : ""}
-                                    </div>
-                                    <div class="choice-content">
-                                        <div class="choice-label">${escapeHtml(choice.label || "")}</div>
-                                        ${choice.reasoning ? `<div class="choice-reasoning">${escapeHtml(choice.reasoning)}</div>` : ""}
-                                    </div>
-                                </div>
-                            `,
-                                )
-                                .join("")}
+                    html += `<div class="answer-section"><div class="question-label">Choices</div><div class="choices-list">`;
+                    data.choices.forEach((choice) => {
+                        html += `
+                        <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
+                            <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
+                            <div class="choice-content">
+                                <div class="choice-label">${escapeHtml(choice.label || "")}</div>
+                                ${choice.reasoning ? `<div class="choice-reasoning">${escapeHtml(choice.reasoning)}</div>` : ""}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                    });
+                    html += `</div></div>`;
                 }
 
-                // Response objects (metrics, etc.)
                 if (
                     data.response_objects &&
                     Object.keys(data.response_objects).length > 0
@@ -984,7 +849,6 @@
                 let html =
                     '<div class="answer-section"><div class="question-label">Additional Data</div>';
 
-                // Metrics
                 if (responseObjects.metrics) {
                     const metrics = responseObjects.metrics;
                     html += `<div class="metadata-grid">`;
@@ -1002,22 +866,14 @@
                     html += `</div>`;
                 }
 
-                // Gap analysis
                 if (responseObjects.gap_analysis) {
                     const ga = responseObjects.gap_analysis;
                     html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${escapeHtml(ga.tag)}</span></div>`;
-                    if (ga.gap_analysis_reasoning) {
-                        html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(ga.gap_analysis_reasoning)}</span></div>`;
-                    }
                 }
 
-                // Scoring
                 if (responseObjects.scoring) {
                     const scoring = responseObjects.scoring;
                     html += `<div class="metadata-item"><span class="metadata-key">Score: </span><span class="metadata-value">${escapeHtml(scoring.score)}</span></div>`;
-                    if (scoring.scoring_reasoning) {
-                        html += `<div class="metadata-item"><span class="metadata-key">Reasoning: </span><span class="metadata-value">${escapeHtml(scoring.scoring_reasoning)}</span></div>`;
-                    }
                 }
 
                 html += "</div>";
@@ -1025,12 +881,10 @@
             }
 
             function renderEQAComparison(output, reference) {
-                // Compare response texts
                 const outputText = normalizeValue(output.response_text);
                 const refText = normalizeValue(reference.response_text);
                 const textMatch = outputText === refText;
 
-                // Compare choices
                 const outputChoices = new Set(
                     (output.choices || [])
                         .filter((c) => c.is_selected)
@@ -1079,14 +933,9 @@
                 if (output) {
                     html += `
                     <div class="panel">
-                        <div class="panel-header">
-                            <span>Output</span>
-                            <span class="badge badge-output">output</span>
-                        </div>
+                        <div class="panel-header"><span>Output</span><span class="badge badge-output">output</span></div>
                         <div class="panel-content">
-                            <div class="json-fallback">
-                                <pre>${escapeHtml(JSON.stringify(output, null, 2))}</pre>
-                            </div>
+                            <div class="json-fallback"><pre>${escapeHtml(JSON.stringify(output, null, 2))}</pre></div>
                         </div>
                     </div>
                 `;
@@ -1095,29 +944,9 @@
                 if (reference) {
                     html += `
                     <div class="panel">
-                        <div class="panel-header">
-                            <span>Reference</span>
-                            <span class="badge badge-reference">reference</span>
-                        </div>
+                        <div class="panel-header"><span>Reference</span><span class="badge badge-reference">reference</span></div>
                         <div class="panel-content">
-                            <div class="json-fallback">
-                                <pre>${escapeHtml(JSON.stringify(reference, null, 2))}</pre>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                }
-
-                if (meta) {
-                    html += `
-                    <div class="panel">
-                        <div class="panel-header">
-                            <span>Metadata</span>
-                        </div>
-                        <div class="panel-content">
-                            <div class="json-fallback">
-                                <pre>${escapeHtml(JSON.stringify(meta, null, 2))}</pre>
-                            </div>
+                            <div class="json-fallback"><pre>${escapeHtml(JSON.stringify(reference, null, 2))}</pre></div>
                         </div>
                     </div>
                 `;
@@ -1132,50 +961,6 @@
                 div.textContent = String(text);
                 return div.innerHTML;
             }
-
-            // For testing locally without LangSmith
-            // Uncomment to test with mock data:
-            /*
-        window.postMessage({
-            type: 'output',
-            data: {
-                column_headers: ['Item', 'Value', 'Unit'],
-                rows: [
-                    ['CO2 Emissions', '1000', 'tCO2e'],
-                    ['Energy Usage', '5000', 'MWh'],
-                    ['Water Consumption', '200', 'm3']
-                ],
-                question_text: 'Extract environmental metrics'
-            },
-            metadata: {
-                inputs: {
-                    table_question: {
-                        text: 'Extract environmental metrics from the document',
-                        cell_questions: [
-                            { text: 'Metric Name', data_type: 'text_short' },
-                            { text: 'Value', data_type: 'number' },
-                            { text: 'Unit', data_type: 'text_short' }
-                        ]
-                    }
-                }
-            }
-        }, '*');
-
-        setTimeout(() => {
-            window.postMessage({
-                type: 'reference',
-                data: {
-                    column_headers: ['Item', 'Value', 'Unit'],
-                    rows: [
-                        ['CO2 Emissions', '1000', 'tCO2e'],
-                        ['Energy Usage', '4500', 'MWh'],
-                        ['Water Consumption', '200', 'm3'],
-                        ['Waste Generated', '50', 'tonnes']
-                    ]
-                }
-            }, '*');
-        }, 500);
-        */
         </script>
     </body>
 </html>
