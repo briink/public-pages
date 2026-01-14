@@ -372,13 +372,49 @@
         </style>
     </head>
     <body>
-        <div class="container" id="content">
-            <div class="loading">Waiting for data from LangSmith...</div>
+        <div class="container">
+            <div id="content">
+                <div class="loading">Waiting for data from LangSmith...</div>
+            </div>
+            <div id="debug-container" style="display: none"></div>
         </div>
 
+        <button
+            id="debug-toggle"
+            style="
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                background: #333;
+                color: #fff;
+                border: 1px solid #555;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                z-index: 1000;
+            "
+        >
+            Show Debug
+        </button>
+
         <script>
-            // Set to true to show debug info on page
-            const DEBUG_MODE = true;
+            // Debug toggle functionality
+            let debugVisible = false;
+            document
+                .getElementById("debug-toggle")
+                .addEventListener("click", function () {
+                    debugVisible = !debugVisible;
+                    const debugContainer =
+                        document.getElementById("debug-container");
+                    debugContainer.style.display = debugVisible
+                        ? "block"
+                        : "none";
+                    this.textContent = debugVisible
+                        ? "Hide Debug"
+                        : "Show Debug";
+                    this.style.background = debugVisible ? "#f0f" : "#333";
+                });
 
             // Store received data
             let outputData = null;
@@ -430,7 +466,9 @@
             });
 
             function renderContent() {
-                const container = document.getElementById("content");
+                const contentContainer = document.getElementById("content");
+                const debugContainer =
+                    document.getElementById("debug-container");
 
                 if (!outputData && !referenceData) {
                     return;
@@ -438,11 +476,34 @@
 
                 const dataType = detectDataType(outputData || referenceData);
 
-                let html = "";
+                // Render main content
+                let contentHtml = "";
+                switch (dataType) {
+                    case "table_response":
+                        contentHtml = renderTableResponse(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                        break;
+                    case "eqa_answer":
+                        contentHtml = renderEQAAnswer(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                        break;
+                    default:
+                        contentHtml = renderGenericJson(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                }
+                contentContainer.innerHTML = contentHtml;
 
-                // Debug panel
-                if (DEBUG_MODE) {
-                    html += `
+                // Render debug panel
+                debugContainer.innerHTML = `
                     <div class="panel debug-panel">
                         <div class="panel-header">
                             <span>DEBUG INFO</span>
@@ -461,32 +522,6 @@
                         </div>
                     </div>
                 `;
-                }
-
-                switch (dataType) {
-                    case "table_response":
-                        html += renderTableResponse(
-                            outputData,
-                            referenceData,
-                            metadata,
-                        );
-                        break;
-                    case "eqa_answer":
-                        html += renderEQAAnswer(
-                            outputData,
-                            referenceData,
-                            metadata,
-                        );
-                        break;
-                    default:
-                        html += renderGenericJson(
-                            outputData,
-                            referenceData,
-                            metadata,
-                        );
-                }
-
-                container.innerHTML = html;
             }
 
             function detectDataType(data) {
