@@ -459,14 +459,19 @@
 
                 // If data has an "output" key and it looks like the actual payload, unwrap it
                 if (data.output && typeof data.output === "object") {
-                    // Check if the nested output has the expected structure
+                    // Check if the nested output has the expected structure for TableResponse or EQAAnswer
                     const nested = data.output;
-                    if (
-                        nested.column_headers ||
-                        nested.rows ||
-                        nested.response_text !== undefined ||
-                        nested.choices
-                    ) {
+                    const isTableResponse =
+                        "column_headers" in nested ||
+                        "rows" in nested ||
+                        "question_text" in nested ||
+                        "table_question_id" in nested;
+                    const isEQAAnswer =
+                        "response_text" in nested ||
+                        "choices" in nested ||
+                        "response_objects" in nested;
+
+                    if (isTableResponse || isEQAAnswer) {
                         return nested;
                     }
                 }
@@ -532,14 +537,20 @@
                 if (!data) return "unknown";
 
                 // Check for TableResponse structure
-                if (data.column_headers && Array.isArray(data.rows)) {
+                // TableResponse has: column_headers, rows, question_text, table_question_id
+                if (
+                    "column_headers" in data ||
+                    ("rows" in data && Array.isArray(data.rows))
+                ) {
                     return "table_response";
                 }
 
                 // Check for EQAAnswer structure
+                // EQAAnswer has: response_text, choices, response_objects, reasoning
                 if (
-                    data.response_text !== undefined ||
-                    (data.choices && Array.isArray(data.choices))
+                    "response_text" in data ||
+                    ("choices" in data && Array.isArray(data.choices)) ||
+                    "response_objects" in data
                 ) {
                     return "eqa_answer";
                 }
