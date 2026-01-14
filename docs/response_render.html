@@ -485,11 +485,26 @@
 
                 if (!message || typeof message !== "object") return;
 
+                // Debug: log raw message to console
+                console.log(
+                    "LangSmith message received:",
+                    JSON.stringify(message, null, 2),
+                );
+
                 if (message.type === "output") {
                     outputData = unwrapData(message.data);
+                    console.log(
+                        "Unwrapped output data:",
+                        JSON.stringify(outputData, null, 2),
+                    );
+                    console.log("Detected type:", detectDataType(outputData));
                     metadata = message.metadata;
                 } else if (message.type === "reference") {
                     referenceData = unwrapData(message.data);
+                    console.log(
+                        "Unwrapped reference data:",
+                        JSON.stringify(referenceData, null, 2),
+                    );
                 }
 
                 renderContent();
