@@ -1374,52 +1374,67 @@
             function renderSingleEQAAnswer(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
+                const sourceDocuments = data.source_documents || [];
+                const srcCount = sourceDocuments.length;
 
-                let html = `
-                <div class="panel">
-                    <div class="panel-header">
-                        <span>${title}</span>
-                        <span class="badge ${badgeClass}">${type}</span>
-                    </div>
-                    <div class="panel-content">
-            `;
+                let answerContent = "";
 
                 if (data.response_text) {
-                    html += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${escapeHtml(data.response_text)}</div></div>`;
+                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processInlineReferences(data.response_text, srcCount)}</div></div>`;
                 }
 
                 if (data.reasoning) {
-                    html += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${escapeHtml(data.reasoning)}</div></div>`;
+                    answerContent += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${processInlineReferences(data.reasoning, srcCount)}</div></div>`;
                 }
 
                 if (data.choices && data.choices.length > 0) {
-                    html += `<div class="answer-section"><div class="question-label">Choices</div><div class="choices-list">`;
+                    answerContent += `<div class="answer-section"><div class="question-label">Choices</div><div class="choices-list">`;
                     data.choices.forEach((choice) => {
-                        html += `
+                        answerContent += `
                         <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
                             <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
                             <div class="choice-content">
                                 <div class="choice-label">${escapeHtml(choice.label || "")}</div>
-                                ${choice.reasoning ? `<div class="choice-reasoning">${escapeHtml(choice.reasoning)}</div>` : ""}
+                                ${choice.reasoning ? `<div class="choice-reasoning">${processInlineReferences(choice.reasoning, srcCount)}</div>` : ""}
                             </div>
                         </div>
                     `;
                     });
-                    html += `</div></div>`;
+                    answerContent += `</div></div>`;
                 }
 
                 if (
                     data.response_objects &&
                     Object.keys(data.response_objects).length > 0
                 ) {
-                    html += renderResponseObjects(data.response_objects);
+                    answerContent += renderResponseObjects(
+                        data.response_objects,
+                        srcCount,
+                    );
                 }
 
-                html += `</div></div>`;
-                return html;
+                return `
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>${title}</span>
+                        <span class="badge ${badgeClass}">${type}</span>
+                    </div>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="answers">Answers</button>
+                        <button class="tab" data-tab="sources">Sources<span class="tab-count">${sourceDocuments.length}</span></button>
+                    </div>
+                    <div class="tab-content active" data-tab-content="answers">
+                        ${answerContent}
+                    </div>
+                    <div class="tab-content" data-tab-content="sources">
+                        ${renderSourceDocuments(sourceDocuments)}
+                    </div>
+                </div>
+            `;
             }
 
-            function renderResponseObjects(responseObjects) {
+            function renderResponseObjects(responseObjects, sourceCount) {
+                const srcCount = sourceCount || 0;
                 let html =
                     '<div class="answer-section"><div class="question-label">Additional Data</div>';
 
@@ -1427,7 +1442,7 @@
                     const metrics = responseObjects.metrics;
                     html += `<div class="metadata-grid">`;
                     if (metrics.full_string_answers) {
-                        html += `<div class="metadata-item"><span class="metadata-key">Answer: </span><span class="metadata-value">${escapeHtml(metrics.full_string_answers)}</span></div>`;
+                        html += `<div class="metadata-item"><span class="metadata-key">Answer: </span><span class="metadata-value">${processInlineReferences(metrics.full_string_answers, srcCount)}</span></div>`;
                     }
                     if (
                         metrics.structured_data &&
@@ -1442,7 +1457,7 @@
 
                 if (responseObjects.gap_analysis) {
                     const ga = responseObjects.gap_analysis;
-                    html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${escapeHtml(ga.tag)}</span></div>`;
+                    html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${processInlineReferences(ga.tag, srcCount)}</span></div>`;
                 }
 
                 if (responseObjects.scoring) {
