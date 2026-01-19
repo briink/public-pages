@@ -369,6 +369,40 @@
             .debug-panel {
                 border: 2px solid #f0f !important;
             }
+
+            .reasoning-table th {
+                background-color: rgba(139, 92, 246, 0.3);
+                color: #c4b5fd;
+            }
+
+            .reasoning-table td {
+                background-color: rgba(139, 92, 246, 0.05);
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .table-section-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 8px;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .table-section-label.values {
+                background-color: rgba(76, 201, 240, 0.15);
+                color: var(--accent-color);
+            }
+
+            .table-section-label.reasoning {
+                background-color: rgba(139, 92, 246, 0.15);
+                color: #c4b5fd;
+            }
         </style>
     </head>
     <body>
@@ -432,6 +466,7 @@
                     const isTableResponse =
                         "column_headers" in nested ||
                         "rows" in nested ||
+                        "reasoning" in nested ||
                         "question_text" in nested ||
                         "table_question_id" in nested;
                     const isEQAAnswer =
@@ -529,7 +564,8 @@
 
                 if (
                     "column_headers" in data ||
-                    ("rows" in data && Array.isArray(data.rows))
+                    ("rows" in data && Array.isArray(data.rows)) ||
+                    ("reasoning" in data && Array.isArray(data.reasoning))
                 ) {
                     return "table_response";
                 }
@@ -640,11 +676,11 @@
                                 ? `
                             <div class="side-by-side">
                                 <div>
-                                    <div class="question-label" style="margin-bottom: 8px;">Cell Values</div>
+                                    <div class="table-section-label values">Values</div>
                                     <div class="table-container">${renderDiffTable(output, reference)}</div>
                                 </div>
                                 <div>
-                                    <div class="question-label" style="margin-bottom: 8px;">Reasoning</div>
+                                    <div class="table-section-label reasoning">Reasoning</div>
                                     <div class="table-container">${renderReasoningTable(output, reference)}</div>
                                 </div>
                             </div>
@@ -794,7 +830,8 @@
                     refReasoningRows.length,
                 );
 
-                let html = '<table class="diff-table"><thead><tr><th>#</th>';
+                let html =
+                    '<table class="diff-table reasoning-table"><thead><tr><th>#</th>';
                 headers.forEach((h) => {
                     html += `<th>${escapeHtml(h)}</th>`;
                 });
@@ -863,7 +900,7 @@
                 if (hasReasoning) {
                     const reasoningRows = data.reasoning || [];
                     reasoningTable = `
-                        <table>
+                        <table class="reasoning-table">
                             <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
                             <tbody>${reasoningRows.map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
                         </table>
@@ -883,11 +920,11 @@
                                 ? `
                             <div class="side-by-side">
                                 <div>
-                                    <div class="question-label" style="margin-bottom: 8px;">Cell Values</div>
+                                    <div class="table-section-label values">Values</div>
                                     <div class="table-container">${valuesTable}</div>
                                 </div>
                                 <div>
-                                    <div class="question-label" style="margin-bottom: 8px;">Reasoning</div>
+                                    <div class="table-section-label reasoning">Reasoning</div>
                                     <div class="table-container">${reasoningTable}</div>
                                 </div>
                             </div>
