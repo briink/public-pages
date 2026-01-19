@@ -598,6 +598,8 @@
 
             function renderTableDiff(output, reference) {
                 const stats = calculateTableDiffStats(output, reference);
+                const hasReasoning =
+                    hasReasoningData(output) || hasReasoningData(reference);
 
                 return `
                 <div class="panel">
@@ -633,7 +635,24 @@
                             <div class="legend-item"><div class="legend-color diff"></div> Different</div>
                             <div class="legend-item"><div class="legend-color missing"></div> Missing/Extra</div>
                         </div>
-                        <div class="table-container">${renderDiffTable(output, reference)}</div>
+                        ${
+                            hasReasoning
+                                ? `
+                            <div class="side-by-side">
+                                <div>
+                                    <div class="question-label" style="margin-bottom: 8px;">Cell Values</div>
+                                    <div class="table-container">${renderDiffTable(output, reference)}</div>
+                                </div>
+                                <div>
+                                    <div class="question-label" style="margin-bottom: 8px;">Reasoning</div>
+                                    <div class="table-container">${renderReasoningTable(output, reference)}</div>
+                                </div>
+                            </div>
+                        `
+                                : `
+                            <div class="table-container">${renderDiffTable(output, reference)}</div>
+                        `
+                        }
                     </div>
                 </div>
             `;
@@ -693,6 +712,16 @@
                 return String(val).trim().toLowerCase();
             }
 
+            function hasReasoningData(data) {
+                if (!data || !data.reasoning) return false;
+                const rows = data.reasoning || [];
+                return rows.some(
+                    (row) =>
+                        row &&
+                        row.some((cell) => cell && cell.trim().length > 0),
+                );
+            }
+
             function renderDiffTable(output, reference) {
                 const outputHeaders = output.column_headers || [];
                 const refHeaders = reference.column_headers || [];
@@ -750,9 +779,96 @@
                 return "diff";
             }
 
+            function renderReasoningTable(output, reference) {
+                const outputHeaders = output.column_headers || [];
+                const refHeaders = reference.column_headers || [];
+                const headers =
+                    outputHeaders.length >= refHeaders.length
+                        ? outputHeaders
+                        : refHeaders;
+
+                const outputReasoningRows = output.reasoning || [];
+                const refReasoningRows = reference.reasoning || [];
+                const maxRows = Math.max(
+                    outputReasoningRows.length,
+                    refReasoningRows.length,
+                );
+
+                let html = '<table class="diff-table"><thead><tr><th>#</th>';
+                headers.forEach((h) => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += "</tr></thead><tbody>";
+
+                for (let i = 0; i < maxRows; i++) {
+                    const outRow = outputReasoningRows[i] || [];
+                    const refRow = refReasoningRows[i] || [];
+                    html += `<tr><td>${i + 1}</td>`;
+
+                    for (let j = 0; j < headers.length; j++) {
+                        const outReasoning = outRow[j];
+                        const refReasoning = refRow[j];
+
+                        // Use same cell values to determine diff class
+                        const outputRows = output.rows || [];
+                        const refRows = reference.rows || [];
+                        const outCell = outputRows[i]
+                            ? outputRows[i][j]
+                            : undefined;
+                        const refCell = refRows[i] ? refRows[i][j] : undefined;
+                        const cellClass = getCellDiffClass(outCell, refCell);
+
+                        html += `<td class="${cellClass}">`;
+                        if (cellClass === "match" || cellClass === "diff") {
+                            if (outReasoning) {
+                                html += `<div class="cell-comparison"><span class="cell-output">${escapeHtml(outReasoning)}</span>`;
+                                if (
+                                    cellClass === "diff" &&
+                                    refReasoning &&
+                                    refReasoning !== outReasoning
+                                ) {
+                                    html += `<span class="cell-reference">${escapeHtml(refReasoning)}</span>`;
+                                }
+                                html += `</div>`;
+                            } else {
+                                html += `<span class="cell-output" style="color: var(--text-muted); font-style: italic;">No reasoning</span>`;
+                            }
+                        } else if (cellClass === "missing") {
+                            html += `<span class="cell-reference">${escapeHtml(refReasoning || "")}</span>`;
+                        } else {
+                            html += `<span class="cell-output">${escapeHtml(outReasoning || "")}</span>`;
+                        }
+                        html += "</td>";
+                    }
+                    html += "</tr>";
+                }
+
+                html += "</tbody></table>";
+                return html;
+            }
+
             function renderSingleTable(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
+                const hasReasoning = hasReasoningData(data);
+
+                let valuesTable = `
+                    <table>
+                        <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+                        <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+                    </table>
+                `;
+
+                let reasoningTable = "";
+                if (hasReasoning) {
+                    const reasoningRows = data.reasoning || [];
+                    reasoningTable = `
+                        <table>
+                            <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
+                            <tbody>${reasoningRows.map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+                        </table>
+                    `;
+                }
 
                 return `
                 <div class="panel">
@@ -762,12 +878,24 @@
                     </div>
                     <div class="panel-content">
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-                                <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
-                            </table>
-                        </div>
+                        ${
+                            hasReasoning
+                                ? `
+                            <div class="side-by-side">
+                                <div>
+                                    <div class="question-label" style="margin-bottom: 8px;">Cell Values</div>
+                                    <div class="table-container">${valuesTable}</div>
+                                </div>
+                                <div>
+                                    <div class="question-label" style="margin-bottom: 8px;">Reasoning</div>
+                                    <div class="table-container">${reasoningTable}</div>
+                                </div>
+                            </div>
+                        `
+                                : `
+                            <div class="table-container">${valuesTable}</div>
+                        `
+                        }
                     </div>
                 </div>
             `;
