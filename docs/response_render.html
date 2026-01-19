@@ -517,16 +517,18 @@
 
             .source-doc-details {
                 display: flex;
-                gap: 12px;
+                flex-wrap: wrap;
+                gap: 8px 16px;
                 font-size: 11px;
                 color: var(--text-muted);
-                margin-top: 2px;
+                margin-top: 4px;
             }
 
             .source-doc-detail {
                 display: flex;
                 align-items: center;
                 gap: 4px;
+                word-break: break-all;
             }
 
             .source-doc-toggle {
@@ -567,6 +569,65 @@
                 display: flex;
                 flex-direction: column;
                 gap: 20px;
+            }
+
+            /* Inline reference bubbles */
+            .ref-bubble {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 18px;
+                height: 18px;
+                padding: 0 5px;
+                margin: 0 2px;
+                background-color: var(--accent-color);
+                color: #1a1d21;
+                border-radius: 9px;
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                vertical-align: middle;
+            }
+
+            .ref-bubble:hover {
+                background-color: #a8c7fa;
+                transform: scale(1.1);
+            }
+
+            .ref-bubble.invalid {
+                background-color: var(--error-color);
+                color: #1a1d21;
+            }
+
+            .ref-bubble.invalid:hover {
+                background-color: #f5a9a3;
+            }
+
+            /* Source document index badge */
+            .source-doc-index {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 28px;
+                height: 28px;
+                padding: 0 8px;
+                background-color: var(--accent-color);
+                color: #1a1d21;
+                border-radius: 14px;
+                font-size: 12px;
+                font-weight: 700;
+                flex-shrink: 0;
+            }
+
+            /* Highlighted source when navigated to */
+            .source-doc.highlighted {
+                border-color: var(--accent-color);
+                box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.3);
+            }
+
+            .source-doc.highlighted .source-doc-header {
+                background-color: rgba(138, 180, 248, 0.15);
             }
         </style>
     </head>
@@ -846,14 +907,14 @@
                         <div class="tables-stacked">
                             <div>
                                 <div class="table-section-label values">Values</div>
-                                <div class="table-container">${renderValuesTable(output, reference)}</div>
+                                <div class="table-container">${renderValuesTable(output, reference, sourceDocuments.length)}</div>
                             </div>
                             ${
                                 hasReasoning
                                     ? `
                             <div>
                                 <div class="table-section-label reasoning">Reasoning</div>
-                                <div class="table-container">${renderReasoningTable(output, reference)}</div>
+                                <div class="table-container">${renderReasoningTable(output, reference, sourceDocuments.length)}</div>
                             </div>
                             `
                                     : ""
@@ -961,14 +1022,14 @@
                             "";
 
                         return `
-                        <div class="source-doc" data-doc-index="${index}">
+                        <div class="source-doc" data-doc-index="${index}" id="source-doc-${index}">
                             <div class="source-doc-header" onclick="toggleSourceDoc(${index})">
-                                <div class="source-doc-icon">&#128196;</div>
+                                <div class="source-doc-index">${index}</div>
                                 <div class="source-doc-meta">
                                     <div class="source-doc-filename">${escapeHtml(fileName)}</div>
                                     <div class="source-doc-details">
                                         <span class="source-doc-detail">Page: ${escapeHtml(String(pageNumber))}</span>
-                                        ${fileId ? `<span class="source-doc-detail">ID: ${escapeHtml(fileId.substring(0, 8))}...</span>` : ""}
+                                        ${fileId ? `<span class="source-doc-detail">ID: ${escapeHtml(fileId)}</span>` : ""}
                                     </div>
                                 </div>
                                 <span class="source-doc-toggle">&#9660;</span>
@@ -989,7 +1050,80 @@
                 }
             }
 
-            function renderValuesTable(output, reference) {
+            // Store source document count for validation
+            let currentSourceCount = 0;
+
+            function processInlineReferences(text, sourceCount) {
+                if (!text) return "";
+                currentSourceCount = sourceCount;
+
+                // First escape HTML
+                const div = document.createElement("div");
+                div.textContent = String(text);
+                let escaped = div.innerHTML;
+
+                // Then replace [^N^] patterns with clickable bubbles
+                escaped = escaped.replace(/\[\^(\d+)\^\]/g, (match, num) => {
+                    const index = parseInt(num, 10);
+                    const isValid = index >= 0 && index < sourceCount;
+                    const className = isValid
+                        ? "ref-bubble"
+                        : "ref-bubble invalid";
+                    return `<span class="${className}" onclick="navigateToSource(${index}, ${sourceCount})" title="${isValid ? "Go to source " + index : "Invalid reference (out of bounds)"}">${index}</span>`;
+                });
+
+                return escaped;
+            }
+
+            function navigateToSource(index, sourceCount) {
+                // Check if index is valid
+                if (index < 0 || index >= sourceCount) {
+                    console.warn("Invalid source reference:", index);
+                    return;
+                }
+
+                // Find the panel containing the clicked reference
+                const panel = event.target.closest(".panel");
+                if (!panel) return;
+
+                // Switch to sources tab
+                const sourcesTab = panel.querySelector('[data-tab="sources"]');
+                if (sourcesTab) {
+                    sourcesTab.click();
+                }
+
+                // Wait a bit for tab switch, then scroll to and highlight the source
+                setTimeout(() => {
+                    const sourceDoc = panel.querySelector(
+                        `#source-doc-${index}`,
+                    );
+                    if (sourceDoc) {
+                        // Remove previous highlights
+                        panel
+                            .querySelectorAll(".source-doc.highlighted")
+                            .forEach((el) => {
+                                el.classList.remove("highlighted");
+                            });
+
+                        // Highlight and expand the target
+                        sourceDoc.classList.add("highlighted");
+                        sourceDoc.classList.add("expanded");
+
+                        // Scroll into view
+                        sourceDoc.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                        });
+
+                        // Remove highlight after a delay
+                        setTimeout(() => {
+                            sourceDoc.classList.remove("highlighted");
+                        }, 3000);
+                    }
+                }, 100);
+            }
+
+            function renderValuesTable(output, reference, sourceCount) {
                 const outputHeaders = output.column_headers || [];
                 const refHeaders = reference.column_headers || [];
                 const headers =
@@ -1000,6 +1134,7 @@
                 const outputRows = output.rows || [];
                 const refRows = reference.rows || [];
                 const maxRows = Math.max(outputRows.length, refRows.length);
+                const srcCount = sourceCount || 0;
 
                 let html = '<table class="diff-table"><thead><tr><th>#</th>';
                 headers.forEach((h) => {
@@ -1019,13 +1154,13 @@
 
                         html += `<td class="${cellClass}">`;
                         if (cellClass === "match") {
-                            html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
+                            html += `<span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span>`;
                         } else if (cellClass === "diff") {
-                            html += `<div class="cell-comparison"><span class="cell-output">${escapeHtml(outCell || "")}</span><span class="cell-reference">${escapeHtml(refCell || "")}</span></div>`;
+                            html += `<div class="cell-comparison"><span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span><span class="cell-reference">${processInlineReferences(refCell || "", srcCount)}</span></div>`;
                         } else if (cellClass === "missing") {
-                            html += `<span class="cell-reference">${escapeHtml(refCell || "")}</span>`;
+                            html += `<span class="cell-reference">${processInlineReferences(refCell || "", srcCount)}</span>`;
                         } else {
-                            html += `<span class="cell-output">${escapeHtml(outCell || "")}</span>`;
+                            html += `<span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span>`;
                         }
                         html += "</td>";
                     }
@@ -1046,7 +1181,7 @@
                 return "diff";
             }
 
-            function renderReasoningTable(output, reference) {
+            function renderReasoningTable(output, reference, sourceCount) {
                 const outputHeaders = output.column_headers || [];
                 const refHeaders = reference.column_headers || [];
                 const headers =
@@ -1060,6 +1195,7 @@
                     outputReasoningRows.length,
                     refReasoningRows.length,
                 );
+                const srcCount = sourceCount || 0;
 
                 let html =
                     '<table class="diff-table reasoning-table"><thead><tr><th>#</th>';
@@ -1089,22 +1225,22 @@
                         html += `<td class="${cellClass}">`;
                         if (cellClass === "match" || cellClass === "diff") {
                             if (outReasoning) {
-                                html += `<div class="cell-comparison"><span class="cell-output">${escapeHtml(outReasoning)}</span>`;
+                                html += `<div class="cell-comparison"><span class="cell-output">${processInlineReferences(outReasoning, srcCount)}</span>`;
                                 if (
                                     cellClass === "diff" &&
                                     refReasoning &&
                                     refReasoning !== outReasoning
                                 ) {
-                                    html += `<span class="cell-reference">${escapeHtml(refReasoning)}</span>`;
+                                    html += `<span class="cell-reference">${processInlineReferences(refReasoning, srcCount)}</span>`;
                                 }
                                 html += `</div>`;
                             } else {
                                 html += `<span class="cell-output" style="color: var(--text-muted); font-style: italic;">No reasoning</span>`;
                             }
                         } else if (cellClass === "missing") {
-                            html += `<span class="cell-reference">${escapeHtml(refReasoning || "")}</span>`;
+                            html += `<span class="cell-reference">${processInlineReferences(refReasoning || "", srcCount)}</span>`;
                         } else {
-                            html += `<span class="cell-output">${escapeHtml(outReasoning || "")}</span>`;
+                            html += `<span class="cell-output">${processInlineReferences(outReasoning || "", srcCount)}</span>`;
                         }
                         html += "</td>";
                     }
@@ -1120,11 +1256,12 @@
                     type === "output" ? "badge-output" : "badge-reference";
                 const hasReasoning = hasReasoningData(data);
                 const sourceDocuments = data.source_documents || [];
+                const srcCount = sourceDocuments.length;
 
                 let valuesTable = `
                     <table>
                         <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-                        <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+                        <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${processInlineReferences(cell || "", srcCount)}</td>`).join("")}</tr>`).join("")}</tbody>
                     </table>
                 `;
 
@@ -1134,7 +1271,7 @@
                     reasoningTable = `
                         <table class="reasoning-table">
                             <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-                            <tbody>${reasoningRows.map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${escapeHtml(cell || "")}</td>`).join("")}</tr>`).join("")}</tbody>
+                            <tbody>${reasoningRows.map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${processInlineReferences(cell || "", srcCount)}</td>`).join("")}</tr>`).join("")}</tbody>
                         </table>
                     `;
                 }
