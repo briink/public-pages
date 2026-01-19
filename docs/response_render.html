@@ -751,11 +751,8 @@
             function hasReasoningData(data) {
                 if (!data || !data.reasoning) return false;
                 const rows = data.reasoning || [];
-                return rows.some(
-                    (row) =>
-                        row &&
-                        row.some((cell) => cell && cell.trim().length > 0),
-                );
+                // Show reasoning table if the field exists and is an array with rows
+                return Array.isArray(rows) && rows.length > 0;
             }
 
             function renderDiffTable(output, reference) {
