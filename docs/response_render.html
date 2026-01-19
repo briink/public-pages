@@ -6,19 +6,19 @@
         <title>Briink EQA Custom Renderer</title>
         <style>
             :root {
-                --bg-color: #ffffff;
-                --card-bg: #f7f8fa;
-                --text-color: #1a1a1a;
-                --text-muted: #6b7280;
-                --border-color: #e5e7eb;
-                --accent-color: #2563eb;
-                --success-color: #16a34a;
-                --warning-color: #ca8a04;
-                --error-color: #dc2626;
-                --diff-added-bg: rgba(22, 163, 74, 0.1);
-                --diff-removed-bg: rgba(220, 38, 38, 0.1);
-                --diff-added-text: #16a34a;
-                --diff-removed-text: #dc2626;
+                --bg-color: #1a1d21;
+                --card-bg: #22262b;
+                --text-color: #e8eaed;
+                --text-muted: #9aa0a6;
+                --border-color: #3c4043;
+                --accent-color: #8ab4f8;
+                --success-color: #81c995;
+                --warning-color: #fdd663;
+                --error-color: #f28b82;
+                --diff-added-bg: rgba(129, 201, 149, 0.15);
+                --diff-removed-bg: rgba(242, 139, 130, 0.15);
+                --diff-added-text: #81c995;
+                --diff-removed-text: #f28b82;
             }
 
             * {
@@ -57,7 +57,7 @@
                 align-items: center;
                 gap: 8px;
                 padding: 12px 16px;
-                background-color: #f1f5f9;
+                background-color: #2d3136;
                 border-bottom: 1px solid var(--border-color);
                 font-weight: 600;
             }
@@ -101,7 +101,7 @@
             }
 
             .answer-section {
-                background-color: #f7f8fa;
+                background-color: #2d3136;
                 border-radius: 6px;
                 padding: 12px;
                 margin-top: 12px;
@@ -190,7 +190,7 @@
             }
 
             th {
-                background-color: #f1f5f9;
+                background-color: #2d3136;
                 font-weight: 600;
                 font-size: 12px;
                 text-transform: uppercase;
@@ -199,7 +199,7 @@
             }
 
             td {
-                background-color: #ffffff;
+                background-color: #22262b;
             }
 
             .diff-legend {
@@ -276,7 +276,7 @@
                 display: flex;
                 gap: 24px;
                 padding: 12px 16px;
-                background-color: #f7f8fa;
+                background-color: #2d3136;
                 border-radius: 6px;
                 margin-bottom: 16px;
             }
@@ -353,7 +353,7 @@
             }
 
             .json-fallback {
-                background-color: #f7f8fa;
+                background-color: #2d3136;
                 border-radius: 6px;
                 padding: 12px;
                 overflow-x: auto;
@@ -371,12 +371,12 @@
             }
 
             .reasoning-table th {
-                background-color: #ede9fe;
-                color: #7c3aed;
+                background-color: rgba(139, 92, 246, 0.25);
+                color: #c4b5fd;
             }
 
             .reasoning-table td {
-                background-color: #faf5ff;
+                background-color: rgba(139, 92, 246, 0.08);
                 font-size: 12px;
                 line-height: 1.4;
             }
@@ -395,13 +395,13 @@
             }
 
             .table-section-label.values {
-                background-color: #dbeafe;
-                color: #1d4ed8;
+                background-color: rgba(138, 180, 248, 0.2);
+                color: #8ab4f8;
             }
 
             .table-section-label.reasoning {
-                background-color: #ede9fe;
-                color: #7c3aed;
+                background-color: rgba(139, 92, 246, 0.2);
+                color: #c4b5fd;
             }
 
             /* Tabs */
@@ -426,7 +426,7 @@
 
             .tab:hover {
                 color: var(--text-color);
-                background-color: #f7f8fa;
+                background-color: #2d3136;
             }
 
             .tab.active {
@@ -442,7 +442,7 @@
                 height: 18px;
                 padding: 0 5px;
                 margin-left: 6px;
-                background-color: #e5e7eb;
+                background-color: #3c4043;
                 border-radius: 9px;
                 font-size: 11px;
                 font-weight: 600;
@@ -450,7 +450,7 @@
             }
 
             .tab.active .tab-count {
-                background-color: #dbeafe;
+                background-color: rgba(138, 180, 248, 0.2);
                 color: var(--accent-color);
             }
 
@@ -480,13 +480,13 @@
                 align-items: center;
                 gap: 12px;
                 padding: 10px 14px;
-                background-color: #f7f8fa;
+                background-color: #2d3136;
                 border-bottom: 1px solid var(--border-color);
                 cursor: pointer;
             }
 
             .source-doc-header:hover {
-                background-color: #f1f5f9;
+                background-color: #363b41;
             }
 
             .source-doc-icon {
@@ -495,7 +495,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background-color: #dbeafe;
+                background-color: rgba(138, 180, 248, 0.2);
                 border-radius: 6px;
                 color: var(--accent-color);
                 font-size: 14px;
@@ -542,7 +542,7 @@
             .source-doc-content {
                 display: none;
                 padding: 14px;
-                background-color: #ffffff;
+                background-color: #22262b;
                 font-size: 13px;
                 line-height: 1.6;
                 white-space: pre-wrap;
@@ -585,9 +585,9 @@
                 bottom: 10px;
                 right: 10px;
                 padding: 8px 12px;
-                background: #f1f5f9;
-                color: #475569;
-                border: 1px solid #e5e7eb;
+                background: #2d3136;
+                color: #9aa0a6;
+                border: 1px solid #3c4043;
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 12px;
@@ -613,8 +613,8 @@
                         ? "Hide Debug"
                         : "Show Debug";
                     this.style.background = debugVisible
-                        ? "#fae8ff"
-                        : "#f1f5f9";
+                        ? "#4a235a"
+                        : "#2d3136";
                 });
 
             // Store received data
@@ -718,9 +718,9 @@
                             <div><strong>"column_headers" in outputData:</strong> ${outputData ? "column_headers" in outputData : "N/A"}</div>
                             <div><strong>"rows" in outputData:</strong> ${outputData ? "rows" in outputData : "N/A"}</div>
                             <div style="margin-top: 10px;"><strong>Raw message.data:</strong></div>
-                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #f1f5f9; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #1a1d21; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
                             <div style="margin-top: 10px;"><strong>Unwrapped outputData:</strong></div>
-                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #f1f5f9; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(outputData, null, 2))}</pre>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #1a1d21; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(outputData, null, 2))}</pre>
                         </div>
                     </div>
                 `;
