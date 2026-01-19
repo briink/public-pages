@@ -6,19 +6,19 @@
         <title>Briink EQA Custom Renderer</title>
         <style>
             :root {
-                --bg-color: #1a1a2e;
-                --card-bg: #16213e;
-                --text-color: #e8e8e8;
-                --text-muted: #a0a0a0;
-                --border-color: #2d3a5c;
-                --accent-color: #4cc9f0;
-                --success-color: #4ade80;
-                --warning-color: #fbbf24;
-                --error-color: #f87171;
-                --diff-added-bg: rgba(74, 222, 128, 0.15);
-                --diff-removed-bg: rgba(248, 113, 113, 0.15);
-                --diff-added-text: #4ade80;
-                --diff-removed-text: #f87171;
+                --bg-color: #ffffff;
+                --card-bg: #f7f8fa;
+                --text-color: #1a1a1a;
+                --text-muted: #6b7280;
+                --border-color: #e5e7eb;
+                --accent-color: #2563eb;
+                --success-color: #16a34a;
+                --warning-color: #ca8a04;
+                --error-color: #dc2626;
+                --diff-added-bg: rgba(22, 163, 74, 0.1);
+                --diff-removed-bg: rgba(220, 38, 38, 0.1);
+                --diff-added-text: #16a34a;
+                --diff-removed-text: #dc2626;
             }
 
             * {
@@ -57,7 +57,7 @@
                 align-items: center;
                 gap: 8px;
                 padding: 12px 16px;
-                background-color: rgba(0, 0, 0, 0.2);
+                background-color: #f1f5f9;
                 border-bottom: 1px solid var(--border-color);
                 font-weight: 600;
             }
@@ -101,7 +101,7 @@
             }
 
             .answer-section {
-                background-color: rgba(0, 0, 0, 0.2);
+                background-color: #f7f8fa;
                 border-radius: 6px;
                 padding: 12px;
                 margin-top: 12px;
@@ -190,7 +190,7 @@
             }
 
             th {
-                background-color: rgba(0, 0, 0, 0.3);
+                background-color: #f1f5f9;
                 font-weight: 600;
                 font-size: 12px;
                 text-transform: uppercase;
@@ -199,7 +199,7 @@
             }
 
             td {
-                background-color: rgba(0, 0, 0, 0.1);
+                background-color: #ffffff;
             }
 
             .diff-legend {
@@ -276,7 +276,7 @@
                 display: flex;
                 gap: 24px;
                 padding: 12px 16px;
-                background-color: rgba(0, 0, 0, 0.2);
+                background-color: #f7f8fa;
                 border-radius: 6px;
                 margin-bottom: 16px;
             }
@@ -353,7 +353,7 @@
             }
 
             .json-fallback {
-                background-color: rgba(0, 0, 0, 0.3);
+                background-color: #f7f8fa;
                 border-radius: 6px;
                 padding: 12px;
                 overflow-x: auto;
@@ -371,12 +371,12 @@
             }
 
             .reasoning-table th {
-                background-color: rgba(139, 92, 246, 0.3);
-                color: #c4b5fd;
+                background-color: #ede9fe;
+                color: #7c3aed;
             }
 
             .reasoning-table td {
-                background-color: rgba(139, 92, 246, 0.05);
+                background-color: #faf5ff;
                 font-size: 12px;
                 line-height: 1.4;
             }
@@ -395,13 +395,13 @@
             }
 
             .table-section-label.values {
-                background-color: rgba(76, 201, 240, 0.15);
-                color: var(--accent-color);
+                background-color: #dbeafe;
+                color: #1d4ed8;
             }
 
             .table-section-label.reasoning {
-                background-color: rgba(139, 92, 246, 0.15);
-                color: #c4b5fd;
+                background-color: #ede9fe;
+                color: #7c3aed;
             }
         </style>
     </head>
@@ -420,9 +420,9 @@
                 bottom: 10px;
                 right: 10px;
                 padding: 8px 12px;
-                background: #333;
-                color: #fff;
-                border: 1px solid #555;
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #e5e7eb;
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 12px;
@@ -447,7 +447,9 @@
                     this.textContent = debugVisible
                         ? "Hide Debug"
                         : "Show Debug";
-                    this.style.background = debugVisible ? "#f0f" : "#333";
+                    this.style.background = debugVisible
+                        ? "#fae8ff"
+                        : "#f1f5f9";
                 });
 
             // Store received data
@@ -551,9 +553,9 @@
                             <div><strong>"column_headers" in outputData:</strong> ${outputData ? "column_headers" in outputData : "N/A"}</div>
                             <div><strong>"rows" in outputData:</strong> ${outputData ? "rows" in outputData : "N/A"}</div>
                             <div style="margin-top: 10px;"><strong>Raw message.data:</strong></div>
-                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #000; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #f1f5f9; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
                             <div style="margin-top: 10px;"><strong>Unwrapped outputData:</strong></div>
-                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #000; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(outputData, null, 2))}</pre>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #f1f5f9; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(outputData, null, 2))}</pre>
                         </div>
                     </div>
                 `;
