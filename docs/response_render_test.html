@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Renderer Test Page</title>
+    <style>
+        :root {
+            --bg-color: #1a1d21;
+            --card-bg: #22262b;
+            --text-color: #e8eaed;
+            --text-muted: #9aa0a6;
+            --border-color: #3c4043;
+            --accent-color: #8ab4f8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 16px;
+            line-height: 1.5;
+        }
+
+        .test-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--accent-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .controls button {
+            padding: 8px 16px;
+            background-color: var(--accent-color);
+            color: #1a1d21;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .controls button:hover {
+            background-color: #a8c7fa;
+        }
+
+        .controls button.active {
+            background-color: #81c995;
+        }
+
+        .renderer-frame {
+            width: 100%;
+            height: 800px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-color);
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-right: 12px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Renderer Test Page</h1>
+
+        <div class="controls">
+            <span class="section-label">Test Data:</span>
+            <button onclick="sendTableResponse()">Table Response</button>
+            <button onclick="sendTableResponseWithRefs()">Table + References</button>
+            <button onclick="sendEQAAnswer()">EQA Answer</button>
+            <button onclick="sendEQAWithChoices()">EQA + Choices</button>
+            <button onclick="sendDocumentsList()">Documents List</button>
+            <button onclick="clearRenderer()">Clear</button>
+        </div>
+
+        <iframe id="renderer" class="renderer-frame" src="response_render.html"></iframe>
+    </div>
+
+    <script>
+        const rendererFrame = document.getElementById('renderer');
+
+        function sendToRenderer(type, data, metadata = {}) {
+            rendererFrame.contentWindow.postMessage({
+                type: type,
+                data: data,
+                metadata: metadata
+            }, '*');
+        }
+
+        function clearRenderer() {
+            rendererFrame.src = rendererFrame.src; // Reload iframe
+        }
+
+        // Test: Table Response with reasoning
+        function sendTableResponse() {
+            sendToRenderer('output', {
+                column_headers: ["Company", "Revenue", "Employees", "Status"],
+                rows: [
+                    ["Acme Corp", "$1.2B", "5,000", "Active"],
+                    ["TechStart Inc", "$50M", "200", "Growing"],
+                    ["Global Services", "$800M", "3,500", "Stable"]
+                ],
+                reasoning: [
+                    ["Found in annual report page 12", "Q4 financials section", "HR report 2023", "Listed as active subsidiary"],
+                    ["Mentioned in press release", "Series B announcement", "LinkedIn data", "Startup status confirmed"],
+                    ["10-K filing 2023", "Revenue table on page 45", "Employee count from sustainability report", "No changes reported"]
+                ],
+                source_documents: [
+                    {
+                        page_content: "Acme Corp reported annual revenue of $1.2 billion in fiscal year 2023, representing a 15% increase year-over-year. The company employs approximately 5,000 people globally.",
+                        metadata: {
+                            file_name: "acme-annual-report-2023.pdf",
+                            page: 12,
+                            file_id: "abc123-def456-ghi789"
+                        }
+                    },
+                    {
+                        page_content: "TechStart Inc announced completion of Series B funding, bringing total valuation to $50M. Current headcount stands at 200 employees.",
+                        metadata: {
+                            file_name: "techstart-press-release.pdf",
+                            page: 1,
+                            file_id: "xyz789-uvw456"
+                        }
+                    }
+                ]
+            });
+        }
+
+        // Test: Table Response with inline references
+        function sendTableResponseWithRefs() {
+            sendToRenderer('output', {
+                column_headers: ["Metric", "Value", "Source"],
+                rows: [
+                    ["Total Revenue", "$1.2B [^0^]", "Annual Report"],
+                    ["Net Income", "$150M [^1^]", "Q4 Earnings"],
+                    ["Employee Count", "5,000 [^0^] [^2^]", "HR Report"],
+                    ["Invalid Ref Test", "See [^99^] for details", "N/A"]
+                ],
+                reasoning: [
+                    ["Revenue found in section 3.1 [^0^]", "", ""],
+                    ["Net income calculated from [^1^]", "", ""],
+                    ["Employee data from multiple sources [^0^] [^2^]", "", ""],
+                    ["This reference [^99^] is invalid", "", ""]
+                ],
+                source_documents: [
+                    {
+                        page_content: "Annual Report 2023: Total revenue reached $1.2 billion, with 5,000 employees worldwide. Operating margins improved to 12.5%.",
+                        metadata: {
+                            file_name: "annual-report-2023.pdf",
+                            page: 45,
+                            file_id: "ar-2023-001"
+                        }
+                    },
+                    {
+                        page_content: "Q4 2023 Earnings Call Transcript: Net income for the quarter was $40M, bringing annual net income to $150M.",
+                        metadata: {
+                            file_name: "q4-earnings-transcript.pdf",
+                            page: 3,
+                            file_id: "q4-earn-2023"
+                        }
+                    },
+                    {
+                        page_content: "Human Resources Annual Summary: As of December 2023, total headcount stands at 5,000 full-time employees across 12 countries.",
+                        metadata: {
+                            file_name: "hr-summary-2023.pdf",
+                            page: 1,
+                            file_id: "hr-sum-2023"
+                        }
+                    }
+                ]
+            });
+        }
+
+        // Test: EQA Answer (simple)
+        function sendEQAAnswer() {
+            sendToRenderer('output', {
+                response_text: "The company reported a 15% increase in revenue year-over-year, reaching $1.2 billion in fiscal year 2023. [^0^]",
+                reasoning: "Based on the annual report page 45, the revenue figures show consistent growth. The data is verified across multiple sources [^0^] [^1^].",
+                source_documents: [
+                    {
+                        page_content: "Fiscal Year 2023 Results: Revenue increased 15% to $1.2 billion compared to $1.04 billion in FY2022.",
+                        metadata: {
+                            file_name: "annual-report-2023.pdf",
+                            page: 45,
+                            file_id: "ar-2023-rev-001"
+                        }
+                    },
+                    {
+                        page_content: "Revenue Growth Analysis: The 15% growth was driven primarily by expansion in APAC markets and new product launches.",
+                        metadata: {
+                            file_name: "investor-presentation.pdf",
+                            page: 12,
+                            file_id: "inv-pres-2023"
+                        }
+                    }
+                ]
+            }, {
+                inputs: {
+                    question: {
+                        text: "What was the company's revenue growth in fiscal year 2023?",
+                        data_type: "text"
+                    }
+                }
+            });
+        }
+
+        // Test: EQA with choices and embedded reasoning
+        function sendEQAWithChoices() {
+            sendToRenderer('output', {
+                response_text: "Yes",
+                reasoning: "<<Yes>> The company has set science-based targets and committed to net-zero by 2050 [^0^]. They have published detailed transition plans. <<No>> This would only apply if no targets were disclosed, but targets are clearly stated in the sustainability report [^1^].",
+                choices: [
+                    { label: "Yes", is_selected: true },
+                    { label: "No", is_selected: false },
+                    { label: "Partial", is_selected: false }
+                ],
+                source_documents: [
+                    {
+                        page_content: "Climate Commitment: We have committed to achieving net-zero greenhouse gas emissions by 2050, with an interim target of 50% reduction by 2030.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 28,
+                            file_id: "sust-2023-climate"
+                        }
+                    },
+                    {
+                        page_content: "Our science-based targets have been validated by the Science Based Targets initiative (SBTi) and align with a 1.5C pathway.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 30,
+                            file_id: "sust-2023-sbti"
+                        }
+                    }
+                ]
+            }, {
+                inputs: {
+                    question: {
+                        text: "Has the company set climate-related targets?",
+                        data_type: "choice",
+                        choices: [
+                            { label: "Yes", description: "Company has disclosed climate targets" },
+                            { label: "No", description: "No climate targets found" },
+                            { label: "Partial", description: "Some targets but incomplete" }
+                        ]
+                    }
+                }
+            });
+        }
+
+        // Test: Documents List
+        function sendDocumentsList() {
+            sendToRenderer('output', {
+                documents: [
+                    {
+                        metadata: {
+                            characters: 2680,
+                            chunk_id: 96,
+                            file_name: "2024-sustainability-report.pdf",
+                            id: "15241e03-deaf-4e6a-8de0-83b04d61cda5",
+                            page: 96
+                        },
+                        page_content: "Employee development, training and education\n\nAt Johnson Controls, we support the ongoing development of our people and continue to provide opportunities for our employees to grow their careers.\n\nTotal learning hours consumed: 1.32 million\nAvg. 15 hours per employee\n85,510 employees completed learning activities\n\nIn fiscal year 2023, we offered a robust curriculum of over 197,000 activities.",
+                        type: "Document"
+                    },
+                    {
+                        metadata: {
+                            characters: 2337,
+                            chunk_id: 95,
+                            file_name: "2024-sustainability-report.pdf",
+                            id: "15241e03-deaf-4e6a-8de0-83b04d61cda5",
+                            page: 95
+                        },
+                        page_content: "Talent management\n\nAt Johnson Controls, we support the continued development of our employees and have embedded this focus throughout our performance and talent processes.\n\nStrategic talent reviews and succession planning occur annually across our business areas globally.",
+                        type: "Document"
+                    },
+                    {
+                        metadata: {
+                            characters: 2670,
+                            chunk_id: 104,
+                            file_name: "2024-sustainability-report.pdf",
+                            id: "15241e03-deaf-4e6a-8de0-83b04d61cda5",
+                            page: 104
+                        },
+                        page_content: "Product safety\n\nOur business is committed to providing quality products and services that meet or exceed the expectations of our customers.\n\nWe're proud to have been recognized by LexisNexis as one of the world's most innovative companies in its latest report, Innovation Momentum 2023: The Global Top 100.",
+                        type: "Document"
+                    }
+                ]
+            });
+        }
+    </script>
+</body>
+</html>
