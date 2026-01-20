@@ -1041,7 +1041,7 @@
                         return `
                         <div class="source-doc" data-doc-index="${index}" id="source-doc-${index}">
                             <div class="source-doc-header" onclick="toggleSourceDoc(${index})">
-                                <div class="source-doc-index">${index}</div>
+                                <div class="source-doc-index">${index + 1}</div>
                                 <div class="source-doc-meta">
                                     <div class="source-doc-filename">${escapeHtml(fileName)}</div>
                                     <div class="source-doc-details">
@@ -1152,13 +1152,15 @@
                 let escaped = div.innerHTML;
 
                 // Then replace [^N^] patterns with clickable bubbles
+                // Display uses 1-based index, but navigation uses 0-based index internally
                 escaped = escaped.replace(/\[\^(\d+)\^\]/g, (match, num) => {
                     const index = parseInt(num, 10);
+                    const displayIndex = index + 1; // 1-based for display
                     const isValid = index >= 0 && index < sourceCount;
                     const className = isValid
                         ? "ref-bubble"
                         : "ref-bubble invalid";
-                    return `<span class="${className}" onclick="navigateToSource(${index}, ${sourceCount})" title="${isValid ? "Go to source " + index : "Invalid reference (out of bounds)"}">${index}</span>`;
+                    return `<span class="${className}" onclick="navigateToSource(${index}, ${sourceCount})" title="${isValid ? "Go to source " + displayIndex : "Invalid reference (out of bounds)"}">${displayIndex}</span>`;
                 });
 
                 return escaped;
@@ -1685,7 +1687,7 @@
                         return `
                         <div class="source-doc" data-doc-index="${index}" id="doc-list-${index}">
                             <div class="source-doc-header" onclick="toggleDocListItem(${index})">
-                                <div class="source-doc-index">${index}</div>
+                                <div class="source-doc-index">${index + 1}</div>
                                 <div class="source-doc-meta">
                                     <div class="source-doc-filename">${escapeHtml(fileName)}</div>
                                     <div class="source-doc-details">
