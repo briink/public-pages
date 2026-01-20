@@ -1,155 +1,102 @@
 # Briink LangSmith Extension
 
-A Chrome browser extension that enhances LangSmith annotation queues with PDF viewing capabilities from the Briink platform.
+A Chrome extension that displays PDF documents from the Briink platform alongside LangSmith annotation queues. When reviewing AI responses that reference source documents, you can click to view the original PDF at the exact page cited.
+
+## Quick Start
+
+### 1. Install the Extension
+
+1. Open Chrome and go to `chrome://extensions/`
+2. Enable **Developer mode** (toggle in top-right corner)
+3. Click **Load unpacked**
+4. Select the `dist` folder from this project
+
+### 2. Configure Your API Key
+
+1. Click the extension icon in Chrome's toolbar (puzzle piece icon, then pin the Briink extension)
+2. You'll see the settings popup:
+
+   ![Settings Popup](docs/popup-screenshot.png)
+
+3. Enter your credentials:
+   - **API Key**: Your Briink platform API key (get this from your Briink account settings)
+   - **API Base URL**: Usually `https://api.briinkai.com` (default)
+   - **Workspace ID**: Optional - only needed if your files are in a specific workspace
+
+4. Click **Save Settings**
+5. Click **Test Connection** to verify your API key works
+
+### 3. Using the Extension
+
+1. Navigate to a LangSmith annotation queue page (e.g., `https://smith.langchain.com/annotation-queues/...`)
+
+2. You'll see a floating **PDF button** in the bottom-right corner of the page
+
+3. When viewing an annotation with source documents, click the **PDF icon** next to any source reference
+
+4. The PDF will open in a sidebar panel on the right side of the page, automatically jumping to the referenced page
+
+### Sidebar Controls
+
+- **Page navigation**: Use `<` and `>` buttons or enter a page number directly
+- **Zoom**: Use `+` and `-` buttons to zoom in/out
+- **Close**: Click the `X` button or the floating PDF button to toggle the sidebar
 
 ## Features
 
-- **PDF Sidebar Viewer**: View source PDFs directly alongside LangSmith annotation queues
-- **Page Navigation**: Click on source documents to jump to the exact page referenced
-- **Secure API Key Storage**: API keys are stored securely using Chrome's encrypted storage
-- **Dark Theme**: Matches LangSmith's dark mode interface
-
-## Prerequisites
-
-- Node.js 20+ 
-- npm or yarn
-- Chrome browser
-
-## Installation
-
-### Development Setup
-
-1. **Clone and install dependencies:**
-   ```bash
-   cd briink-langsmith-extension
-   npm install
-   ```
-
-2. **Create icon files:**
-   
-   The extension requires PNG icons. You can convert the provided SVG files or create your own:
-   - `public/icons/icon16.png` (16x16)
-   - `public/icons/icon48.png` (48x48)
-   - `public/icons/icon128.png` (128x128)
-
-3. **Build the extension:**
-   ```bash
-   npm run build
-   ```
-
-4. **Load in Chrome:**
-   - Open Chrome and navigate to `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
-   - Click "Load unpacked"
-   - Select the `dist` folder from this project
-
-### Development Mode
-
-For hot-reload during development:
-
-```bash
-npm run dev
-```
-
-Then load the extension from the `dist` folder in Chrome.
-
-## Configuration
-
-1. Click the extension icon in Chrome toolbar
-2. Enter your Briink API credentials:
-   - **API Key**: Your Briink platform API key
-   - **API Base URL**: The Briink API endpoint (default: `https://api.briinkai.com`)
-   - **Workspace ID**: (Optional) Your workspace ID if required
-3. Click "Save Settings"
-4. Use "Test Connection" to verify your credentials
-
-## Usage
-
-1. Navigate to a LangSmith annotation queue page
-2. A floating PDF button (📄) will appear in the bottom-right corner
-3. Click on any source document's PDF icon to open it in the sidebar
-4. Use the toolbar to:
-   - Navigate between pages
-   - Zoom in/out
-   - Fit to width
-
-## Project Structure
-
-```
-briink-langsmith-extension/
-├── src/
-│   ├── popup/           # Extension popup (settings UI)
-│   │   ├── popup.html
-│   │   ├── main.ts
-│   │   └── Popup.svelte
-│   ├── sidebar/         # PDF viewer sidebar
-│   │   ├── sidebar.html
-│   │   ├── main.ts
-│   │   └── Sidebar.svelte
-│   ├── content/         # Content script (injected into LangSmith)
-│   │   ├── content.ts
-│   │   └── content.css
-│   ├── background/      # Service worker (API calls)
-│   │   └── service-worker.ts
-│   └── types/           # TypeScript type definitions
-│       └── index.ts
-├── public/
-│   └── icons/           # Extension icons
-├── manifest.json        # Chrome extension manifest
-├── vite.config.ts       # Vite configuration
-└── package.json
-```
-
-## Tech Stack
-
-- **Svelte 5** - UI components with runes
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **@crxjs/vite-plugin** - Chrome extension Vite plugin
-- **PDF.js** - PDF rendering
-
-## API Integration
-
-The extension expects the Briink API to provide:
-
-- `GET /status` - Health check endpoint
-- `GET /files/{fileId}/content` - PDF file download
-- `GET /workspaces/{workspaceId}/files/{fileId}/content` - PDF file download (with workspace)
-
-Authentication is done via the `x-api-key` header.
-
-## Custom Renderer Integration
-
-The extension works with the `response_render.html` custom renderer. When a user clicks the PDF icon on a source document, the renderer sends a message:
-
-```javascript
-window.parent.postMessage({
-  type: 'BRIINK_SOURCE_CLICK',
-  payload: {
-    fileId: 'uuid',
-    page: 1,
-    fileName: 'document.pdf'
-  }
-}, '*');
-```
-
-The extension's content script intercepts this message and opens the PDF in the sidebar.
+- View source PDFs without leaving LangSmith
+- Automatically jumps to the exact page referenced
+- Resizable sidebar (drag the left edge)
+- Dark theme matching LangSmith's interface
+- Secure API key storage (encrypted by Chrome)
+- PDF caching to avoid re-downloading
 
 ## Troubleshooting
 
-### Extension not loading
-- Ensure you've built the project (`npm run build`)
-- Check Chrome's extension error logs at `chrome://extensions/`
+### "Extension not working on LangSmith"
+- Make sure you're on a `smith.langchain.com` page
+- Check that the extension is enabled (not grayed out in `chrome://extensions/`)
+- Try refreshing the page
 
-### PDF not loading
-- Verify your API key is correct
-- Check the browser console for error messages
-- Ensure the Briink API is accessible
+### "PDF not loading"
+- Verify your API key is correct (use **Test Connection**)
+- Check that the file ID exists in your Briink workspace
+- Open Chrome DevTools (F12) and check the Console for error messages
 
-### Sidebar not appearing
-- Make sure the extension is enabled in settings
-- Verify you're on a LangSmith annotation queue page
+### "Can't find the extension icon"
+- Click the puzzle piece icon in Chrome's toolbar
+- Find "Briink LangSmith Enrichment" and click the pin icon
 
-## License
+### "Test Connection fails"
+- Double-check your API key (no extra spaces)
+- Verify the API Base URL is correct
+- Check your network connection
 
-MIT
+## For Developers
+
+### Building from Source
+
+```bash
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+
+# Development mode with hot reload
+npm run dev
+```
+
+### Tech Stack
+- Svelte 5 + TypeScript
+- Vite + @crxjs/vite-plugin
+- PDF.js for rendering
+
+### API Requirements
+
+The extension expects these Briink API endpoints:
+- `GET /status` - Health check
+- `GET /files/{fileId}/content` - Download PDF
+- `GET /workspaces/{workspaceId}/files/{fileId}/content` - Download PDF (with workspace)
+
+Authentication uses the `x-api-key` header.

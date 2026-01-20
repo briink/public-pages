@@ -1,41 +1,37 @@
 {
-  "manifest_version": 3,
-  "name": "Briink LangSmith Enrichment",
-  "version": "1.0.0",
-  "description": "Enhance LangSmith annotation queues with PDF viewing from Briink platform",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "sidePanel"
-  ],
-  "host_permissions": [
-    "https://smith.langchain.com/*",
-    "https://api.briinkai.com/*",
-    "https://*.briinkai.com/*"
-  ],
-  "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_icon": {
-      "16": "public/icons/icon16.png",
-      "48": "public/icons/icon48.png",
-      "128": "public/icons/icon128.png"
+    "manifest_version": 3,
+    "name": "Briink LangSmith Enrichment",
+    "version": "1.0.0",
+    "description": "Enhance LangSmith annotation queues with PDF viewing from Briink platform",
+    "permissions": ["storage", "activeTab", "sidePanel"],
+    "host_permissions": [
+        "https://smith.langchain.com/*",
+        "https://api.briinkai.com/*",
+        "https://*.briinkai.com/*"
+    ],
+    "action": {
+        "default_popup": "src/popup/popup.html",
+        "default_icon": {
+            "16": "public/icons/icon16.png",
+            "48": "public/icons/icon48.png",
+            "128": "public/icons/icon128.png"
+        }
+    },
+    "background": {
+        "service_worker": "src/background/service-worker.ts",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://smith.langchain.com/*"],
+            "js": ["src/content/content.ts"],
+            "css": ["public/content.css"],
+            "run_at": "document_idle"
+        }
+    ],
+    "icons": {
+        "16": "public/icons/icon16.png",
+        "48": "public/icons/icon48.png",
+        "128": "public/icons/icon128.png"
     }
-  },
-  "background": {
-    "service_worker": "src/background/service-worker.ts",
-    "type": "module"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://smith.langchain.com/*"],
-      "js": ["src/content/content.ts"],
-      "css": ["src/content/content.css"],
-      "run_at": "document_idle"
-    }
-  ],
-  "icons": {
-    "16": "public/icons/icon16.png",
-    "48": "public/icons/icon48.png",
-    "128": "public/icons/icon128.png"
-  }
 }
