@@ -113,7 +113,7 @@
                 word-wrap: break-word;
             }
 
-            /* Dash-delimited list styling */
+            /* Dash-delimited list styling - matches choice-item selected style */
             .response-list {
                 list-style: none;
                 padding: 0;
@@ -121,14 +121,17 @@
             }
 
             .response-list li {
-                position: relative;
-                padding: 8px 12px 8px 24px;
-                margin-bottom: 6px;
-                background-color: rgba(138, 180, 248, 0.08);
-                border-radius: 6px;
-                border-left: 3px solid var(--accent-color);
-                font-size: 14px;
-                line-height: 1.5;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 10px;
+                margin-bottom: 4px;
+                background-color: rgba(129, 201, 149, 0.1);
+                border-radius: 4px;
+                border-left: 3px solid var(--success-color);
+                font-size: 13px;
+                font-weight: 500;
+                line-height: 1.4;
             }
 
             .response-list li:last-child {
@@ -136,11 +139,32 @@
             }
 
             .response-list li::before {
-                content: "–";
-                position: absolute;
-                left: 10px;
-                color: var(--accent-color);
+                content: "✓";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 16px;
+                height: 16px;
+                background-color: var(--success-color);
+                color: #000;
+                border-radius: 50%;
+                font-size: 10px;
                 font-weight: 600;
+                flex-shrink: 0;
+            }
+
+            /* Compact list styling inside table cells */
+            td .response-list li {
+                padding: 4px 8px;
+                margin-bottom: 3px;
+                font-size: 12px;
+                gap: 6px;
+            }
+
+            td .response-list li::before {
+                width: 14px;
+                height: 14px;
+                font-size: 9px;
             }
 
             .choices-list {
@@ -594,11 +618,32 @@
                 font-size: 13px;
             }
 
-            /* Stacked layout for tables */
-            .tables-stacked {
+            /* Split cell layout - value on left, reasoning on right */
+            .split-cell {
                 display: flex;
-                flex-direction: column;
-                gap: 20px;
+                gap: 0;
+                min-height: 100%;
+                margin: -10px -12px;
+            }
+
+            .split-cell-value {
+                flex: 1;
+                padding: 10px 12px;
+                background-color: rgba(138, 180, 248, 0.06);
+            }
+
+            .split-cell-reasoning {
+                flex: 1;
+                padding: 10px 12px;
+                font-size: 12px;
+                color: var(--text-muted);
+                line-height: 1.4;
+                background-color: rgba(139, 92, 246, 0.06);
+            }
+
+            .split-cell-reasoning:empty::before {
+                content: "—";
+                color: var(--border-color);
             }
 
             /* Inline reference bubbles */
@@ -951,21 +996,8 @@
                             <div class="legend-item"><div class="legend-color diff"></div> Different</div>
                             <div class="legend-item"><div class="legend-color missing"></div> Missing/Extra</div>
                         </div>
-                        <div class="tables-stacked">
-                            <div>
-                                <div class="table-section-label values">Values</div>
-                                <div class="table-container">${renderValuesTable(output, reference, sourceDocuments.length)}</div>
-                            </div>
-                            ${
-                                hasReasoning
-                                    ? `
-                            <div>
-                                <div class="table-section-label reasoning">Reasoning</div>
-                                <div class="table-container">${renderReasoningTable(output, reference, sourceDocuments.length)}</div>
-                            </div>
-                            `
-                                    : ""
-                            }
+                        <div class="table-container">
+                            ${renderMergedTable(output, reference, sourceDocuments.length)}
                         </div>
                     </div>
                     <div class="tab-content" data-tab-content="sources">
@@ -1204,15 +1236,16 @@
                 const str = String(text).trim();
 
                 // Check if text looks like a dash-delimited list
-                // Must have at least 2 lines starting with dash
+                // All non-empty lines must start with dash (even single items)
                 const lines = str.split(/\n/);
+                const nonEmptyLines = lines.filter((l) => l.trim());
                 const dashLines = lines.filter((line) =>
                     /^\s*[-–]\s+/.test(line.trim()),
                 );
 
                 if (
-                    dashLines.length >= 2 &&
-                    dashLines.length === lines.filter((l) => l.trim()).length
+                    dashLines.length >= 1 &&
+                    dashLines.length === nonEmptyLines.length
                 ) {
                     // All non-empty lines are dash items - render as list
                     const items = lines
@@ -1315,15 +1348,94 @@
 
                         html += `<td class="${cellClass}">`;
                         if (cellClass === "match") {
-                            html += `<span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span>`;
+                            html += `<span class="cell-output">${formatResponseText(outCell || "", srcCount)}</span>`;
                         } else if (cellClass === "diff") {
-                            html += `<div class="cell-comparison"><span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span><span class="cell-reference">${processInlineReferences(refCell || "", srcCount)}</span></div>`;
+                            html += `<div class="cell-comparison"><span class="cell-output">${formatResponseText(outCell || "", srcCount)}</span><span class="cell-reference">${formatResponseText(refCell || "", srcCount)}</span></div>`;
                         } else if (cellClass === "missing") {
-                            html += `<span class="cell-reference">${processInlineReferences(refCell || "", srcCount)}</span>`;
+                            html += `<span class="cell-reference">${formatResponseText(refCell || "", srcCount)}</span>`;
                         } else {
-                            html += `<span class="cell-output">${processInlineReferences(outCell || "", srcCount)}</span>`;
+                            html += `<span class="cell-output">${formatResponseText(outCell || "", srcCount)}</span>`;
                         }
                         html += "</td>";
+                    }
+                    html += "</tr>";
+                }
+
+                html += "</tbody></table>";
+                return html;
+            }
+
+            function renderMergedTable(output, reference, sourceCount) {
+                const outputHeaders = output.column_headers || [];
+                const refHeaders = reference.column_headers || [];
+                const headers =
+                    outputHeaders.length >= refHeaders.length
+                        ? outputHeaders
+                        : refHeaders;
+
+                const outputRows = output.rows || [];
+                const refRows = reference.rows || [];
+                const outputReasoningRows = output.reasoning || [];
+                const refReasoningRows = reference.reasoning || [];
+                const maxRows = Math.max(outputRows.length, refRows.length);
+                const srcCount = sourceCount || 0;
+
+                let html = '<table class="diff-table"><thead><tr><th>#</th>';
+                headers.forEach((h) => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += "</tr></thead><tbody>";
+
+                for (let i = 0; i < maxRows; i++) {
+                    const outRow = outputRows[i] || [];
+                    const refRow = refRows[i] || [];
+                    const outReasoningRow = outputReasoningRows[i] || [];
+                    const refReasoningRow = refReasoningRows[i] || [];
+                    html += `<tr><td>${i + 1}</td>`;
+
+                    for (let j = 0; j < headers.length; j++) {
+                        const outCell = outRow[j];
+                        const refCell = refRow[j];
+                        const outReasoning = outReasoningRow[j] || "";
+                        const refReasoning = refReasoningRow[j] || "";
+                        const cellClass = getCellDiffClass(outCell, refCell);
+
+                        html += `<td class="${cellClass}">`;
+                        html += `<div class="split-cell">`;
+
+                        // Value part (left)
+                        html += `<div class="split-cell-value">`;
+                        if (cellClass === "match") {
+                            html += formatResponseText(outCell || "", srcCount);
+                        } else if (cellClass === "diff") {
+                            html += `<div class="cell-comparison"><span class="cell-output">${formatResponseText(outCell || "", srcCount)}</span><span class="cell-reference">${formatResponseText(refCell || "", srcCount)}</span></div>`;
+                        } else if (cellClass === "missing") {
+                            html += `<span class="cell-reference">${formatResponseText(refCell || "", srcCount)}</span>`;
+                        } else {
+                            html += formatResponseText(outCell || "", srcCount);
+                        }
+                        html += `</div>`;
+
+                        // Reasoning part (right)
+                        html += `<div class="split-cell-reasoning">`;
+                        if (outReasoning) {
+                            html += processInlineReferences(
+                                outReasoning,
+                                srcCount,
+                            );
+                            if (
+                                cellClass === "diff" &&
+                                refReasoning &&
+                                refReasoning !== outReasoning
+                            ) {
+                                html += `<div class="cell-reference" style="margin-top: 4px;">${processInlineReferences(refReasoning, srcCount)}</div>`;
+                            }
+                        } else if (refReasoning) {
+                            html += `<span class="cell-reference">${processInlineReferences(refReasoning, srcCount)}</span>`;
+                        }
+                        html += `</div>`;
+
+                        html += `</div></td>`;
                     }
                     html += "</tr>";
                 }
@@ -1415,27 +1527,8 @@
             function renderSingleTable(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
-                const hasReasoning = hasReasoningData(data);
                 const sourceDocuments = data.source_documents || [];
                 const srcCount = sourceDocuments.length;
-
-                let valuesTable = `
-                    <table>
-                        <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-                        <tbody>${(data.rows || []).map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${processInlineReferences(cell || "", srcCount)}</td>`).join("")}</tr>`).join("")}</tbody>
-                    </table>
-                `;
-
-                let reasoningTable = "";
-                if (hasReasoning) {
-                    const reasoningRows = data.reasoning || [];
-                    reasoningTable = `
-                        <table class="reasoning-table">
-                            <thead><tr><th>#</th>${(data.column_headers || []).map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>
-                            <tbody>${reasoningRows.map((row, i) => `<tr><td>${i + 1}</td>${row.map((cell) => `<td>${processInlineReferences(cell || "", srcCount)}</td>`).join("")}</tr>`).join("")}</tbody>
-                        </table>
-                    `;
-                }
 
                 return `
                 <div class="panel">
@@ -1449,21 +1542,8 @@
                     </div>
                     <div class="tab-content active" data-tab-content="answers">
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
-                        <div class="tables-stacked">
-                            <div>
-                                <div class="table-section-label values">Values</div>
-                                <div class="table-container">${valuesTable}</div>
-                            </div>
-                            ${
-                                hasReasoning
-                                    ? `
-                            <div>
-                                <div class="table-section-label reasoning">Reasoning</div>
-                                <div class="table-container">${reasoningTable}</div>
-                            </div>
-                            `
-                                    : ""
-                            }
+                        <div class="table-container">
+                            ${renderSingleMergedTable(data, srcCount)}
                         </div>
                     </div>
                     <div class="tab-content" data-tab-content="sources">
@@ -1471,6 +1551,38 @@
                     </div>
                 </div>
             `;
+            }
+
+            function renderSingleMergedTable(data, srcCount) {
+                const headers = data.column_headers || [];
+                const rows = data.rows || [];
+                const reasoningRows = data.reasoning || [];
+
+                let html = "<table><thead><tr><th>#</th>";
+                headers.forEach((h) => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += "</tr></thead><tbody>";
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i] || [];
+                    const reasoningRow = reasoningRows[i] || [];
+                    html += `<tr><td>${i + 1}</td>`;
+
+                    for (let j = 0; j < headers.length; j++) {
+                        const cell = row[j] || "";
+                        const reasoning = reasoningRow[j] || "";
+
+                        html += `<td><div class="split-cell">`;
+                        html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}</div>`;
+                        html += `<div class="split-cell-reasoning">${reasoning ? processInlineReferences(reasoning, srcCount) : ""}</div>`;
+                        html += `</div></td>`;
+                    }
+                    html += "</tr>";
+                }
+
+                html += "</tbody></table>";
+                return html;
             }
 
             function renderEQAAnswer(output, reference, meta) {

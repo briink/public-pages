@@ -130,113 +130,300 @@
                 rendererFrame.src = rendererFrame.src; // Reload iframe
             }
 
-            // Test: Table Response with reasoning
+            // Test: Table Response with choice-type questions (including multi-select)
             function sendTableResponse() {
-                sendToRenderer("output", {
-                    column_headers: [
-                        "Company",
-                        "Revenue",
-                        "Employees",
-                        "Status",
-                    ],
-                    rows: [
-                        ["Acme Corp", "$1.2B", "5,000", "Active"],
-                        ["TechStart Inc", "$50M", "200", "Growing"],
-                        ["Global Services", "$800M", "3,500", "Stable"],
-                    ],
-                    reasoning: [
-                        [
-                            "Found in annual report page 12",
-                            "Q4 financials section",
-                            "HR report 2023",
-                            "Listed as active subsidiary",
+                sendToRenderer(
+                    "output",
+                    {
+                        column_headers: [
+                            "Has Climate Target",
+                            "Target Types",
+                            "Board Composition",
                         ],
-                        [
-                            "Mentioned in press release",
-                            "Series B announcement",
-                            "LinkedIn data",
-                            "Startup status confirmed",
+                        rows: [
+                            [
+                                "Yes",
+                                "- Science-based\n- Net-zero",
+                                "- Executive directors\n- Non-executive directors\n- Independent directors",
+                            ],
+                            [
+                                "Yes",
+                                "- Net-zero\n- Carbon neutral",
+                                "- Executive directors\n- Independent directors",
+                            ],
+                            ["No", "N/A", "- Executive directors"],
                         ],
-                        [
-                            "10-K filing 2023",
-                            "Revenue table on page 45",
-                            "Employee count from sustainability report",
-                            "No changes reported",
+                        reasoning: [
+                            [
+                                "Climate targets disclosed in sustainability report [^0^]",
+                                "Both SBTi validated and net-zero targets mentioned [^0^]",
+                                "Full board composition described in governance section [^1^]",
+                            ],
+                            [
+                                "Net-zero commitment stated in press release [^1^]",
+                                "Dual commitment to net-zero and carbon neutrality [^0^] [^1^]",
+                                "Two types of directors identified in filing [^1^]",
+                            ],
+                            [
+                                "No formal climate targets found in disclosures",
+                                "Not applicable as no targets set",
+                                "Only executive directors on the board",
+                            ],
                         ],
-                    ],
-                    source_documents: [
-                        {
-                            page_content:
-                                "Acme Corp reported annual revenue of $1.2 billion in fiscal year 2023, representing a 15% increase year-over-year. The company employs approximately 5,000 people globally.",
-                            metadata: {
-                                file_name: "acme-annual-report-2023.pdf",
-                                page: 12,
-                                file_id: "abc123-def456-ghi789",
+                        source_documents: [
+                            {
+                                page_content:
+                                    "Climate Commitment: We have committed to achieving net-zero greenhouse gas emissions by 2050, with science-based interim targets validated by SBTi. We also pursue carbon neutrality for our direct operations.",
+                                metadata: {
+                                    file_name: "sustainability-report-2023.pdf",
+                                    page: 28,
+                                    file_id: "sust-2023-climate",
+                                },
+                            },
+                            {
+                                page_content:
+                                    "Board Composition: Our board consists of executive directors who manage day-to-day operations, non-executive directors who provide strategic guidance, and independent non-executive directors who ensure corporate governance standards are met.",
+                                metadata: {
+                                    file_name: "governance-report-2023.pdf",
+                                    page: 12,
+                                    file_id: "gov-2023-board",
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            table_question: {
+                                text: "Assess climate commitments and board composition for each company",
+                                cell_questions: [
+                                    {
+                                        text: "Has the company set climate-related targets?",
+                                        data_type: "choice",
+                                        choices: [
+                                            {
+                                                label: "Yes",
+                                                description:
+                                                    "Climate targets have been disclosed",
+                                            },
+                                            {
+                                                label: "No",
+                                                description:
+                                                    "No climate targets found",
+                                            },
+                                            {
+                                                label: "Partial",
+                                                description:
+                                                    "Some targets but incomplete",
+                                            },
+                                        ],
+                                    },
+                                    {
+                                        text: "What types of climate targets have been set? (Select all that apply)",
+                                        data_type: "multi_choice",
+                                        choices: [
+                                            {
+                                                label: "Science-based",
+                                                description:
+                                                    "SBTi validated or aligned",
+                                            },
+                                            {
+                                                label: "Net-zero",
+                                                description:
+                                                    "Net-zero commitment",
+                                            },
+                                            {
+                                                label: "Carbon neutral",
+                                                description:
+                                                    "Carbon neutrality target",
+                                            },
+                                            {
+                                                label: "N/A",
+                                                description: "Not applicable",
+                                            },
+                                        ],
+                                    },
+                                    {
+                                        text: "What types of directors is the board comprised of? (Select all that apply)",
+                                        data_type: "multi_choice",
+                                        choices: [
+                                            {
+                                                label: "Executive directors",
+                                                description:
+                                                    "Directors involved in day-to-day management",
+                                            },
+                                            {
+                                                label: "Non-executive directors",
+                                                description:
+                                                    "Directors not involved in daily operations",
+                                            },
+                                            {
+                                                label: "Independent directors",
+                                                description:
+                                                    "Directors with no material relationship to company",
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         },
-                        {
-                            page_content:
-                                "TechStart Inc announced completion of Series B funding, bringing total valuation to $50M. Current headcount stands at 200 employees.",
-                            metadata: {
-                                file_name: "techstart-press-release.pdf",
-                                page: 1,
-                                file_id: "xyz789-uvw456",
-                            },
-                        },
-                    ],
-                });
+                    },
+                );
             }
 
-            // Test: Table Response with inline references
+            // Test: Table Response with inline references and multi-select questions
             function sendTableResponseWithRefs() {
-                sendToRenderer("output", {
-                    column_headers: ["Metric", "Value", "Source"],
-                    rows: [
-                        ["Total Revenue", "$1.2B [^0^]", "Annual Report"],
-                        ["Net Income", "$150M [^1^]", "Q4 Earnings"],
-                        ["Employee Count", "5,000 [^0^] [^2^]", "HR Report"],
-                        ["Invalid Ref Test", "See [^99^] for details", "N/A"],
-                    ],
-                    reasoning: [
-                        ["Revenue found in section 3.1 [^0^]", "", ""],
-                        ["Net income calculated from [^1^]", "", ""],
-                        [
-                            "Employee data from multiple sources [^0^] [^2^]",
-                            "",
-                            "",
+                sendToRenderer(
+                    "output",
+                    {
+                        column_headers: [
+                            "Board Independence",
+                            "Committee Types",
+                            "Stakeholder Engagement",
                         ],
-                        ["This reference [^99^] is invalid", "", ""],
-                    ],
-                    source_documents: [
-                        {
-                            page_content:
-                                "Annual Report 2023: Total revenue reached $1.2 billion, with 5,000 employees worldwide. Operating margins improved to 12.5%.",
-                            metadata: {
-                                file_name: "annual-report-2023.pdf",
-                                page: 45,
-                                file_id: "ar-2023-001",
+                        rows: [
+                            [
+                                "Yes [^0^]",
+                                "- Audit\n- Compensation\n- Nomination [^1^]",
+                                "- Shareholders\n- Employees\n- Communities [^0^]",
+                            ],
+                            [
+                                "Partial [^1^]",
+                                "- Audit\n- Risk [^0^]",
+                                "- Shareholders\n- Customers",
+                            ],
+                            ["No [^99^]", "- Audit", "- Shareholders"],
+                        ],
+                        reasoning: [
+                            [
+                                "Board independence confirmed in governance report [^0^]",
+                                "Multiple committees described in charter [^1^]",
+                                "Comprehensive stakeholder engagement program [^0^]",
+                            ],
+                            [
+                                "Some independent directors but not majority [^1^]",
+                                "Two key committees identified [^0^]",
+                                "Limited stakeholder engagement focus",
+                            ],
+                            [
+                                "Invalid reference test [^99^]",
+                                "Only basic audit committee",
+                                "Minimal stakeholder engagement",
+                            ],
+                        ],
+                        source_documents: [
+                            {
+                                page_content:
+                                    "Corporate Governance Report: The board maintains a majority of independent directors. We engage with shareholders, employees, and local communities through regular dialogue and feedback mechanisms.",
+                                metadata: {
+                                    file_name: "governance-report-2023.pdf",
+                                    page: 15,
+                                    file_id: "gov-2023-001",
+                                },
+                            },
+                            {
+                                page_content:
+                                    "Committee Structure: The board has established an Audit Committee, Compensation Committee, and Nomination Committee, each comprised of independent directors.",
+                                metadata: {
+                                    file_name: "committee-charters.pdf",
+                                    page: 2,
+                                    file_id: "committees-2023",
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            table_question: {
+                                text: "Evaluate corporate governance and stakeholder engagement",
+                                cell_questions: [
+                                    {
+                                        text: "Does the board have a majority of independent directors?",
+                                        data_type: "choice",
+                                        choices: [
+                                            {
+                                                label: "Yes",
+                                                description:
+                                                    "Majority independent",
+                                            },
+                                            {
+                                                label: "No",
+                                                description:
+                                                    "Not majority independent",
+                                            },
+                                            {
+                                                label: "Partial",
+                                                description:
+                                                    "Some independent directors",
+                                            },
+                                        ],
+                                    },
+                                    {
+                                        text: "What board committees exist? (Select all that apply)",
+                                        data_type: "multi_choice",
+                                        choices: [
+                                            {
+                                                label: "Audit",
+                                                description:
+                                                    "Audit/Finance committee",
+                                            },
+                                            {
+                                                label: "Compensation",
+                                                description:
+                                                    "Compensation/Remuneration committee",
+                                            },
+                                            {
+                                                label: "Nomination",
+                                                description:
+                                                    "Nomination/Governance committee",
+                                            },
+                                            {
+                                                label: "Risk",
+                                                description:
+                                                    "Risk management committee",
+                                            },
+                                            {
+                                                label: "Sustainability",
+                                                description:
+                                                    "ESG/Sustainability committee",
+                                            },
+                                        ],
+                                    },
+                                    {
+                                        text: "Which stakeholders does the company engage with? (Select all that apply)",
+                                        data_type: "multi_choice",
+                                        choices: [
+                                            {
+                                                label: "Shareholders",
+                                                description:
+                                                    "Investors and shareholders",
+                                            },
+                                            {
+                                                label: "Employees",
+                                                description:
+                                                    "Workforce engagement",
+                                            },
+                                            {
+                                                label: "Customers",
+                                                description:
+                                                    "Customer engagement",
+                                            },
+                                            {
+                                                label: "Communities",
+                                                description:
+                                                    "Local community engagement",
+                                            },
+                                            {
+                                                label: "Suppliers",
+                                                description:
+                                                    "Supply chain engagement",
+                                            },
+                                        ],
+                                    },
+                                ],
                             },
                         },
-                        {
-                            page_content:
-                                "Q4 2023 Earnings Call Transcript: Net income for the quarter was $40M, bringing annual net income to $150M.",
-                            metadata: {
-                                file_name: "q4-earnings-transcript.pdf",
-                                page: 3,
-                                file_id: "q4-earn-2023",
-                            },
-                        },
-                        {
-                            page_content:
-                                "Human Resources Annual Summary: As of December 2023, total headcount stands at 5,000 full-time employees across 12 countries.",
-                            metadata: {
-                                file_name: "hr-summary-2023.pdf",
-                                page: 1,
-                                file_id: "hr-sum-2023",
-                            },
-                        },
-                    ],
-                });
+                    },
+                );
             }
 
             // Test: EQA Answer (simple)
