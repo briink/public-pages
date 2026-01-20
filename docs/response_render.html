@@ -113,6 +113,36 @@
                 word-wrap: break-word;
             }
 
+            /* Dash-delimited list styling */
+            .response-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .response-list li {
+                position: relative;
+                padding: 8px 12px 8px 24px;
+                margin-bottom: 6px;
+                background-color: rgba(138, 180, 248, 0.08);
+                border-radius: 6px;
+                border-left: 3px solid var(--accent-color);
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            .response-list li:last-child {
+                margin-bottom: 0;
+            }
+
+            .response-list li::before {
+                content: "–";
+                position: absolute;
+                left: 10px;
+                color: var(--accent-color);
+                font-weight: 600;
+            }
+
             .choices-list {
                 margin-top: 8px;
             }
@@ -1166,6 +1196,46 @@
                 return escaped;
             }
 
+            // Format response text, detecting dash-delimited lists
+            // Pattern: lines starting with "- " or "– " separated by newlines
+            function formatResponseText(text, sourceCount) {
+                if (!text) return "";
+
+                const str = String(text).trim();
+
+                // Check if text looks like a dash-delimited list
+                // Must have at least 2 lines starting with dash
+                const lines = str.split(/\n/);
+                const dashLines = lines.filter((line) =>
+                    /^\s*[-–]\s+/.test(line.trim()),
+                );
+
+                if (
+                    dashLines.length >= 2 &&
+                    dashLines.length === lines.filter((l) => l.trim()).length
+                ) {
+                    // All non-empty lines are dash items - render as list
+                    const items = lines
+                        .map((line) => line.trim())
+                        .filter((line) => line)
+                        .map((line) => line.replace(/^[-–]\s+/, "").trim())
+                        .filter((item) => item);
+
+                    if (items.length > 0) {
+                        const listItems = items
+                            .map(
+                                (item) =>
+                                    `<li>${processInlineReferences(item, sourceCount)}</li>`,
+                            )
+                            .join("");
+                        return `<ul class="response-list">${listItems}</ul>`;
+                    }
+                }
+
+                // Not a list - use standard processing
+                return processInlineReferences(text, sourceCount);
+            }
+
             function navigateToSource(index, sourceCount) {
                 // Check if index is valid
                 if (index < 0 || index >= sourceCount) {
@@ -1471,7 +1541,7 @@
                 let answerContent = "";
 
                 if (data.response_text) {
-                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processInlineReferences(data.response_text, srcCount)}</div></div>`;
+                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${formatResponseText(data.response_text, srcCount)}</div></div>`;
                 }
 
                 // For choice-based questions, reasoning may contain <<Choice Label>> markers
