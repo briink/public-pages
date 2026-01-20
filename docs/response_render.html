@@ -595,6 +595,23 @@
                 transform: rotate(180deg);
             }
 
+            .view-pdf-btn {
+                padding: 4px 8px;
+                background-color: rgba(138, 180, 248, 0.2);
+                border: 1px solid rgba(138, 180, 248, 0.3);
+                border-radius: 4px;
+                color: var(--accent-color);
+                cursor: pointer;
+                font-size: 14px;
+                transition: all 0.2s;
+                margin-right: 8px;
+            }
+
+            .view-pdf-btn:hover {
+                background-color: rgba(138, 180, 248, 0.3);
+                transform: scale(1.05);
+            }
+
             .source-doc-content {
                 display: none;
                 padding: 14px;
@@ -1101,7 +1118,7 @@
                             "";
 
                         return `
-                        <div class="source-doc" data-doc-index="${index}" id="source-doc-${index}">
+                        <div class="source-doc" data-doc-index="${index}" data-file-id="${escapeHtml(fileId)}" data-page="${pageNumber}" id="source-doc-${index}">
                             <div class="source-doc-header" onclick="toggleSourceDoc(${index})">
                                 <div class="source-doc-index">${index + 1}</div>
                                 <div class="source-doc-meta">
@@ -1111,6 +1128,7 @@
                                         ${fileId ? `<span class="source-doc-detail">ID: ${escapeHtml(fileId)}</span>` : ""}
                                     </div>
                                 </div>
+                                ${fileId ? `<button class="view-pdf-btn" onclick="event.stopPropagation(); openPdfViewer('${escapeHtml(fileId)}', ${typeof pageNumber === "number" ? pageNumber : 1}, '${escapeHtml(fileName)}')" title="View PDF">📄</button>` : ""}
                                 <span class="source-doc-toggle">&#9660;</span>
                             </div>
                             <div class="source-doc-content">${escapeHtml(pageContent)}</div>
@@ -1127,6 +1145,34 @@
                 if (doc) {
                     doc.classList.toggle("expanded");
                 }
+            }
+
+            // Open PDF viewer in Briink LangSmith Extension
+            // Sends a message to the parent window (LangSmith) which the extension listens for
+            function openPdfViewer(fileId, page, fileName) {
+                if (!fileId) {
+                    console.warn("No file ID provided for PDF viewer");
+                    return;
+                }
+
+                // Post message to parent window for the Chrome extension to intercept
+                window.parent.postMessage(
+                    {
+                        type: "BRIINK_SOURCE_CLICK",
+                        payload: {
+                            fileId: fileId,
+                            page: page || 1,
+                            fileName: fileName || "document.pdf",
+                        },
+                    },
+                    "*",
+                );
+
+                console.log("PDF viewer requested for:", {
+                    fileId,
+                    page,
+                    fileName,
+                });
             }
 
             // Parse choice reasoning from a reasoning string that may contain <<Choice Label>> markers
