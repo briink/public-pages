@@ -756,6 +756,13 @@
                             metadata,
                         );
                         break;
+                    case "documents_list":
+                        contentHtml = renderDocumentsList(
+                            outputData,
+                            referenceData,
+                            metadata,
+                        );
+                        break;
                     default:
                         contentHtml = renderGenericJson(
                             outputData,
@@ -789,6 +796,16 @@
 
             function detectDataType(data) {
                 if (!data) return "unknown";
+
+                // Check for documents array (document list output)
+                if (
+                    "documents" in data &&
+                    Array.isArray(data.documents) &&
+                    data.documents.length > 0 &&
+                    data.documents[0].page_content !== undefined
+                ) {
+                    return "documents_list";
+                }
 
                 if (
                     "column_headers" in data ||
@@ -1048,6 +1065,78 @@
                 if (doc) {
                     doc.classList.toggle("expanded");
                 }
+            }
+
+            // Parse choice reasoning from a reasoning string that may contain <<Choice Label>> markers
+            // Example: "<<Yes>> This is because... <<No>> This doesn't apply because..."
+            function parseChoiceReasoningFromText(reasoningText, choices) {
+                if (!reasoningText || !choices || choices.length === 0) {
+                    return {};
+                }
+
+                const choiceReasonings = {};
+                const labels = choices.map((c) => c.label).filter(Boolean);
+
+                // Build regex pattern to match <<Label>> sections
+                // Match <<Label>> followed by content until next <<Label>> or end of string
+                for (let i = 0; i < labels.length; i++) {
+                    const label = labels[i];
+                    const escapedLabel = label.replace(
+                        /[.*+?^${}()|[\]\\]/g,
+                        "\\$&",
+                    );
+
+                    // Pattern: <<Label>> followed by content until next <<...>> or end
+                    const pattern = new RegExp(
+                        `<<${escapedLabel}>>\\s*([\\s\\S]*?)(?=<<[^>]+>>|$)`,
+                        "i",
+                    );
+                    const match = reasoningText.match(pattern);
+
+                    if (match && match[1]) {
+                        choiceReasonings[label] = match[1].trim();
+                    }
+                }
+
+                return choiceReasonings;
+            }
+
+            // Enrich choices with reasoning parsed from the main reasoning text
+            function enrichChoicesWithReasoning(data) {
+                if (!data || !data.choices || data.choices.length === 0) {
+                    return data.choices || [];
+                }
+
+                const choices = data.choices;
+                const reasoningText = data.reasoning || "";
+
+                // If reasoning is a string (not an array like in TableResponse), parse it
+                if (
+                    typeof reasoningText === "string" &&
+                    reasoningText.includes("<<")
+                ) {
+                    const parsedReasonings = parseChoiceReasoningFromText(
+                        reasoningText,
+                        choices,
+                    );
+
+                    return choices.map((choice) => {
+                        // Only set reasoning if not already present
+                        if (
+                            !choice.reasoning &&
+                            choice.label &&
+                            parsedReasonings[choice.label]
+                        ) {
+                            return {
+                                ...choice,
+                                reasoning: parsedReasonings[choice.label],
+                            };
+                        }
+                        return choice;
+                    });
+                }
+
+                return choices;
             }
 
             // Store source document count for validation
@@ -1383,13 +1472,22 @@
                     answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processInlineReferences(data.response_text, srcCount)}</div></div>`;
                 }
 
-                if (data.reasoning) {
+                // For choice-based questions, reasoning may contain <<Choice Label>> markers
+                // Only show raw reasoning section if it doesn't contain choice markers (will be shown per-choice instead)
+                const hasChoiceMarkers =
+                    data.reasoning &&
+                    typeof data.reasoning === "string" &&
+                    data.reasoning.includes("<<");
+                if (data.reasoning && !hasChoiceMarkers) {
                     answerContent += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${processInlineReferences(data.reasoning, srcCount)}</div></div>`;
                 }
 
                 if (data.choices && data.choices.length > 0) {
+                    // Enrich choices with parsed reasoning from main reasoning text
+                    const enrichedChoices = enrichChoicesWithReasoning(data);
+
                     answerContent += `<div class="answer-section"><div class="question-label">Choices</div><div class="choices-list">`;
-                    data.choices.forEach((choice) => {
+                    enrichedChoices.forEach((choice) => {
                         answerContent += `
                         <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
                             <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
@@ -1514,6 +1612,103 @@
                     </div>
                 </div>
             `;
+            }
+
+            function renderDocumentsList(output, reference, meta) {
+                let html = "";
+
+                // Get documents from output or reference
+                const outputDocs = output?.documents || [];
+                const refDocs = reference?.documents || [];
+
+                if (outputDocs.length > 0) {
+                    html += `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Documents</span>
+                            <span class="badge badge-output">${outputDocs.length} documents</span>
+                        </div>
+                        <div class="panel-content">
+                            ${renderDocumentsListItems(outputDocs)}
+                        </div>
+                    </div>
+                    `;
+                }
+
+                if (refDocs.length > 0) {
+                    html += `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Reference Documents</span>
+                            <span class="badge badge-reference">${refDocs.length} documents</span>
+                        </div>
+                        <div class="panel-content">
+                            ${renderDocumentsListItems(refDocs)}
+                        </div>
+                    </div>
+                    `;
+                }
+
+                return html;
+            }
+
+            function renderDocumentsListItems(documents) {
+                if (!documents || documents.length === 0) {
+                    return '<div class="no-sources">No documents available</div>';
+                }
+
+                return documents
+                    .map((doc, index) => {
+                        const metadata = doc.metadata || {};
+                        const pageContent = doc.page_content || "";
+                        const fileName =
+                            metadata.file_name ||
+                            metadata.filename ||
+                            metadata.source ||
+                            "Unknown file";
+                        const pageNumber =
+                            metadata.page_number ||
+                            metadata.page ||
+                            metadata.page_idx ||
+                            "-";
+                        const fileId =
+                            metadata.file_id ||
+                            metadata.id ||
+                            metadata.chunk_uuid ||
+                            "";
+                        const chunkId =
+                            metadata.chunk_id !== undefined
+                                ? metadata.chunk_id
+                                : "-";
+                        const characters = metadata.characters || "-";
+
+                        return `
+                        <div class="source-doc" data-doc-index="${index}" id="doc-list-${index}">
+                            <div class="source-doc-header" onclick="toggleDocListItem(${index})">
+                                <div class="source-doc-index">${index}</div>
+                                <div class="source-doc-meta">
+                                    <div class="source-doc-filename">${escapeHtml(fileName)}</div>
+                                    <div class="source-doc-details">
+                                        <span class="source-doc-detail">Page: ${escapeHtml(String(pageNumber))}</span>
+                                        <span class="source-doc-detail">Chunk: ${escapeHtml(String(chunkId))}</span>
+                                        <span class="source-doc-detail">Chars: ${escapeHtml(String(characters))}</span>
+                                        ${fileId ? `<span class="source-doc-detail">ID: ${escapeHtml(fileId)}</span>` : ""}
+                                    </div>
+                                </div>
+                                <span class="source-doc-toggle">&#9660;</span>
+                            </div>
+                            <div class="source-doc-content">${escapeHtml(pageContent)}</div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+            }
+
+            function toggleDocListItem(index) {
+                const doc = document.querySelector(`#doc-list-${index}`);
+                if (doc) {
+                    doc.classList.toggle("expanded");
+                }
             }
 
             function renderGenericJson(output, reference, meta) {
