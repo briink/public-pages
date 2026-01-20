@@ -2,7 +2,7 @@
   import type { BriinkConfig, TestConnectionResponse } from '../types';
 
   let apiKey = $state('');
-  let apiBaseUrl = $state('https://api.briinkai.com');
+  let apiBaseUrl = $state('https://api.platform.briink.com');
   let workspaceId = $state('');
   let enabled = $state(true);
   let showApiKey = $state(false);
@@ -21,7 +21,7 @@
       if (result.briinkConfig) {
         const config: BriinkConfig = result.briinkConfig;
         apiKey = config.apiKey || '';
-        apiBaseUrl = config.apiBaseUrl || 'https://api.briinkai.com';
+        apiBaseUrl = config.apiBaseUrl || 'https://api.platform.briink.com';
         workspaceId = config.workspaceId || '';
         enabled = config.enabled ?? true;
       }

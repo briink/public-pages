@@ -9,15 +9,31 @@
     import.meta.url
   ).toString();
 
+  // Types
+  interface FileInfo {
+    fileId: string;
+    fileName: string;
+    page: number;
+  }
+
+  interface LoadedPdf {
+    fileId: string;
+    fileName: string;
+    initialPage: number;
+    doc: PDFDocumentProxy | null;
+    data: string | null; // base64
+    error: string | null;
+    loading: boolean;
+  }
+
   // State
-  let pdfDoc = $state<PDFDocumentProxy | null>(null);
+  let files = $state<FileInfo[]>([]);
+  let loadedPdfs = $state<Map<string, LoadedPdf>>(new Map());
+  let activeFileId = $state<string | null>(null);
   let currentPage = $state(1);
   let totalPages = $state(0);
   let scale = $state(1.0);
-  let isLoading = $state(false);
-  let error = $state<string | null>(null);
-  let fileName = $state('');
-  let currentFileId = $state<string | null>(null);
+  let needsConfig = $state(false);
   let canvasContainer: HTMLDivElement;
   let canvas: HTMLCanvasElement;
 
@@ -34,19 +50,65 @@
   });
 
   async function handleMessage(event: MessageEvent) {
-    if (event.data?.type === 'LOAD_PDF') {
-      const { fileId, page, fileName: name } = event.data.payload;
-      await loadPdf(fileId, page, name);
+    const { type, payload } = event.data || {};
+
+    switch (type) {
+      case 'LOAD_PDF':
+        await handleLoadPdf(payload);
+        break;
+      case 'BRIINK_FILES_LIST':
+        handleFilesList(payload.files);
+        break;
+      case 'SHOW_CONFIG_MESSAGE':
+        needsConfig = true;
+        break;
     }
   }
 
-  async function loadPdf(fileId: string, page: number = 1, name: string = '') {
-    if (!fileId) return;
+  function handleFilesList(newFiles: FileInfo[]) {
+    // Add new files to our list (avoid duplicates)
+    for (const file of newFiles) {
+      if (!files.find(f => f.fileId === file.fileId)) {
+        files = [...files, file];
+        // Start fetching the PDF
+        fetchPdfForFile(file);
+      }
+    }
+  }
 
-    isLoading = true;
-    error = null;
-    fileName = name;
-    currentFileId = fileId;
+  async function handleLoadPdf(payload: { fileId: string; page: number; fileName: string }) {
+    const { fileId, page, fileName } = payload;
+
+    // Add to files list if not present
+    if (!files.find(f => f.fileId === fileId)) {
+      files = [...files, { fileId, fileName, page }];
+      await fetchPdfForFile({ fileId, fileName, page });
+    }
+
+    // Set as active and go to the specified page
+    activeFileId = fileId;
+    const loaded = loadedPdfs.get(fileId);
+    if (loaded?.doc) {
+      totalPages = loaded.doc.numPages;
+      currentPage = Math.min(Math.max(1, page), totalPages);
+      await renderPage(currentPage);
+    }
+  }
+
+  async function fetchPdfForFile(file: FileInfo) {
+    const { fileId, fileName, page } = file;
+
+    // Initialize loading state
+    loadedPdfs.set(fileId, {
+      fileId,
+      fileName,
+      initialPage: page,
+      doc: null,
+      data: null,
+      error: null,
+      loading: true,
+    });
+    loadedPdfs = new Map(loadedPdfs); // Trigger reactivity
 
     try {
       // Fetch PDF from service worker
@@ -59,60 +121,87 @@
         throw new Error(response.error || 'Failed to fetch PDF');
       }
 
-      // Convert base64 to ArrayBuffer
+      // Convert base64 to ArrayBuffer and load PDF
       const pdfData = base64ToArrayBuffer(response.data);
-
-      // Load PDF document
       const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-      pdfDoc = await loadingTask.promise;
-      totalPages = pdfDoc.numPages;
-      currentPage = Math.min(Math.max(1, page), totalPages);
+      const doc = await loadingTask.promise;
 
-      // Render the requested page
-      await renderPage(currentPage);
+      loadedPdfs.set(fileId, {
+        fileId,
+        fileName: response.fileName || fileName,
+        initialPage: page,
+        doc,
+        data: response.data,
+        error: null,
+        loading: false,
+      });
+      loadedPdfs = new Map(loadedPdfs);
 
-      if (response.fileName) {
-        fileName = response.fileName;
+      // If this is the first file or the active one, render it
+      if (!activeFileId || activeFileId === fileId) {
+        activeFileId = fileId;
+        totalPages = doc.numPages;
+        currentPage = Math.min(Math.max(1, page), totalPages);
+        await renderPage(currentPage);
       }
     } catch (err) {
       console.error('Failed to load PDF:', err);
-      error = err instanceof Error ? err.message : 'Failed to load PDF';
-      pdfDoc = null;
-    } finally {
-      isLoading = false;
+      loadedPdfs.set(fileId, {
+        fileId,
+        fileName,
+        initialPage: page,
+        doc: null,
+        data: null,
+        error: err instanceof Error ? err.message : 'Failed to fetch PDF',
+        loading: false,
+      });
+      loadedPdfs = new Map(loadedPdfs);
+    }
+  }
+
+  async function selectFile(fileId: string) {
+    const loaded = loadedPdfs.get(fileId);
+    if (!loaded) return;
+
+    activeFileId = fileId;
+
+    if (loaded.doc) {
+      totalPages = loaded.doc.numPages;
+      currentPage = Math.min(Math.max(1, loaded.initialPage), totalPages);
+      await renderPage(currentPage);
     }
   }
 
   async function renderPage(pageNum: number) {
-    if (!pdfDoc || !canvas) return;
+    if (!activeFileId || !canvas) return;
+
+    const loaded = loadedPdfs.get(activeFileId);
+    if (!loaded?.doc) return;
 
     try {
-      const page: PDFPageProxy = await pdfDoc.getPage(pageNum);
-
+      const page: PDFPageProxy = await loaded.doc.getPage(pageNum);
       const viewport = page.getViewport({ scale });
       const context = canvas.getContext('2d');
 
       if (!context) return;
 
-      // Set canvas dimensions
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
-      // Render PDF page
-      const renderContext = {
+      await page.render({
         canvasContext: context,
         viewport: viewport,
-      };
-
-      await page.render(renderContext).promise;
+      }).promise;
     } catch (err) {
       console.error('Failed to render page:', err);
-      error = 'Failed to render page';
     }
   }
 
   function goToPage(pageNum: number) {
-    if (!pdfDoc) return;
+    if (!activeFileId) return;
+    const loaded = loadedPdfs.get(activeFileId);
+    if (!loaded?.doc) return;
+
     currentPage = Math.min(Math.max(1, pageNum), totalPages);
     renderPage(currentPage);
   }
@@ -136,14 +225,23 @@
   }
 
   function fitWidth() {
-    if (!pdfDoc || !canvasContainer) return;
+    if (!activeFileId || !canvasContainer) return;
+    const loaded = loadedPdfs.get(activeFileId);
+    if (!loaded?.doc) return;
 
-    pdfDoc.getPage(currentPage).then((page) => {
+    loaded.doc.getPage(currentPage).then((page) => {
       const viewport = page.getViewport({ scale: 1.0 });
-      const containerWidth = canvasContainer.clientWidth - 32; // Account for padding
+      const containerWidth = canvasContainer.clientWidth - 32;
       scale = containerWidth / viewport.width;
       renderPage(currentPage);
     });
+  }
+
+  function retryFetch(fileId: string) {
+    const file = files.find(f => f.fileId === fileId);
+    if (file) {
+      fetchPdfForFile(file);
+    }
   }
 
   function base64ToArrayBuffer(base64: string): ArrayBuffer {
@@ -162,64 +260,107 @@
       goToPage(pageNum);
     }
   }
+
+  function truncateFileName(name: string, maxLen: number = 40): string {
+    if (name.length <= maxLen) return name;
+    const ext = name.lastIndexOf('.');
+    if (ext > 0 && name.length - ext < 10) {
+      const extPart = name.slice(ext);
+      const namePart = name.slice(0, maxLen - extPart.length - 3);
+      return namePart + '...' + extPart;
+    }
+    return name.slice(0, maxLen - 3) + '...';
+  }
+
+  // Reactive: get active loaded PDF
+  let activeLoaded = $derived(activeFileId ? loadedPdfs.get(activeFileId) : null);
 </script>
 
 <div class="sidebar-container">
-  <header class="sidebar-header">
-    <h2>PDF Viewer</h2>
-    {#if fileName}
-      <span class="file-name" title={fileName}>{fileName}</span>
-    {/if}
-  </header>
-
-  {#if isLoading}
-    <div class="loading">
-      <div class="spinner"></div>
-      <p>Loading PDF...</p>
+  {#if needsConfig}
+    <div class="config-message">
+      <div class="icon">🔑</div>
+      <p>Please configure your Briink API key</p>
+      <p class="hint">Click the extension icon in Chrome toolbar</p>
     </div>
-  {:else if error}
-    <div class="error">
-      <p>{error}</p>
-      <button onclick={() => currentFileId && loadPdf(currentFileId, currentPage, fileName)}>
-        Retry
-      </button>
-    </div>
-  {:else if !pdfDoc}
+  {:else if files.length === 0}
     <div class="empty-state">
       <div class="icon">📄</div>
       <p>Click on a source document to view the PDF</p>
     </div>
   {:else}
-    <div class="toolbar">
-      <div class="toolbar-group">
-        <button onclick={prevPage} disabled={currentPage <= 1} title="Previous page">
-          ◀
+    <!-- File tabs -->
+    <div class="file-tabs">
+      {#each files as file (file.fileId)}
+        {@const loaded = loadedPdfs.get(file.fileId)}
+        <button
+          class="file-tab"
+          class:active={activeFileId === file.fileId}
+          class:loading={loaded?.loading}
+          class:error={loaded?.error}
+          onclick={() => selectFile(file.fileId)}
+          title={file.fileName}
+        >
+          {#if loaded?.loading}
+            <span class="tab-spinner"></span>
+          {:else if loaded?.error}
+            <span class="tab-icon error">!</span>
+          {:else}
+            <span class="tab-icon">📄</span>
+          {/if}
+          <span class="tab-name">{truncateFileName(file.fileName, 25)}</span>
+          <span class="tab-page">p.{file.page}</span>
         </button>
-        <span class="page-info">
-          <input
-            type="number"
-            value={currentPage}
-            min="1"
-            max={totalPages}
-            onchange={handlePageInput}
-          />
-          / {totalPages}
-        </span>
-        <button onclick={nextPage} disabled={currentPage >= totalPages} title="Next page">
-          ▶
-        </button>
-      </div>
-
-      <div class="toolbar-group">
-        <button onclick={zoomOut} title="Zoom out">−</button>
-        <span class="zoom-level">{Math.round(scale * 100)}%</span>
-        <button onclick={zoomIn} title="Zoom in">+</button>
-        <button onclick={fitWidth} title="Fit width">↔</button>
-      </div>
+      {/each}
     </div>
 
-    <div class="canvas-container" bind:this={canvasContainer}>
-      <canvas bind:this={canvas}></canvas>
+    <!-- PDF viewer area -->
+    <div class="viewer-area">
+      {#if activeLoaded?.loading}
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading {activeLoaded.fileName}...</p>
+        </div>
+      {:else if activeLoaded?.error}
+        <div class="error">
+          <p>Failed to load PDF</p>
+          <p class="error-detail">{activeLoaded.error}</p>
+          <button onclick={() => activeFileId && retryFetch(activeFileId)}>Retry</button>
+        </div>
+      {:else if activeLoaded?.doc}
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-group">
+            <button onclick={prevPage} disabled={currentPage <= 1} title="Previous page">◀</button>
+            <span class="page-info">
+              <input
+                type="number"
+                value={currentPage}
+                min="1"
+                max={totalPages}
+                onchange={handlePageInput}
+              />
+              / {totalPages}
+            </span>
+            <button onclick={nextPage} disabled={currentPage >= totalPages} title="Next page">▶</button>
+          </div>
+          <div class="toolbar-group">
+            <button onclick={zoomOut} title="Zoom out">−</button>
+            <span class="zoom-level">{Math.round(scale * 100)}%</span>
+            <button onclick={zoomIn} title="Zoom in">+</button>
+            <button onclick={fitWidth} title="Fit width">↔</button>
+          </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="canvas-container" bind:this={canvasContainer}>
+          <canvas bind:this={canvas}></canvas>
+        </div>
+      {:else}
+        <div class="empty-state">
+          <p>Select a file from the tabs above</p>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
@@ -241,28 +382,92 @@
     height: 100vh;
   }
 
-  .sidebar-header {
-    padding: 12px 16px;
+  /* File tabs */
+  .file-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
     background-color: #22262b;
     border-bottom: 1px solid #3c4043;
+    max-height: 200px;
+    overflow-y: auto;
     flex-shrink: 0;
   }
 
-  .sidebar-header h2 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #8ab4f8;
+  .file-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #2d3136;
+    border: 1px solid #3c4043;
+    border-radius: 6px;
+    color: #9aa0a6;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: left;
+    transition: all 0.2s;
   }
 
-  .file-name {
-    display: block;
-    font-size: 11px;
-    color: #9aa0a6;
-    margin-top: 4px;
-    white-space: nowrap;
+  .file-tab:hover {
+    background-color: #3c4043;
+    color: #e8eaed;
+  }
+
+  .file-tab.active {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+    color: #e8eaed;
+  }
+
+  .file-tab.loading {
+    opacity: 0.7;
+  }
+
+  .file-tab.error {
+    border-color: #f28b82;
+  }
+
+  .tab-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .tab-icon.error {
+    color: #f28b82;
+    font-weight: bold;
+  }
+
+  .tab-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #3c4043;
+    border-top-color: #8ab4f8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .tab-name {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tab-page {
+    font-size: 10px;
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  /* Viewer area */
+  .viewer-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .toolbar {
@@ -345,7 +550,8 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   }
 
-  .loading, .error, .empty-state {
+  /* States */
+  .loading, .error, .empty-state, .config-message {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -355,7 +561,7 @@
     text-align: center;
   }
 
-  .loading p, .error p, .empty-state p {
+  .loading p, .empty-state p, .config-message p {
     margin: 16px 0 0 0;
     color: #9aa0a6;
     font-size: 13px;
@@ -378,6 +584,17 @@
     color: #f28b82;
   }
 
+  .error p {
+    margin: 8px 0;
+  }
+
+  .error-detail {
+    font-size: 11px;
+    color: #9aa0a6;
+    max-width: 300px;
+    word-break: break-word;
+  }
+
   .error button {
     margin-top: 16px;
     padding: 8px 16px;
@@ -393,8 +610,14 @@
     background-color: #a8c7fa;
   }
 
-  .empty-state .icon {
+  .empty-state .icon, .config-message .icon {
     font-size: 48px;
     opacity: 0.5;
+  }
+
+  .config-message .hint {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 8px;
   }
 </style>

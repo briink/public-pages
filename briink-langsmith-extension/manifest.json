@@ -6,6 +6,7 @@
     "permissions": ["storage", "activeTab", "sidePanel"],
     "host_permissions": [
         "https://smith.langchain.com/*",
+        "https://*.smith.langchain.com/*",
         "https://api.briinkai.com/*",
         "https://*.briinkai.com/*"
     ],
@@ -23,7 +24,10 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://smith.langchain.com/*"],
+            "matches": [
+                "https://smith.langchain.com/*",
+                "https://*.smith.langchain.com/*"
+            ],
             "js": ["src/content/content.ts"],
             "css": ["public/content.css"],
             "run_at": "document_idle"
@@ -33,5 +37,14 @@
         "16": "public/icons/icon16.png",
         "48": "public/icons/icon48.png",
         "128": "public/icons/icon128.png"
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "matches": [
+                "https://smith.langchain.com/*",
+                "https://*.smith.langchain.com/*"
+            ],
+            "resources": ["src/sidebar/sidebar.html", "assets/*"]
+        }
+    ]
 }

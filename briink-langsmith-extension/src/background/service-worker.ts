@@ -55,11 +55,14 @@ async function fetchPdf(
 ): Promise<FetchPdfResponse> {
     try {
         // Construct the file download URL
-        // Adjust this endpoint based on actual Briink API documentation
-        let url = `${config.apiBaseUrl}/files/${fileId}/content`;
-        if (config.workspaceId) {
-            url = `${config.apiBaseUrl}/workspaces/${config.workspaceId}/files/${fileId}/content`;
+        // API: https://api.platform.briink.com/workspaces/{workspace_id}/files/{file_id}
+        if (!config.workspaceId) {
+            return {
+                success: false,
+                error: "Workspace ID is required. Please configure it in extension settings.",
+            };
         }
+        const url = `${config.apiBaseUrl}/workspaces/${config.workspaceId}/files/${fileId}`;
 
         const response = await fetch(url, {
             method: "GET",
