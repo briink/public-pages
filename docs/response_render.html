@@ -234,8 +234,10 @@
 
             table {
                 width: 100%;
+                min-width: max-content;
                 border-collapse: collapse;
                 font-size: 13px;
+                table-layout: fixed;
             }
 
             th,
@@ -243,6 +245,17 @@
                 padding: 10px 12px;
                 text-align: left;
                 border: 1px solid var(--border-color);
+                min-width: 180px;
+                max-width: 350px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+
+            th:first-child,
+            td:first-child {
+                min-width: 40px;
+                max-width: 60px;
+                width: 40px;
             }
 
             th {
@@ -677,6 +690,7 @@
             /* Split cell layout - value on left, reasoning on right */
             .split-cell {
                 display: flex;
+                flex-direction: column;
                 gap: 0;
                 min-height: 100%;
                 margin: -10px -12px;
@@ -686,20 +700,23 @@
                 flex: 1;
                 padding: 10px 12px;
                 background-color: rgba(138, 180, 248, 0.06);
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
 
             .split-cell-reasoning {
-                flex: 1;
-                padding: 10px 12px;
-                font-size: 12px;
+                padding: 8px 12px;
+                font-size: 11px;
                 color: var(--text-muted);
                 line-height: 1.4;
                 background-color: rgba(139, 92, 246, 0.06);
+                border-top: 1px solid var(--border-color);
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
 
-            .split-cell-reasoning:empty::before {
-                content: "—";
-                color: var(--border-color);
+            .split-cell-reasoning:empty {
+                display: none;
             }
 
             /* Inline reference bubbles */

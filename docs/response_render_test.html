@@ -102,6 +102,7 @@
                 <button onclick="sendEQAListAnswer()">EQA List Answer</button>
                 <button onclick="sendEQAWithChoices()">EQA + Choices</button>
                 <button onclick="sendDocumentsList()">Documents List</button>
+                <button onclick="sendLargeTable()">Large Table (4x15)</button>
                 <button onclick="clearRenderer()">Clear</button>
             </div>
 
@@ -602,6 +603,347 @@
                         },
                     ],
                 });
+            }
+
+            // Test: Large 4 rows x 15 columns table with mix of choice and long text
+            function sendLargeTable() {
+                const columns = [
+                    "Has Climate Target",
+                    "Target Types",
+                    "SBTi Validated",
+                    "Carbon Reduction Strategy",
+                    "Water Risk Level",
+                    "Water Management Approach",
+                    "Waste Diversion Rate",
+                    "Circular Economy Initiatives",
+                    "Renewable Energy %",
+                    "Energy Sources",
+                    "Board Oversight",
+                    "Governance Structure",
+                    "Stakeholder Types",
+                    "Engagement Methods",
+                    "Future Commitments",
+                ];
+
+                // Cell question definitions - mix of choice, multi_choice, and text
+                const cellQuestions = [
+                    {
+                        text: "Has the company set climate-related targets?",
+                        data_type: "choice",
+                        choices: [
+                            {
+                                label: "Yes",
+                                description: "Climate targets disclosed",
+                            },
+                            { label: "No", description: "No targets found" },
+                            {
+                                label: "Partial",
+                                description: "Some targets but incomplete",
+                            },
+                        ],
+                    },
+                    {
+                        text: "What types of climate targets? (Select all)",
+                        data_type: "multi_choice",
+                        choices: [
+                            {
+                                label: "Science-based",
+                                description: "SBTi aligned",
+                            },
+                            {
+                                label: "Net-zero",
+                                description: "Net-zero commitment",
+                            },
+                            {
+                                label: "Carbon neutral",
+                                description: "Carbon neutrality",
+                            },
+                            {
+                                label: "Intensity-based",
+                                description: "Per unit targets",
+                            },
+                        ],
+                    },
+                    {
+                        text: "Are targets validated by SBTi?",
+                        data_type: "choice",
+                        choices: [
+                            { label: "Yes", description: "SBTi validated" },
+                            { label: "No", description: "Not validated" },
+                            {
+                                label: "Committed",
+                                description: "Committed but pending",
+                            },
+                        ],
+                    },
+                    {
+                        text: "Describe the carbon reduction strategy",
+                        data_type: "text",
+                    },
+                    {
+                        text: "What is the water risk level?",
+                        data_type: "choice",
+                        choices: [
+                            {
+                                label: "High",
+                                description: "High water stress areas",
+                            },
+                            {
+                                label: "Medium",
+                                description: "Moderate water risk",
+                            },
+                            { label: "Low", description: "Low water stress" },
+                        ],
+                    },
+                    {
+                        text: "Describe water management approach",
+                        data_type: "text",
+                    },
+                    {
+                        text: "What is the waste diversion rate?",
+                        data_type: "choice",
+                        choices: [
+                            {
+                                label: ">90%",
+                                description: "Excellent diversion",
+                            },
+                            { label: "70-90%", description: "Good diversion" },
+                            {
+                                label: "50-70%",
+                                description: "Moderate diversion",
+                            },
+                            { label: "<50%", description: "Low diversion" },
+                        ],
+                    },
+                    {
+                        text: "Describe circular economy initiatives",
+                        data_type: "text",
+                    },
+                    {
+                        text: "What percentage of energy is renewable?",
+                        data_type: "choice",
+                        choices: [
+                            { label: "100%", description: "Fully renewable" },
+                            {
+                                label: "75-99%",
+                                description: "Mostly renewable",
+                            },
+                            {
+                                label: "50-74%",
+                                description: "Majority renewable",
+                            },
+                            {
+                                label: "<50%",
+                                description: "Minority renewable",
+                            },
+                        ],
+                    },
+                    {
+                        text: "What energy sources are used? (Select all)",
+                        data_type: "multi_choice",
+                        choices: [
+                            { label: "Solar", description: "Solar PV" },
+                            { label: "Wind", description: "Wind power" },
+                            { label: "Hydro", description: "Hydroelectric" },
+                            {
+                                label: "Natural Gas",
+                                description: "Natural gas",
+                            },
+                            { label: "Grid", description: "Grid electricity" },
+                        ],
+                    },
+                    {
+                        text: "Does the board oversee climate issues?",
+                        data_type: "choice",
+                        choices: [
+                            {
+                                label: "Yes",
+                                description: "Board-level oversight",
+                            },
+                            { label: "No", description: "No board oversight" },
+                            {
+                                label: "Committee",
+                                description: "Committee level only",
+                            },
+                        ],
+                    },
+                    {
+                        text: "Describe the governance structure for sustainability",
+                        data_type: "text",
+                    },
+                    {
+                        text: "Which stakeholders are engaged? (Select all)",
+                        data_type: "multi_choice",
+                        choices: [
+                            { label: "Investors", description: "Shareholders" },
+                            { label: "Employees", description: "Workforce" },
+                            {
+                                label: "Communities",
+                                description: "Local communities",
+                            },
+                            { label: "Suppliers", description: "Supply chain" },
+                            {
+                                label: "NGOs",
+                                description: "Environmental NGOs",
+                            },
+                        ],
+                    },
+                    {
+                        text: "Describe stakeholder engagement methods",
+                        data_type: "text",
+                    },
+                    {
+                        text: "Describe future sustainability commitments",
+                        data_type: "text",
+                    },
+                ];
+
+                // Row data - 4 companies with varying ESG maturity
+                const rows = [
+                    // Company Alpha - strong performer
+                    [
+                        "Yes",
+                        "- Science-based\n- Net-zero",
+                        "Yes",
+                        "The company has implemented a comprehensive carbon reduction program targeting a 45% decrease in Scope 1 and 2 emissions by 2030, with interim targets set for 2025 including fleet electrification, renewable energy procurement, and process efficiency improvements across all manufacturing facilities.",
+                        "Medium",
+                        "Water stewardship initiatives include closed-loop cooling systems achieving 85% water recycling, rainwater harvesting across 12 facilities, and partnerships with local watershed councils to restore riparian zones in water-stressed operating regions.",
+                        ">90%",
+                        "Circular economy initiatives have diverted 15,000 tonnes of materials from waste streams through product take-back programs, design-for-recyclability guidelines, and industrial symbiosis partnerships with neighboring facilities.",
+                        "75-99%",
+                        "- Solar\n- Wind\n- Grid",
+                        "Yes",
+                        "The board has established a dedicated Sustainability Committee comprising three independent directors who meet quarterly to review climate risks, approve emissions targets, and oversee implementation of the transition plan.",
+                        "- Investors\n- Employees\n- Communities\n- NGOs",
+                        "Stakeholder engagement includes quarterly investor calls on ESG topics, employee sustainability champions program, community advisory panels near major facilities, and collaborative projects with WWF and local environmental groups.",
+                        "By 2030, the company commits to achieving 100% renewable electricity, reducing Scope 3 emissions by 30%, and implementing nature-based solutions across 10,000 hectares of land in partnership with conservation organizations.",
+                    ],
+                    // Company Beta - moderate performer
+                    [
+                        "Yes",
+                        "- Net-zero\n- Intensity-based",
+                        "Committed",
+                        "Carbon strategy focuses on operational efficiency improvements and gradual transition to lower-carbon energy sources. The company has set an intensity-based target of 25% reduction per unit of production by 2028, with plans to develop absolute reduction targets.",
+                        "High",
+                        "Given operations in water-stressed regions, the company has prioritized water efficiency measures including leak detection systems, process water recycling, and drought contingency planning. Total water withdrawal reduced by 15% since 2020.",
+                        "70-90%",
+                        "Product packaging redesign has reduced plastic use by 40%. The company operates a refurbishment program for returned equipment and partners with recyclers to ensure proper end-of-life management.",
+                        "50-74%",
+                        "- Solar\n- Natural Gas\n- Grid",
+                        "Committee",
+                        "Sustainability is overseen by the Risk Committee which reviews environmental matters quarterly. Management has established a cross-functional sustainability working group that reports to the committee on progress against targets.",
+                        "- Investors\n- Employees\n- Suppliers",
+                        "Annual sustainability report published with GRI alignment. Employee engagement surveys include sustainability questions. Supplier code of conduct requires environmental compliance and reporting.",
+                        "The company plans to submit SBTi targets for validation by 2025, achieve 80% renewable electricity by 2028, and expand circular economy programs to cover 100% of product categories.",
+                    ],
+                    // Company Gamma - developing
+                    [
+                        "Partial",
+                        "- Intensity-based",
+                        "No",
+                        "The company has begun developing its climate strategy with initial focus on energy efficiency and emissions measurement. A cross-functional team is working to establish baseline emissions data and evaluate target-setting frameworks.",
+                        "Low",
+                        "Water management practices include standard compliance monitoring and basic efficiency measures. The company is evaluating opportunities for water recycling and has committed to conducting a water risk assessment.",
+                        "50-70%",
+                        "Recycling programs are in place at major facilities. The company is exploring circular economy opportunities and has piloted a product refurbishment program in one market.",
+                        "<50%",
+                        "- Natural Gas\n- Grid",
+                        "No",
+                        "Environmental matters are managed at the operational level with periodic reporting to senior management. The company is evaluating options for enhanced board-level oversight of sustainability issues.",
+                        "- Investors\n- Employees",
+                        "The company responds to investor ESG questionnaires and includes sustainability updates in annual reports. Employee communications cover environmental initiatives and energy-saving tips.",
+                        "Over the next three years, the company plans to complete comprehensive emissions baselining, establish science-aligned targets, and develop a formal climate transition roadmap.",
+                    ],
+                    // Company Delta - early stage
+                    [
+                        "No",
+                        "N/A",
+                        "No",
+                        "The company has not yet established formal climate targets but recognizes the importance of addressing climate change. Initial steps include energy audits at key facilities and preliminary discussions on sustainability strategy.",
+                        "Medium",
+                        "Standard water management practices are in place to ensure regulatory compliance. The company monitors water usage at major facilities and implements basic conservation measures.",
+                        "<50%",
+                        "Basic recycling programs exist at corporate offices. The company is beginning to explore circular economy concepts and their potential application to business operations.",
+                        "<50%",
+                        "- Grid",
+                        "No",
+                        "Sustainability is not currently a formal board agenda item. Environmental compliance is managed through standard operational processes and legal oversight.",
+                        "- Investors",
+                        "The company responds to basic ESG inquiries from investors and includes minimal environmental information in annual reporting. Plans to enhance disclosure are under consideration.",
+                        "The company is committed to developing a sustainability strategy over the coming year, including establishing baseline measurements and evaluating appropriate targets and initiatives.",
+                    ],
+                ];
+
+                // Build reasoning with references
+                const reasoning = rows.map((row, rowIdx) => {
+                    const companyNames = [
+                        "Company Alpha",
+                        "Company Beta",
+                        "Company Gamma",
+                        "Company Delta",
+                    ];
+                    return columns.map((col, colIdx) => {
+                        return `Analysis based on ${companyNames[rowIdx]}'s sustainability report [^${colIdx % 4}^]. Data verified against public disclosures and third-party assessments.`;
+                    });
+                });
+
+                // Source documents
+                const sourceDocuments = [
+                    {
+                        page_content:
+                            "Climate targets and carbon reduction strategies section covering emissions data, science-based targets, and transition planning across all portfolio companies.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 20,
+                            file_id: "sust-2023-0",
+                        },
+                    },
+                    {
+                        page_content:
+                            "Water and waste management section detailing water stewardship initiatives, circular economy programs, and waste diversion metrics.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 45,
+                            file_id: "sust-2023-1",
+                        },
+                    },
+                    {
+                        page_content:
+                            "Energy and renewables section covering electricity procurement, on-site generation, and progress toward renewable energy targets.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 70,
+                            file_id: "sust-2023-2",
+                        },
+                    },
+                    {
+                        page_content:
+                            "Governance and stakeholder engagement section covering board oversight, sustainability committees, and stakeholder engagement practices.",
+                        metadata: {
+                            file_name: "sustainability-report-2023.pdf",
+                            page: 95,
+                            file_id: "sust-2023-3",
+                        },
+                    },
+                ];
+
+                sendToRenderer(
+                    "output",
+                    {
+                        column_headers: columns,
+                        rows: rows,
+                        reasoning: reasoning,
+                        source_documents: sourceDocuments,
+                    },
+                    {
+                        inputs: {
+                            table_question: {
+                                text: "Comprehensive ESG assessment across climate, water, energy, governance and stakeholder dimensions",
+                                cell_questions: cellQuestions,
+                            },
+                        },
+                    },
+                );
             }
         </script>
     </body>

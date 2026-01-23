@@ -96,12 +96,21 @@
 
             <div class="controls">
                 <span class="section-label">Test Data:</span>
-                <button onclick="sendFullTableGradeResult()">Full Grade Result</button>
+                <button onclick="sendFullTableGradeResult()">
+                    Full Grade Result
+                </button>
                 <button onclick="sendCorrectGradeResult()">All Correct</button>
-                <button onclick="sendWithStructureIssues()">Structure Issues</button>
-                <button onclick="sendWithRefDataIssues()">Reference Issues</button>
+                <button onclick="sendWithStructureIssues()">
+                    Structure Issues
+                </button>
+                <button onclick="sendWithRefDataIssues()">
+                    Reference Issues
+                </button>
                 <button onclick="sendMixedGrades()">Mixed Grades</button>
-                <button onclick="sendNonTableGradeResult()">Non-TableGradeResult (JSON)</button>
+                <button onclick="sendLargeTable()">Large Table (4x15)</button>
+                <button onclick="sendNonTableGradeResult()">
+                    Non-TableGradeResult (JSON)
+                </button>
                 <button onclick="clearRenderer()">Clear</button>
             </div>
 
@@ -149,9 +158,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Both predicted and ground truth indicate the company has set climate targets."
+                                        rationale:
+                                            "Both predicted and ground truth indicate the company has set climate targets.",
                                     },
-                                    row_match_score: 0.95
+                                    row_match_score: 0.95,
                                 },
                                 {
                                     row_key: "ACME Corporation",
@@ -161,9 +171,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match on target year."
+                                        rationale:
+                                            "Exact match on target year.",
                                     },
-                                    row_match_score: 0.95
+                                    row_match_score: 0.95,
                                 },
                                 {
                                     row_key: "ACME Corporation",
@@ -173,9 +184,10 @@
                                     evaluation: {
                                         annotation: "FORMAT",
                                         subtype: "rounding_diff",
-                                        rationale: "Same value with minor formatting difference (decimal vs no decimal)."
+                                        rationale:
+                                            "Same value with minor formatting difference (decimal vs no decimal).",
                                     },
-                                    row_match_score: 0.95
+                                    row_match_score: 0.95,
                                 },
                                 {
                                     row_key: "ACME Corporation",
@@ -185,9 +197,10 @@
                                     evaluation: {
                                         annotation: "USEFUL",
                                         subtype: "partial_fact",
-                                        rationale: "Predicted correctly identified Scope 1 and 2, but missed Scope 3 coverage."
+                                        rationale:
+                                            "Predicted correctly identified Scope 1 and 2, but missed Scope 3 coverage.",
                                     },
-                                    row_match_score: 0.95
+                                    row_match_score: 0.95,
                                 },
                                 {
                                     row_key: "ACME Corporation",
@@ -197,9 +210,10 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "boolean_flip",
-                                        rationale: "Predicted indicates not verified, but ground truth shows SBTi verification."
+                                        rationale:
+                                            "Predicted indicates not verified, but ground truth shows SBTi verification.",
                                     },
-                                    row_match_score: 0.95
+                                    row_match_score: 0.95,
                                 },
                                 {
                                     row_key: "ACME Corporation",
@@ -209,11 +223,12 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "incorrect_detail",
-                                        rationale: "Base year is incorrectly stated as 2019 when it should be 2020."
+                                        rationale:
+                                            "Base year is incorrectly stated as 2019 when it should be 2020.",
                                     },
-                                    row_match_score: 0.95
-                                }
-                            ]
+                                    row_match_score: 0.95,
+                                },
+                            ],
                         },
                         {
                             row_key: "TechCorp Inc",
@@ -229,9 +244,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "TechCorp Inc",
@@ -241,9 +256,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match on net-zero target year."
+                                        rationale:
+                                            "Exact match on net-zero target year.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "TechCorp Inc",
@@ -253,9 +269,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Both indicate net-zero commitment."
+                                        rationale:
+                                            "Both indicate net-zero commitment.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "TechCorp Inc",
@@ -265,9 +282,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Full scope coverage correctly identified."
+                                        rationale:
+                                            "Full scope coverage correctly identified.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "TechCorp Inc",
@@ -277,9 +295,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "SBTi verification status correct."
+                                        rationale:
+                                            "SBTi verification status correct.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "TechCorp Inc",
@@ -289,11 +308,12 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Base year correctly identified."
+                                        rationale:
+                                            "Base year correctly identified.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
+                                    row_match_score: 1.0,
+                                },
+                            ],
                         },
                         {
                             row_key: "GreenEnergy Ltd",
@@ -309,9 +329,10 @@
                                     evaluation: {
                                         annotation: "NOT_FOUND",
                                         subtype: "gen_claims_missing",
-                                        rationale: "Predicted claims information is not disclosed, but ground truth shows targets exist."
+                                        rationale:
+                                            "Predicted claims information is not disclosed, but ground truth shows targets exist.",
                                     },
-                                    row_match_score: 0.85
+                                    row_match_score: 0.85,
                                 },
                                 {
                                     row_key: "GreenEnergy Ltd",
@@ -321,9 +342,10 @@
                                     evaluation: {
                                         annotation: "NOT_FOUND",
                                         subtype: "gen_empty",
-                                        rationale: "No target year provided when one exists in reference."
+                                        rationale:
+                                            "No target year provided when one exists in reference.",
                                     },
-                                    row_match_score: 0.85
+                                    row_match_score: 0.85,
                                 },
                                 {
                                     row_key: "GreenEnergy Ltd",
@@ -333,9 +355,10 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "value_low",
-                                        rationale: "Predicted reduction target is lower than actual (40% vs 45%)."
+                                        rationale:
+                                            "Predicted reduction target is lower than actual (40% vs 45%).",
                                     },
-                                    row_match_score: 0.85
+                                    row_match_score: 0.85,
                                 },
                                 {
                                     row_key: "GreenEnergy Ltd",
@@ -345,9 +368,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Scope coverage correctly identified."
+                                        rationale:
+                                            "Scope coverage correctly identified.",
                                     },
-                                    row_match_score: 0.85
+                                    row_match_score: 0.85,
                                 },
                                 {
                                     row_key: "GreenEnergy Ltd",
@@ -357,9 +381,10 @@
                                     evaluation: {
                                         annotation: "USEFUL",
                                         subtype: "partial_fact",
-                                        rationale: "Pending status is close but not exactly matching 'No' verification."
+                                        rationale:
+                                            "Pending status is close but not exactly matching 'No' verification.",
                                     },
-                                    row_match_score: 0.85
+                                    row_match_score: 0.85,
                                 },
                                 {
                                     row_key: "GreenEnergy Ltd",
@@ -369,12 +394,12 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Base year matches."
+                                        rationale: "Base year matches.",
                                     },
-                                    row_match_score: 0.85
-                                }
-                            ]
-                        }
+                                    row_match_score: 0.85,
+                                },
+                            ],
+                        },
                     ],
                     missing_rows: ["OldEnergy Corp"],
                     extra_rows: ["NewStartup Inc"],
@@ -384,7 +409,8 @@
                     structure_score: 1.0,
                     reference_data_score: 1.0,
                     annotation: "USEFUL",
-                    comment: "Cell score: 0.778 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 1 |\n Extra rows: 1"
+                    comment:
+                        "Cell score: 0.778 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 1 |\n Extra rows: 1",
                 });
             }
 
@@ -407,9 +433,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match on board size."
+                                        rationale: "Exact match on board size.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Company A",
@@ -419,9 +445,10 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match on independent directors count."
+                                        rationale:
+                                            "Exact match on independent directors count.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Company A",
@@ -431,11 +458,12 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "contextual_equiv",
-                                        rationale: "Same value with minor rounding difference in percentage display."
+                                        rationale:
+                                            "Same value with minor rounding difference in percentage display.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
+                                    row_match_score: 1.0,
+                                },
+                            ],
                         },
                         {
                             row_key: "Company B",
@@ -451,9 +479,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Company B",
@@ -463,9 +491,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Company B",
@@ -475,12 +503,12 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
-                        }
+                                    row_match_score: 1.0,
+                                },
+                            ],
+                        },
                     ],
                     missing_rows: [],
                     extra_rows: [],
@@ -490,7 +518,8 @@
                     structure_score: 1.0,
                     reference_data_score: 1.0,
                     annotation: "CORRECT",
-                    comment: "Cell score: 1.000 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0"
+                    comment:
+                        "Cell score: 1.000 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0",
                 });
             }
 
@@ -513,9 +542,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "2023",
@@ -525,9 +554,10 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "value_high",
-                                        rationale: "Predicted value significantly higher than ground truth."
+                                        rationale:
+                                            "Predicted value significantly higher than ground truth.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "2023",
@@ -537,12 +567,13 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "magnitude_off",
-                                        rationale: "Total is incorrect due to Scope 2 error propagation."
+                                        rationale:
+                                            "Total is incorrect due to Scope 2 error propagation.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
-                        }
+                                    row_match_score: 1.0,
+                                },
+                            ],
+                        },
                     ],
                     missing_rows: [],
                     extra_rows: [],
@@ -550,20 +581,23 @@
                         {
                             annotation: "TABLE_CONSISTENT_ISSUE",
                             subtype: "column_inconsistent",
-                            rationale: "The Total Emissions column should equal Scope 1 + Scope 2, but the predicted values are internally inconsistent (1,250 + 3,500 = 4,750 but doesn't match expected total logic)."
+                            rationale:
+                                "The Total Emissions column should equal Scope 1 + Scope 2, but the predicted values are internally inconsistent (1,250 + 3,500 = 4,750 but doesn't match expected total logic).",
                         },
                         {
                             annotation: "TABLE_CONSISTENT_ISSUE",
                             subtype: "column_dependency_violated",
-                            rationale: "Scope 2 emissions appear inflated which cascades to incorrect totals."
-                        }
+                            rationale:
+                                "Scope 2 emissions appear inflated which cascades to incorrect totals.",
+                        },
                     ],
                     reference_data_issues: [],
                     accuracy_score: 0.33,
                     structure_score: 0.49,
                     reference_data_score: 1.0,
                     annotation: "NOT_MATCH",
-                    comment: "Cell score: 0.333 |\n Structure issues: 2 |\n Structure score: 0.490 |\n Missing rows: 0 |\n Extra rows: 0"
+                    comment:
+                        "Cell score: 0.333 |\n Structure issues: 2 |\n Structure score: 0.490 |\n Missing rows: 0 |\n Extra rows: 0",
                 });
             }
 
@@ -586,9 +620,10 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "magnitude_off",
-                                        rationale: "Predicted value is 10x higher than reference."
+                                        rationale:
+                                            "Predicted value is 10x higher than reference.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Facility A",
@@ -598,12 +633,12 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match on discharge."
+                                        rationale: "Exact match on discharge.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
-                        }
+                                    row_match_score: 1.0,
+                                },
+                            ],
+                        },
                     ],
                     missing_rows: [],
                     extra_rows: [],
@@ -612,15 +647,17 @@
                         {
                             annotation: "REFERENCE_QUALITY",
                             subtype: "check_reference_data_quality",
-                            rationale: "Reference data shows water withdrawal (5,000 m3) less than water discharge (45,000 m3), which is physically impossible without external water input. The reference data appears to have an error in the withdrawal figure."
-                        }
+                            rationale:
+                                "Reference data shows water withdrawal (5,000 m3) less than water discharge (45,000 m3), which is physically impossible without external water input. The reference data appears to have an error in the withdrawal figure.",
+                        },
                     ],
                     accuracy_score: 0.5,
                     structure_score: 1.0,
                     reference_data_score: 0.5,
                     check_reference_data_quality: true,
                     annotation: "USEFUL",
-                    comment: "Cell score: 0.500 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0"
+                    comment:
+                        "Cell score: 0.500 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0",
                 });
             }
 
@@ -643,9 +680,9 @@
                                     evaluation: {
                                         annotation: "CORRECT",
                                         subtype: "fact_exact",
-                                        rationale: "Exact match."
+                                        rationale: "Exact match.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Supplier 1",
@@ -655,9 +692,10 @@
                                     evaluation: {
                                         annotation: "NOT_MATCH",
                                         subtype: "wrong_choice",
-                                        rationale: "Predicted Medium risk but reference indicates High risk."
+                                        rationale:
+                                            "Predicted Medium risk but reference indicates High risk.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Supplier 1",
@@ -667,9 +705,10 @@
                                     evaluation: {
                                         annotation: "FORMAT",
                                         subtype: "repr_diff",
-                                        rationale: "Same date, different representation format."
+                                        rationale:
+                                            "Same date, different representation format.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Supplier 1",
@@ -679,9 +718,10 @@
                                     evaluation: {
                                         annotation: "USEFUL",
                                         subtype: "partial_fact",
-                                        rationale: "Correctly identified ISO 14001 but missed SA8000 certification."
+                                        rationale:
+                                            "Correctly identified ISO 14001 but missed SA8000 certification.",
                                     },
-                                    row_match_score: 1.0
+                                    row_match_score: 1.0,
                                 },
                                 {
                                     row_key: "Supplier 1",
@@ -691,12 +731,13 @@
                                     evaluation: {
                                         annotation: "MISSING",
                                         subtype: "gen_invents_value",
-                                        rationale: "Predicted provides specific employee count when reference indicates not disclosed."
+                                        rationale:
+                                            "Predicted provides specific employee count when reference indicates not disclosed.",
                                     },
-                                    row_match_score: 1.0
-                                }
-                            ]
-                        }
+                                    row_match_score: 1.0,
+                                },
+                            ],
+                        },
                     ],
                     missing_rows: ["Supplier 2", "Supplier 3"],
                     extra_rows: [],
@@ -706,19 +747,160 @@
                     structure_score: 1.0,
                     reference_data_score: 1.0,
                     annotation: "USEFUL",
-                    comment: "Cell score: 0.600 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 2 |\n Extra rows: 0"
+                    comment:
+                        "Cell score: 0.600 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 2 |\n Extra rows: 0",
                 });
             }
 
             // Test: Non-TableGradeResult (should show JSON fallback)
             function sendNonTableGradeResult() {
                 sendToRenderer("output", {
-                    response_text: "This is a regular EQA response, not a TableGradeResult.",
+                    response_text:
+                        "This is a regular EQA response, not a TableGradeResult.",
                     choices: [
                         { label: "Yes", is_selected: true },
-                        { label: "No", is_selected: false }
+                        { label: "No", is_selected: false },
                     ],
-                    reasoning: "Based on the analysis of the provided documents..."
+                    reasoning:
+                        "Based on the analysis of the provided documents...",
+                });
+            }
+
+            // Test: Large 4x15 table with long text answers
+            function sendLargeTable() {
+                const columns = [
+                    "Environmental Impact Assessment",
+                    "Risk Mitigation Strategy",
+                    "Compliance Status",
+                    "Future Commitments",
+                ];
+
+                const rowKeys = [
+                    "Carbon Emissions Reduction",
+                    "Water Management",
+                    "Waste Disposal",
+                    "Biodiversity Protection",
+                    "Energy Efficiency",
+                    "Supply Chain Sustainability",
+                    "Renewable Energy Adoption",
+                    "Chemical Management",
+                    "Land Use Practices",
+                    "Air Quality Control",
+                    "Circular Economy Initiatives",
+                    "Climate Adaptation",
+                    "Stakeholder Engagement",
+                    "Environmental Training",
+                    "Monitoring & Reporting",
+                ];
+
+                const longTexts = {
+                    predictions: [
+                        "The company has implemented a comprehensive carbon reduction program targeting a 45% decrease in Scope 1 and 2 emissions by 2030, with interim targets set for 2025 including fleet electrification and renewable energy procurement.",
+                        "Water stewardship initiatives include closed-loop cooling systems, rainwater harvesting across 12 facilities, and partnerships with local watershed councils to restore riparian zones in operating regions.",
+                        "Zero-waste-to-landfill certification achieved at 8 of 15 manufacturing sites, with remaining facilities on track for certification by Q4 2025 through enhanced recycling and composting programs.",
+                        "Biodiversity action plans developed for all sites within 5km of protected areas, including habitat corridors, native species planting, and removal of invasive species on company-owned land.",
+                        "Energy intensity reduced by 23% since baseline year through LED retrofits, building automation systems, and process optimization using AI-driven predictive maintenance.",
+                        "Supplier sustainability assessments conducted for 85% of Tier 1 suppliers, with corrective action plans in place for those not meeting environmental standards.",
+                        "Renewable energy accounts for 62% of total electricity consumption, achieved through a combination of on-site solar installations and long-term power purchase agreements.",
+                        "Chemical management system upgraded to track all substances of concern, with phase-out plans for PFAS and other persistent pollutants in manufacturing processes.",
+                        "Sustainable land use practices include no-deforestation commitments, soil health monitoring, and regenerative agriculture pilots with farming partners.",
+                        "Air emission controls exceed regulatory requirements with continuous monitoring systems and quarterly third-party verification audits at all major facilities.",
+                        "Circular economy initiatives have diverted 15,000 tonnes of materials from waste streams through product take-back programs and design-for-recyclability guidelines.",
+                        "Climate adaptation strategies include flood resilience assessments, drought contingency plans, and infrastructure upgrades to withstand extreme weather events.",
+                        "Stakeholder engagement on environmental issues includes quarterly community forums, annual sustainability surveys, and partnerships with environmental NGOs.",
+                        "Environmental training programs reach 95% of employees annually, covering topics from waste segregation to energy conservation and spill response procedures.",
+                        "Environmental monitoring includes real-time sensors for water quality, air emissions, and energy consumption, with data published in quarterly sustainability dashboards.",
+                    ],
+                    groundTruths: [
+                        "The organization commits to reducing carbon emissions by 50% by 2030 relative to a 2019 baseline, focusing primarily on operational efficiency improvements and transitioning to renewable energy sources across all facilities.",
+                        "Water management strategy encompasses water recycling systems achieving 80% reuse rates, zero liquid discharge at critical facilities, and community water access programs in water-stressed regions.",
+                        "Waste management approach follows circular economy principles with 95% diversion from landfill, including industrial symbiosis partnerships and advanced materials recovery facilities.",
+                        "Biodiversity commitments include net positive impact targets, ecosystem restoration projects covering 500 hectares, and integration of biodiversity metrics into investment decisions.",
+                        "Energy efficiency improvements target 30% reduction in energy intensity by 2025 through smart building technologies, process electrification, and waste heat recovery systems.",
+                        "Supply chain environmental standards require all suppliers to have certified environmental management systems and disclose their carbon footprints by 2024.",
+                        "Renewable energy target of 100% by 2030 through direct investments in solar and wind projects, virtual power purchase agreements, and green tariff programs.",
+                        "Chemical safety protocols align with GHS standards, with complete elimination of substances of very high concern and transition to green chemistry alternatives.",
+                        "Land stewardship program includes certified sustainable forestry practices, wetland conservation easements, and brownfield redevelopment initiatives.",
+                        "Air quality management systems utilize best available control technologies, with voluntary commitments to reduce NOx and SOx emissions 40% below permitted levels.",
+                        "Product lifecycle assessments inform circular design principles, with targets for 100% recyclable packaging and 50% recycled content in products by 2027.",
+                        "Climate resilience planning incorporates scenario analysis, natural capital assessments, and infrastructure investments aligned with TCFD recommendations.",
+                        "Environmental stakeholder engagement strategy includes materiality assessments, grievance mechanisms, and collaborative initiatives with industry peers and regulators.",
+                        "Capacity building programs provide specialized environmental training for operations staff, with certification requirements for personnel in high-impact roles.",
+                        "Integrated environmental reporting follows GRI Standards and includes third-party assurance, with real-time performance tracking against science-based targets.",
+                    ],
+                };
+
+                const annotations = [
+                    "CORRECT",
+                    "FORMAT",
+                    "USEFUL",
+                    "NOT_MATCH",
+                    "NOT_FOUND",
+                    "MISSING",
+                ];
+                const subtypes = {
+                    CORRECT: ["fact_exact", "fact_present", "contextual_equiv"],
+                    FORMAT: ["unit_diff", "scale_diff", "rounding_diff"],
+                    USEFUL: [
+                        "partial_fact",
+                        "partial_text",
+                        "methodology_diff",
+                    ],
+                    NOT_MATCH: [
+                        "wrong_choice",
+                        "incorrect_detail",
+                        "missing_key_element",
+                    ],
+                    NOT_FOUND: ["gen_claims_missing", "gen_empty"],
+                    MISSING: ["gen_invents_value", "gen_invents_text"],
+                };
+
+                const rowGrades = rowKeys.map((rowKey, rowIdx) => {
+                    const cellGrades = columns.map((col, colIdx) => {
+                        const annotation =
+                            annotations[(rowIdx + colIdx) % annotations.length];
+                        const subtypeList = subtypes[annotation];
+                        const subtype =
+                            subtypeList[
+                                Math.floor(Math.random() * subtypeList.length)
+                            ];
+
+                        return {
+                            row_key: rowKey,
+                            column_header: col,
+                            predicted_value: longTexts.predictions[rowIdx],
+                            ground_truth_value: longTexts.groundTruths[rowIdx],
+                            evaluation: {
+                                annotation: annotation,
+                                subtype: subtype,
+                                rationale: `Evaluation for ${rowKey} - ${col}: The predicted response ${annotation === "CORRECT" ? "accurately captures" : "differs from"} the ground truth in terms of ${subtype.replace("_", " ")}. Detailed analysis shows ${annotation === "CORRECT" ? "alignment" : "discrepancies"} in the specific metrics and commitments mentioned.`,
+                            },
+                            row_match_score: 0.9 + Math.random() * 0.1,
+                        };
+                    });
+
+                    return {
+                        row_key: rowKey,
+                        predicted_row_key: rowKey,
+                        row_match_score: 0.95,
+                        row_accuracy: 0.5 + Math.random() * 0.5,
+                        cell_grades: cellGrades,
+                    };
+                });
+
+                sendToRenderer("output", {
+                    table_question_id: "q_environmental_assessment_2024",
+                    row_grades: rowGrades,
+                    missing_rows: [],
+                    extra_rows: [],
+                    structure_issues: [],
+                    reference_data_issues: [],
+                    accuracy_score: 0.72,
+                    structure_score: 1.0,
+                    reference_data_score: 1.0,
+                    annotation: "USEFUL",
+                    comment:
+                        "Cell score: 0.720 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0",
                 });
             }
         </script>
