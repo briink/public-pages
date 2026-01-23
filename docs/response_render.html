@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Briink EQA Custom Renderer</title>
+        <script src="https://cdn.jsdelivr.net/npm/renderjson@1.4.0/renderjson.min.js"></script>
         <style>
             :root {
                 --bg-color: #1a1d21;
@@ -411,13 +412,50 @@
                 border-radius: 6px;
                 padding: 12px;
                 overflow-x: auto;
-            }
-
-            .json-fallback pre {
                 font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
                 font-size: 12px;
-                white-space: pre-wrap;
-                word-wrap: break-word;
+                line-height: 1.6;
+            }
+
+            /* renderjson overrides for dark theme */
+            .json-fallback .renderjson a {
+                text-decoration: none;
+                color: var(--accent-color);
+            }
+
+            .json-fallback .renderjson a:hover {
+                color: #a8c7fa;
+            }
+
+            .json-fallback .disclosure {
+                color: var(--accent-color);
+                font-weight: bold;
+                cursor: pointer;
+                padding: 0 4px;
+            }
+
+            .json-fallback .string {
+                color: #f9a825; /* orange/amber for strings */
+            }
+
+            .json-fallback .number {
+                color: #8ab4f8; /* blue for numbers */
+            }
+
+            .json-fallback .boolean {
+                color: #c4b5fd; /* purple for booleans */
+            }
+
+            .json-fallback .key {
+                color: #4fc3f7; /* cyan for keys */
+            }
+
+            .json-fallback .null {
+                color: var(--text-muted);
+            }
+
+            .json-fallback .syntax {
+                color: var(--text-color);
             }
 
             .debug-panel {
@@ -1944,23 +1982,43 @@
             function renderGenericJson(output, reference, meta) {
                 let html = "";
 
+                // Configure renderjson
+                renderjson.set_show_to_level(1);
+                renderjson.set_icons("+", "-");
+
                 if (output) {
+                    const outputContainerId = `json-output-${Math.random().toString(36).substr(2, 9)}`;
+                    setTimeout(() => {
+                        const container =
+                            document.getElementById(outputContainerId);
+                        if (container)
+                            container.appendChild(renderjson(output));
+                    }, 0);
+
                     html += `
                     <div class="panel">
                         <div class="panel-header"><span>Output</span><span class="badge badge-output">output</span></div>
                         <div class="panel-content">
-                            <div class="json-fallback"><pre>${escapeHtml(JSON.stringify(output, null, 2))}</pre></div>
+                            <div class="json-fallback" id="${outputContainerId}"></div>
                         </div>
                     </div>
                 `;
                 }
 
                 if (reference) {
+                    const refContainerId = `json-ref-${Math.random().toString(36).substr(2, 9)}`;
+                    setTimeout(() => {
+                        const container =
+                            document.getElementById(refContainerId);
+                        if (container)
+                            container.appendChild(renderjson(reference));
+                    }, 0);
+
                     html += `
                     <div class="panel">
                         <div class="panel-header"><span>Reference</span><span class="badge badge-reference">reference</span></div>
                         <div class="panel-content">
-                            <div class="json-fallback"><pre>${escapeHtml(JSON.stringify(reference, null, 2))}</pre></div>
+                            <div class="json-fallback" id="${refContainerId}"></div>
                         </div>
                     </div>
                 `;
