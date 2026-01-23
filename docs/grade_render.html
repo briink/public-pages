@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Briink Table Grade Result Renderer</title>
+        <script src="https://cdn.jsdelivr.net/npm/renderjson@1.4.0/renderjson.min.js"></script>
         <style>
             :root {
                 --bg-color: #1a1d21;
@@ -15,13 +16,21 @@
 
                 /* Annotation category colors */
                 --correct-color: #81c995;
+                --correct-bg: rgba(129, 201, 149, 0.15);
                 --format-color: #8ab4f8;
+                --format-bg: rgba(138, 180, 248, 0.15);
                 --useful-color: #fdd663;
+                --useful-bg: rgba(253, 214, 99, 0.15);
                 --not-found-color: #f9a825;
+                --not-found-bg: rgba(249, 168, 37, 0.15);
                 --missing-color: #f28b82;
+                --missing-bg: rgba(242, 139, 130, 0.15);
                 --not-match-color: #f28b82;
+                --not-match-bg: rgba(242, 139, 130, 0.15);
                 --reference-quality-color: #c4b5fd;
+                --reference-quality-bg: rgba(196, 181, 253, 0.15);
                 --table-issue-color: #f48fb1;
+                --table-issue-bg: rgba(244, 143, 177, 0.15);
             }
 
             * {
@@ -78,22 +87,107 @@
 
             /* Badges */
             .badge {
-                font-size: 11px;
-                padding: 3px 10px;
-                border-radius: 12px;
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 10px;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.3px;
+                cursor: default;
+                position: relative;
             }
 
-            .badge-correct { background-color: var(--correct-color); color: #000; }
-            .badge-format { background-color: var(--format-color); color: #000; }
-            .badge-useful { background-color: var(--useful-color); color: #000; }
-            .badge-not-found { background-color: var(--not-found-color); color: #000; }
-            .badge-missing { background-color: var(--missing-color); color: #000; }
-            .badge-not-match { background-color: var(--not-match-color); color: #000; }
-            .badge-reference-quality { background-color: var(--reference-quality-color); color: #000; }
-            .badge-table-issue { background-color: var(--table-issue-color); color: #000; }
+            .badge-large {
+                font-size: 11px;
+                padding: 3px 10px;
+                border-radius: 12px;
+            }
+
+            .badge-correct {
+                background-color: var(--correct-color);
+                color: #000;
+            }
+            .badge-format {
+                background-color: var(--format-color);
+                color: #000;
+            }
+            .badge-useful {
+                background-color: var(--useful-color);
+                color: #000;
+            }
+            .badge-not-found {
+                background-color: var(--not-found-color);
+                color: #000;
+            }
+            .badge-missing {
+                background-color: var(--missing-color);
+                color: #000;
+            }
+            .badge-not-match {
+                background-color: var(--not-match-color);
+                color: #000;
+            }
+            .badge-reference-quality {
+                background-color: var(--reference-quality-color);
+                color: #000;
+            }
+            .badge-table-issue {
+                background-color: var(--table-issue-color);
+                color: #000;
+            }
+
+            /* Tooltip */
+            .tooltip-container {
+                position: relative;
+                display: inline-block;
+            }
+
+            .tooltip {
+                visibility: hidden;
+                opacity: 0;
+                position: absolute;
+                bottom: calc(100% + 8px);
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #1a1d21;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 10px 12px;
+                width: 280px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                transition:
+                    opacity 0.2s,
+                    visibility 0.2s;
+            }
+
+            .tooltip::after {
+                content: "";
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 6px solid transparent;
+                border-top-color: var(--border-color);
+            }
+
+            .tooltip-container:hover .tooltip {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            .tooltip-subtype {
+                font-family: monospace;
+                font-size: 11px;
+                color: var(--accent-color);
+                margin-bottom: 6px;
+            }
+
+            .tooltip-rationale {
+                font-size: 12px;
+                color: var(--text-color);
+                line-height: 1.4;
+            }
 
             /* Stats Summary */
             .stats-summary {
@@ -118,10 +212,18 @@
                 font-weight: 700;
             }
 
-            .stat-value.good { color: var(--correct-color); }
-            .stat-value.warning { color: var(--useful-color); }
-            .stat-value.bad { color: var(--not-match-color); }
-            .stat-value.neutral { color: var(--text-muted); }
+            .stat-value.good {
+                color: var(--correct-color);
+            }
+            .stat-value.warning {
+                color: var(--useful-color);
+            }
+            .stat-value.bad {
+                color: var(--not-match-color);
+            }
+            .stat-value.neutral {
+                color: var(--text-muted);
+            }
 
             .stat-label {
                 font-size: 11px;
@@ -189,236 +291,142 @@
                 display: block;
             }
 
-            /* Collapsible Sections */
-            .collapsible {
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                margin-bottom: 12px;
-                overflow: hidden;
+            /* Grade Table */
+            .table-container {
+                overflow-x: auto;
             }
 
-            .collapsible:last-child {
-                margin-bottom: 0;
-            }
-
-            .collapsible-header {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 14px;
-                background-color: #2d3136;
-                cursor: pointer;
-                user-select: none;
-                transition: background-color 0.2s;
-            }
-
-            .collapsible-header:hover {
-                background-color: #363b41;
-            }
-
-            .collapsible-toggle {
-                color: var(--text-muted);
-                font-size: 12px;
-                transition: transform 0.2s;
-                flex-shrink: 0;
-            }
-
-            .collapsible.expanded .collapsible-toggle {
-                transform: rotate(180deg);
-            }
-
-            .collapsible-title {
-                flex: 1;
-                font-weight: 500;
+            .grade-table {
+                width: 100%;
+                border-collapse: collapse;
                 font-size: 13px;
             }
 
-            .collapsible-meta {
-                font-size: 12px;
-                color: var(--text-muted);
+            .grade-table th,
+            .grade-table td {
+                border: 1px solid var(--border-color);
+                padding: 0;
+                vertical-align: top;
             }
 
-            .collapsible-content {
-                display: none;
-                padding: 14px;
-                background-color: var(--card-bg);
-                border-top: 1px solid var(--border-color);
-            }
-
-            .collapsible.expanded .collapsible-content {
-                display: block;
-            }
-
-            /* Row Grade */
-            .row-grade-header {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex: 1;
-            }
-
-            .row-key {
+            .grade-table th {
+                background-color: #2d3136;
                 font-weight: 600;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                color: var(--accent-color);
+                padding: 10px 12px;
+                text-align: left;
+            }
+
+            .grade-table th.row-key-header {
+                width: 150px;
+                min-width: 150px;
+            }
+
+            /* Row key cell */
+            .row-key-cell {
+                background-color: #2d3136;
+                padding: 10px 12px;
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .row-key-name {
                 color: var(--text-color);
-            }
-
-            .row-accuracy {
-                font-size: 12px;
-                padding: 2px 8px;
-                border-radius: 4px;
-                background-color: rgba(138, 180, 248, 0.15);
-                color: var(--accent-color);
-            }
-
-            /* Cell Grid */
-            .cell-grid {
-                display: grid;
-                gap: 12px;
-            }
-
-            .cell-card {
-                border: 1px solid var(--border-color);
-                border-radius: 6px;
-                overflow: hidden;
-            }
-
-            .cell-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 8px 12px;
-                background-color: #2d3136;
-                border-bottom: 1px solid var(--border-color);
-            }
-
-            .cell-column-name {
-                font-weight: 600;
-                font-size: 12px;
-                color: var(--accent-color);
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-            }
-
-            .cell-badge {
-                font-size: 10px;
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-weight: 600;
-            }
-
-            .cell-body {
-                padding: 12px;
-            }
-
-            .cell-values {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-                margin-bottom: 12px;
-            }
-
-            .cell-value-block {
-                background-color: #2d3136;
-                border-radius: 4px;
-                padding: 8px 10px;
-            }
-
-            .cell-value-label {
-                font-size: 10px;
-                text-transform: uppercase;
-                color: var(--text-muted);
                 margin-bottom: 4px;
-                letter-spacing: 0.3px;
             }
 
-            .cell-value-text {
-                font-size: 13px;
+            .row-key-meta {
+                font-size: 10px;
+                color: var(--text-muted);
+                font-weight: 400;
+            }
+
+            /* Grade cell with split layout */
+            .grade-cell {
+                display: flex;
+                flex-direction: column;
+                min-height: 80px;
+            }
+
+            .grade-cell-values {
+                display: flex;
+                flex: 1;
+            }
+
+            .grade-cell-predicted,
+            .grade-cell-gt {
+                flex: 1;
+                padding: 8px 10px;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .grade-cell-predicted {
+                background-color: rgba(138, 180, 248, 0.08);
+                border-right: 1px dashed var(--border-color);
+            }
+
+            .grade-cell-gt {
+                background-color: rgba(129, 201, 149, 0.08);
+            }
+
+            .grade-cell-label {
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                margin-bottom: 4px;
+                font-weight: 600;
+            }
+
+            .grade-cell-predicted .grade-cell-label {
+                color: var(--accent-color);
+            }
+
+            .grade-cell-gt .grade-cell-label {
+                color: var(--correct-color);
+            }
+
+            .grade-cell-value {
+                color: var(--text-color);
                 white-space: pre-wrap;
                 word-break: break-word;
             }
 
-            .cell-value-block.predicted .cell-value-label {
-                color: var(--accent-color);
-            }
-
-            .cell-value-block.ground-truth .cell-value-label {
-                color: var(--correct-color);
-            }
-
-            /* Cell Details (expandable) */
-            .cell-details-toggle {
+            .grade-cell-badge {
                 display: flex;
-                align-items: center;
-                gap: 6px;
-                padding: 6px 10px;
+                justify-content: center;
+                padding: 6px;
+                border-bottom: 1px solid var(--border-color);
                 background-color: #2d3136;
-                border: 1px solid var(--border-color);
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 11px;
-                color: var(--text-muted);
-                transition: all 0.2s;
             }
 
-            .cell-details-toggle:hover {
-                background-color: #363b41;
-                color: var(--text-color);
+            /* Cell background colors based on annotation */
+            .grade-cell.cell-correct .grade-cell-badge {
+                background-color: var(--correct-bg);
             }
-
-            .cell-details-toggle .toggle-icon {
-                transition: transform 0.2s;
+            .grade-cell.cell-format .grade-cell-badge {
+                background-color: var(--format-bg);
             }
-
-            .cell-card.details-expanded .cell-details-toggle .toggle-icon {
-                transform: rotate(180deg);
+            .grade-cell.cell-useful .grade-cell-badge {
+                background-color: var(--useful-bg);
             }
-
-            .cell-details {
-                display: none;
-                margin-top: 12px;
-                padding: 12px;
-                background-color: #2d3136;
-                border-radius: 6px;
+            .grade-cell.cell-not-found .grade-cell-badge {
+                background-color: var(--not-found-bg);
             }
-
-            .cell-card.details-expanded .cell-details {
-                display: block;
+            .grade-cell.cell-missing .grade-cell-badge {
+                background-color: var(--missing-bg);
             }
-
-            .detail-item {
-                margin-bottom: 12px;
+            .grade-cell.cell-not-match .grade-cell-badge {
+                background-color: var(--not-match-bg);
             }
-
-            .detail-item:last-child {
-                margin-bottom: 0;
+            .grade-cell.cell-reference-quality .grade-cell-badge {
+                background-color: var(--reference-quality-bg);
             }
-
-            .detail-label {
-                font-size: 11px;
-                text-transform: uppercase;
-                color: var(--text-muted);
-                margin-bottom: 4px;
-                letter-spacing: 0.3px;
-            }
-
-            .detail-value {
-                font-size: 13px;
-                line-height: 1.5;
-            }
-
-            .detail-value.subtype {
-                font-family: monospace;
-                background-color: rgba(138, 180, 248, 0.1);
-                padding: 2px 6px;
-                border-radius: 3px;
-                display: inline-block;
-            }
-
-            .detail-value.rationale {
-                background-color: #1a1d21;
-                padding: 10px;
-                border-radius: 4px;
-                border-left: 3px solid var(--accent-color);
+            .grade-cell.cell-table-issue .grade-cell-badge {
+                background-color: var(--table-issue-bg);
             }
 
             /* Evaluation Output (for issues) */
@@ -466,6 +474,23 @@
                 display: block;
             }
 
+            .detail-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+                letter-spacing: 0.3px;
+            }
+
+            .detail-value.rationale {
+                font-size: 13px;
+                background-color: #1a1d21;
+                padding: 10px;
+                border-radius: 4px;
+                border-left: 3px solid var(--accent-color);
+                line-height: 1.5;
+            }
+
             /* Missing/Extra Rows */
             .row-list {
                 display: flex;
@@ -491,6 +516,10 @@
                 color: var(--useful-color);
             }
 
+            .row-list-section {
+                margin-top: 16px;
+            }
+
             /* Empty State */
             .empty-state {
                 text-align: center;
@@ -499,19 +528,56 @@
                 font-size: 13px;
             }
 
-            /* JSON Fallback */
+            /* JSON Fallback - renderjson styling */
             .json-fallback {
                 background-color: #2d3136;
                 border-radius: 6px;
                 padding: 12px;
                 overflow-x: auto;
-            }
-
-            .json-fallback pre {
                 font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
                 font-size: 12px;
-                white-space: pre-wrap;
-                word-wrap: break-word;
+                line-height: 1.6;
+            }
+
+            /* renderjson overrides for dark theme */
+            .json-fallback .renderjson a {
+                text-decoration: none;
+                color: var(--accent-color);
+            }
+
+            .json-fallback .renderjson a:hover {
+                color: #a8c7fa;
+            }
+
+            .json-fallback .disclosure {
+                color: var(--accent-color);
+                font-weight: bold;
+                cursor: pointer;
+                padding: 0 4px;
+            }
+
+            .json-fallback .string {
+                color: #f9a825; /* orange/amber for strings */
+            }
+
+            .json-fallback .number {
+                color: #8ab4f8; /* blue for numbers */
+            }
+
+            .json-fallback .boolean {
+                color: #c4b5fd; /* purple for booleans */
+            }
+
+            .json-fallback .key {
+                color: #4fc3f7; /* cyan for keys */
+            }
+
+            .json-fallback .null {
+                color: var(--text-muted);
+            }
+
+            .json-fallback .syntax {
+                color: var(--text-color);
             }
 
             /* Loading */
@@ -532,11 +598,6 @@
                 white-space: pre-wrap;
                 border-left: 3px solid var(--accent-color);
             }
-
-            /* Score color helpers */
-            .score-good { color: var(--correct-color); }
-            .score-warning { color: var(--useful-color); }
-            .score-bad { color: var(--not-match-color); }
         </style>
     </head>
     <body>
@@ -547,15 +608,12 @@
         </div>
 
         <script>
-            // Store received data
             let outputData = null;
             let referenceData = null;
             let metadata = null;
 
-            // Listen for messages from LangSmith
             window.addEventListener("message", (event) => {
                 const message = event.data;
-
                 if (!message || typeof message !== "object") return;
 
                 if (message.type === "output") {
@@ -570,10 +628,7 @@
 
             function renderContent() {
                 const contentContainer = document.getElementById("content");
-
-                if (!outputData && !referenceData) {
-                    return;
-                }
+                if (!outputData && !referenceData) return;
 
                 const data = outputData || referenceData;
 
@@ -609,7 +664,7 @@
                                 <span>Table Grade Result</span>
                                 ${data.table_question_id ? `<span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(data.table_question_id)}</span>` : ""}
                             </div>
-                            <span class="badge ${badgeClass}">${escapeHtml(annotation)}</span>
+                            <span class="badge badge-large ${badgeClass}">${escapeHtml(annotation)}</span>
                         </div>
 
                         <div class="panel-content">
@@ -617,13 +672,13 @@
                         </div>
 
                         <div class="tabs">
-                            <button class="tab active" data-tab="rows">Rows<span class="tab-count">${rowGrades.length}</span></button>
+                            <button class="tab active" data-tab="grades">Cell Grades</button>
                             <button class="tab" data-tab="structure">Structure Issues<span class="tab-count">${structureIssues.length}</span></button>
                             <button class="tab" data-tab="reference">Reference Issues<span class="tab-count">${refDataIssues.length}</span></button>
                         </div>
 
-                        <div class="tab-content active" data-tab-content="rows">
-                            ${renderRowGrades(rowGrades)}
+                        <div class="tab-content active" data-tab-content="grades">
+                            ${renderGradeTable(rowGrades)}
                             ${renderMissingExtraRows(missingRows, extraRows)}
                         </div>
 
@@ -640,7 +695,13 @@
                 `;
             }
 
-            function renderStatsSummary(accuracy, structure, refData, missing, extra) {
+            function renderStatsSummary(
+                accuracy,
+                structure,
+                refData,
+                missing,
+                extra,
+            ) {
                 return `
                     <div class="stats-summary">
                         <div class="stat-item">
@@ -656,105 +717,131 @@
                             <span class="stat-label">Ref Data</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-value ${missing > 0 ? 'warning' : 'neutral'}">${missing}</span>
+                            <span class="stat-value ${missing > 0 ? "warning" : "neutral"}">${missing}</span>
                             <span class="stat-label">Missing</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-value ${extra > 0 ? 'warning' : 'neutral'}">${extra}</span>
+                            <span class="stat-value ${extra > 0 ? "warning" : "neutral"}">${extra}</span>
                             <span class="stat-label">Extra</span>
                         </div>
                     </div>
                 `;
             }
 
-            function renderRowGrades(rowGrades) {
+            function renderGradeTable(rowGrades) {
                 if (!rowGrades || rowGrades.length === 0) {
                     return '<div class="empty-state">No row grades available</div>';
                 }
 
-                return rowGrades.map((row, idx) => renderRowGrade(row, idx)).join("");
+                // Get all unique column headers
+                const columns = getUniqueColumns(rowGrades);
+                if (columns.length === 0) {
+                    return '<div class="empty-state">No cell grades available</div>';
+                }
+
+                let html =
+                    '<div class="table-container"><table class="grade-table">';
+
+                // Header row
+                html += "<thead><tr>";
+                html += '<th class="row-key-header">Row</th>';
+                columns.forEach((col) => {
+                    html += `<th>${escapeHtml(col)}</th>`;
+                });
+                html += "</tr></thead>";
+
+                // Data rows
+                html += "<tbody>";
+                rowGrades.forEach((row) => {
+                    html += "<tr>";
+
+                    // Row key cell
+                    html += `<td class="row-key-cell">
+                        <div class="row-key-name">${escapeHtml(row.row_key || "Unknown")}</div>
+                        <div class="row-key-meta">${(row.row_accuracy * 100).toFixed(0)}% acc</div>
+                    </td>`;
+
+                    // Cell grades
+                    columns.forEach((col) => {
+                        const cellGrade = findCellGrade(row.cell_grades, col);
+                        if (cellGrade) {
+                            html += renderGradeCell(cellGrade);
+                        } else {
+                            html +=
+                                '<td><div class="grade-cell"><div class="empty-state" style="padding: 16px;">-</div></div></td>';
+                        }
+                    });
+
+                    html += "</tr>";
+                });
+                html += "</tbody></table></div>";
+
+                return html;
             }
 
-            function renderRowGrade(row, idx) {
-                const rowAccuracy = row.row_accuracy ?? 0;
-                const cellGrades = row.cell_grades || [];
-
-                return `
-                    <div class="collapsible expanded" data-row-idx="${idx}">
-                        <div class="collapsible-header" onclick="toggleCollapsible(this)">
-                            <span class="collapsible-toggle">&#9660;</span>
-                            <div class="row-grade-header">
-                                <span class="row-key">${escapeHtml(row.row_key || `Row ${idx + 1}`)}</span>
-                                ${row.predicted_row_key && row.predicted_row_key !== row.row_key ?
-                                    `<span style="font-size: 11px; color: var(--text-muted);">matched: ${escapeHtml(row.predicted_row_key)}</span>` : ""}
-                            </div>
-                            <span class="row-accuracy">${(rowAccuracy * 100).toFixed(0)}% accuracy</span>
-                            ${row.row_match_score !== undefined ?
-                                `<span class="collapsible-meta">match: ${(row.row_match_score * 100).toFixed(0)}%</span>` : ""}
-                        </div>
-                        <div class="collapsible-content">
-                            <div class="cell-grid">
-                                ${cellGrades.map((cell, cellIdx) => renderCellGrade(cell, idx, cellIdx)).join("")}
-                            </div>
-                        </div>
-                    </div>
-                `;
+            function getUniqueColumns(rowGrades) {
+                const columns = new Set();
+                rowGrades.forEach((row) => {
+                    (row.cell_grades || []).forEach((cell) => {
+                        if (cell.column_header) {
+                            columns.add(cell.column_header);
+                        }
+                    });
+                });
+                return Array.from(columns);
             }
 
-            function renderCellGrade(cell, rowIdx, cellIdx) {
+            function findCellGrade(cellGrades, columnHeader) {
+                if (!cellGrades) return null;
+                return cellGrades.find((c) => c.column_header === columnHeader);
+            }
+
+            function renderGradeCell(cell) {
                 const eval_ = cell.evaluation || {};
                 const annotation = eval_.annotation || "UNKNOWN";
                 const badgeClass = getAnnotationBadgeClass(annotation);
+                const cellClass = getCellClass(annotation);
                 const subtype = eval_.subtype || "";
-                const rationale = eval_.rationale || "";
+                const rationale = eval_.rationale || "No rationale provided";
 
                 return `
-                    <div class="cell-card" data-row="${rowIdx}" data-cell="${cellIdx}">
-                        <div class="cell-header">
-                            <span class="cell-column-name">${escapeHtml(cell.column_header || `Column ${cellIdx + 1}`)}</span>
-                            <span class="cell-badge ${badgeClass}">${escapeHtml(annotation)}</span>
-                        </div>
-                        <div class="cell-body">
-                            <div class="cell-values">
-                                <div class="cell-value-block predicted">
-                                    <div class="cell-value-label">Predicted</div>
-                                    <div class="cell-value-text">${escapeHtml(cell.predicted_value || "-")}</div>
-                                </div>
-                                <div class="cell-value-block ground-truth">
-                                    <div class="cell-value-label">Ground Truth</div>
-                                    <div class="cell-value-text">${escapeHtml(cell.ground_truth_value || "-")}</div>
+                    <td>
+                        <div class="grade-cell ${cellClass}">
+                            <div class="grade-cell-badge">
+                                <div class="tooltip-container">
+                                    <span class="badge ${badgeClass}">${escapeHtml(annotation)}</span>
+                                    <div class="tooltip">
+                                        <div class="tooltip-subtype">${escapeHtml(subtype)}</div>
+                                        <div class="tooltip-rationale">${escapeHtml(rationale)}</div>
+                                    </div>
                                 </div>
                             </div>
-                            <button class="cell-details-toggle" onclick="toggleCellDetails(this)">
-                                <span class="toggle-icon">&#9660;</span>
-                                <span>Details</span>
-                            </button>
-                            <div class="cell-details">
-                                <div class="detail-item">
-                                    <div class="detail-label">Subtype</div>
-                                    <div class="detail-value subtype">${escapeHtml(subtype)}</div>
+                            <div class="grade-cell-values">
+                                <div class="grade-cell-predicted">
+                                    <div class="grade-cell-label">Pred</div>
+                                    <div class="grade-cell-value">${escapeHtml(cell.predicted_value || "-")}</div>
                                 </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Rationale</div>
-                                    <div class="detail-value rationale">${escapeHtml(rationale)}</div>
+                                <div class="grade-cell-gt">
+                                    <div class="grade-cell-label">GT</div>
+                                    <div class="grade-cell-value">${escapeHtml(cell.ground_truth_value || "-")}</div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </td>
                 `;
             }
 
             function renderMissingExtraRows(missing, extra) {
                 if (missing.length === 0 && extra.length === 0) return "";
 
-                let html = '<div style="margin-top: 16px;">';
+                let html = '<div class="row-list-section">';
 
                 if (missing.length > 0) {
                     html += `
                         <div style="margin-bottom: 12px;">
                             <div class="detail-label" style="margin-bottom: 8px;">Missing Rows (in GT but not in prediction)</div>
                             <div class="row-list">
-                                ${missing.map(r => `<span class="row-list-item missing">${escapeHtml(r)}</span>`).join("")}
+                                ${missing.map((r) => `<span class="row-list-item missing">${escapeHtml(r)}</span>`).join("")}
                             </div>
                         </div>
                     `;
@@ -765,13 +852,13 @@
                         <div>
                             <div class="detail-label" style="margin-bottom: 8px;">Extra Rows (in prediction but not in GT)</div>
                             <div class="row-list">
-                                ${extra.map(r => `<span class="row-list-item extra">${escapeHtml(r)}</span>`).join("")}
+                                ${extra.map((r) => `<span class="row-list-item extra">${escapeHtml(r)}</span>`).join("")}
                             </div>
                         </div>
                     `;
                 }
 
-                html += '</div>';
+                html += "</div>";
                 return html;
             }
 
@@ -780,7 +867,9 @@
                     return `<div class="empty-state">${escapeHtml(emptyMessage)}</div>`;
                 }
 
-                return outputs.map((output, idx) => renderEvaluationOutput(output, idx)).join("");
+                return outputs
+                    .map((output, idx) => renderEvaluationOutput(output, idx))
+                    .join("");
             }
 
             function renderEvaluationOutput(output, idx) {
@@ -797,16 +886,28 @@
                             <span style="font-size: 12px; color: var(--text-muted); font-family: monospace;">${escapeHtml(subtype)}</span>
                         </div>
                         <div class="eval-output-content">
-                            <div class="detail-item">
-                                <div class="detail-label">Rationale</div>
-                                <div class="detail-value rationale">${escapeHtml(rationale)}</div>
-                            </div>
+                            <div class="detail-label">Rationale</div>
+                            <div class="detail-value rationale">${escapeHtml(rationale)}</div>
                         </div>
                     </div>
                 `;
             }
 
             function renderJsonFallback(data) {
+                // Configure renderjson
+                renderjson.set_show_to_level(1);
+                renderjson.set_icons("+", "-");
+
+                const containerId = `json-container-${Math.random().toString(36).substr(2, 9)}`;
+
+                // We need to render after DOM is ready, so use setTimeout
+                setTimeout(() => {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        container.appendChild(renderjson(data));
+                    }
+                }, 0);
+
                 return `
                     <div class="panel">
                         <div class="panel-header">
@@ -814,9 +915,7 @@
                             <span class="badge" style="background-color: var(--text-muted); color: #000;">Fallback</span>
                         </div>
                         <div class="panel-content">
-                            <div class="json-fallback">
-                                <pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>
-                            </div>
+                            <div class="json-fallback" id="${containerId}"></div>
                         </div>
                     </div>
                 `;
@@ -825,16 +924,30 @@
             // Helper functions
             function getAnnotationBadgeClass(annotation) {
                 const mapping = {
-                    "CORRECT": "badge-correct",
-                    "FORMAT": "badge-format",
-                    "USEFUL": "badge-useful",
-                    "NOT_FOUND": "badge-not-found",
-                    "MISSING": "badge-missing",
-                    "NOT_MATCH": "badge-not-match",
-                    "REFERENCE_QUALITY": "badge-reference-quality",
-                    "TABLE_CONSISTENT_ISSUE": "badge-table-issue"
+                    CORRECT: "badge-correct",
+                    FORMAT: "badge-format",
+                    USEFUL: "badge-useful",
+                    NOT_FOUND: "badge-not-found",
+                    MISSING: "badge-missing",
+                    NOT_MATCH: "badge-not-match",
+                    REFERENCE_QUALITY: "badge-reference-quality",
+                    TABLE_CONSISTENT_ISSUE: "badge-table-issue",
                 };
                 return mapping[annotation] || "badge-not-match";
+            }
+
+            function getCellClass(annotation) {
+                const mapping = {
+                    CORRECT: "cell-correct",
+                    FORMAT: "cell-format",
+                    USEFUL: "cell-useful",
+                    NOT_FOUND: "cell-not-found",
+                    MISSING: "cell-missing",
+                    NOT_MATCH: "cell-not-match",
+                    REFERENCE_QUALITY: "cell-reference-quality",
+                    TABLE_CONSISTENT_ISSUE: "cell-table-issue",
+                };
+                return mapping[annotation] || "cell-not-match";
             }
 
             function getScoreClass(score) {
@@ -850,34 +963,28 @@
                 return div.innerHTML;
             }
 
-            // Event handlers
-            function toggleCollapsible(header) {
-                const collapsible = header.closest(".collapsible");
-                collapsible.classList.toggle("expanded");
-            }
-
-            function toggleCellDetails(button) {
-                const card = button.closest(".cell-card");
-                card.classList.toggle("details-expanded");
-            }
-
             function toggleEvalOutput(header) {
                 const output = header.closest(".eval-output");
                 output.classList.toggle("expanded");
             }
 
             function attachEventListeners() {
-                // Tab switching
-                document.querySelectorAll(".tab").forEach(tab => {
-                    tab.addEventListener("click", function() {
+                document.querySelectorAll(".tab").forEach((tab) => {
+                    tab.addEventListener("click", function () {
                         const tabName = this.getAttribute("data-tab");
                         const panel = this.closest(".panel");
 
-                        panel.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                        panel
+                            .querySelectorAll(".tab")
+                            .forEach((t) => t.classList.remove("active"));
                         this.classList.add("active");
 
-                        panel.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-                        panel.querySelector(`[data-tab-content="${tabName}"]`).classList.add("active");
+                        panel
+                            .querySelectorAll(".tab-content")
+                            .forEach((c) => c.classList.remove("active"));
+                        panel
+                            .querySelector(`[data-tab-content="${tabName}"]`)
+                            .classList.add("active");
                     });
                 });
             }
