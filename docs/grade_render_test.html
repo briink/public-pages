@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Grade Renderer Test Page</title>
+        <style>
+            :root {
+                --bg-color: #1a1d21;
+                --card-bg: #22262b;
+                --text-color: #e8eaed;
+                --text-muted: #9aa0a6;
+                --border-color: #3c4043;
+                --accent-color: #8ab4f8;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                padding: 16px;
+                line-height: 1.5;
+            }
+
+            .test-container {
+                max-width: 1600px;
+                margin: 0 auto;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 16px;
+                color: var(--accent-color);
+            }
+
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+                padding: 12px;
+                background-color: var(--card-bg);
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+            }
+
+            .controls button {
+                padding: 8px 16px;
+                background-color: var(--accent-color);
+                color: #1a1d21;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .controls button:hover {
+                background-color: #a8c7fa;
+            }
+
+            .controls button.active {
+                background-color: #81c995;
+            }
+
+            .section-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                margin-right: 12px;
+                letter-spacing: 0.5px;
+                display: flex;
+                align-items: center;
+            }
+
+            .renderer-frame {
+                width: 100%;
+                height: 800px;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                background-color: var(--bg-color);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="test-container">
+            <h1>Grade Renderer Test Page</h1>
+
+            <div class="controls">
+                <span class="section-label">Test Data:</span>
+                <button onclick="sendFullTableGradeResult()">Full Grade Result</button>
+                <button onclick="sendCorrectGradeResult()">All Correct</button>
+                <button onclick="sendWithStructureIssues()">Structure Issues</button>
+                <button onclick="sendWithRefDataIssues()">Reference Issues</button>
+                <button onclick="sendMixedGrades()">Mixed Grades</button>
+                <button onclick="sendNonTableGradeResult()">Non-TableGradeResult (JSON)</button>
+                <button onclick="clearRenderer()">Clear</button>
+            </div>
+
+            <iframe
+                id="renderer"
+                class="renderer-frame"
+                src="grade_render.html"
+            ></iframe>
+        </div>
+
+        <script>
+            const rendererFrame = document.getElementById("renderer");
+
+            function sendToRenderer(type, data, metadata = {}) {
+                rendererFrame.contentWindow.postMessage(
+                    {
+                        type: type,
+                        data: data,
+                        metadata: metadata,
+                    },
+                    "*",
+                );
+            }
+
+            function clearRenderer() {
+                rendererFrame.src = rendererFrame.src; // Reload iframe
+            }
+
+            // Test: Full TableGradeResult with various cell grades
+            function sendFullTableGradeResult() {
+                sendToRenderer("output", {
+                    table_question_id: "q_climate_targets_2024",
+                    row_grades: [
+                        {
+                            row_key: "ACME Corporation",
+                            predicted_row_key: "ACME Corp",
+                            row_match_score: 0.95,
+                            row_accuracy: 0.833,
+                            cell_grades: [
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Has Climate Target",
+                                    predicted_value: "Yes",
+                                    ground_truth_value: "Yes",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Both predicted and ground truth indicate the company has set climate targets."
+                                    },
+                                    row_match_score: 0.95
+                                },
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Target Year",
+                                    predicted_value: "2030",
+                                    ground_truth_value: "2030",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match on target year."
+                                    },
+                                    row_match_score: 0.95
+                                },
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Reduction Target",
+                                    predicted_value: "50%",
+                                    ground_truth_value: "50.0%",
+                                    evaluation: {
+                                        annotation: "FORMAT",
+                                        subtype: "rounding_diff",
+                                        rationale: "Same value with minor formatting difference (decimal vs no decimal)."
+                                    },
+                                    row_match_score: 0.95
+                                },
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Scope Coverage",
+                                    predicted_value: "Scope 1, Scope 2",
+                                    ground_truth_value: "Scope 1, 2, 3",
+                                    evaluation: {
+                                        annotation: "USEFUL",
+                                        subtype: "partial_fact",
+                                        rationale: "Predicted correctly identified Scope 1 and 2, but missed Scope 3 coverage."
+                                    },
+                                    row_match_score: 0.95
+                                },
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Verified by SBTi",
+                                    predicted_value: "No",
+                                    ground_truth_value: "Yes",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "boolean_flip",
+                                        rationale: "Predicted indicates not verified, but ground truth shows SBTi verification."
+                                    },
+                                    row_match_score: 0.95
+                                },
+                                {
+                                    row_key: "ACME Corporation",
+                                    column_header: "Base Year",
+                                    predicted_value: "2019",
+                                    ground_truth_value: "2020",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "incorrect_detail",
+                                        rationale: "Base year is incorrectly stated as 2019 when it should be 2020."
+                                    },
+                                    row_match_score: 0.95
+                                }
+                            ]
+                        },
+                        {
+                            row_key: "TechCorp Inc",
+                            predicted_row_key: "TechCorp Inc",
+                            row_match_score: 1.0,
+                            row_accuracy: 1.0,
+                            cell_grades: [
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Has Climate Target",
+                                    predicted_value: "Yes",
+                                    ground_truth_value: "Yes",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Target Year",
+                                    predicted_value: "2050",
+                                    ground_truth_value: "2050",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match on net-zero target year."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Reduction Target",
+                                    predicted_value: "Net Zero",
+                                    ground_truth_value: "Net Zero",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Both indicate net-zero commitment."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Scope Coverage",
+                                    predicted_value: "Scope 1, 2, 3",
+                                    ground_truth_value: "Scope 1, 2, 3",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Full scope coverage correctly identified."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Verified by SBTi",
+                                    predicted_value: "Yes",
+                                    ground_truth_value: "Yes",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "SBTi verification status correct."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "TechCorp Inc",
+                                    column_header: "Base Year",
+                                    predicted_value: "2021",
+                                    ground_truth_value: "2021",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Base year correctly identified."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        },
+                        {
+                            row_key: "GreenEnergy Ltd",
+                            predicted_row_key: "GreenEnergy Limited",
+                            row_match_score: 0.85,
+                            row_accuracy: 0.5,
+                            cell_grades: [
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Has Climate Target",
+                                    predicted_value: "Not disclosed",
+                                    ground_truth_value: "Yes",
+                                    evaluation: {
+                                        annotation: "NOT_FOUND",
+                                        subtype: "gen_claims_missing",
+                                        rationale: "Predicted claims information is not disclosed, but ground truth shows targets exist."
+                                    },
+                                    row_match_score: 0.85
+                                },
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Target Year",
+                                    predicted_value: "-",
+                                    ground_truth_value: "2040",
+                                    evaluation: {
+                                        annotation: "NOT_FOUND",
+                                        subtype: "gen_empty",
+                                        rationale: "No target year provided when one exists in reference."
+                                    },
+                                    row_match_score: 0.85
+                                },
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Reduction Target",
+                                    predicted_value: "40%",
+                                    ground_truth_value: "45%",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "value_low",
+                                        rationale: "Predicted reduction target is lower than actual (40% vs 45%)."
+                                    },
+                                    row_match_score: 0.85
+                                },
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Scope Coverage",
+                                    predicted_value: "Scope 1, 2",
+                                    ground_truth_value: "Scope 1, 2",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Scope coverage correctly identified."
+                                    },
+                                    row_match_score: 0.85
+                                },
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Verified by SBTi",
+                                    predicted_value: "Pending",
+                                    ground_truth_value: "No",
+                                    evaluation: {
+                                        annotation: "USEFUL",
+                                        subtype: "partial_fact",
+                                        rationale: "Pending status is close but not exactly matching 'No' verification."
+                                    },
+                                    row_match_score: 0.85
+                                },
+                                {
+                                    row_key: "GreenEnergy Ltd",
+                                    column_header: "Base Year",
+                                    predicted_value: "2022",
+                                    ground_truth_value: "2022",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Base year matches."
+                                    },
+                                    row_match_score: 0.85
+                                }
+                            ]
+                        }
+                    ],
+                    missing_rows: ["OldEnergy Corp"],
+                    extra_rows: ["NewStartup Inc"],
+                    structure_issues: [],
+                    reference_data_issues: [],
+                    accuracy_score: 0.778,
+                    structure_score: 1.0,
+                    reference_data_score: 1.0,
+                    annotation: "USEFUL",
+                    comment: "Cell score: 0.778 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 1 |\n Extra rows: 1"
+                });
+            }
+
+            // Test: All cells correct
+            function sendCorrectGradeResult() {
+                sendToRenderer("output", {
+                    table_question_id: "q_board_composition",
+                    row_grades: [
+                        {
+                            row_key: "Company A",
+                            predicted_row_key: "Company A",
+                            row_match_score: 1.0,
+                            row_accuracy: 1.0,
+                            cell_grades: [
+                                {
+                                    row_key: "Company A",
+                                    column_header: "Board Size",
+                                    predicted_value: "12",
+                                    ground_truth_value: "12",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match on board size."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Company A",
+                                    column_header: "Independent Directors",
+                                    predicted_value: "8",
+                                    ground_truth_value: "8",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match on independent directors count."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Company A",
+                                    column_header: "Female Directors",
+                                    predicted_value: "4 (33%)",
+                                    ground_truth_value: "4 (33.3%)",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "contextual_equiv",
+                                        rationale: "Same value with minor rounding difference in percentage display."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        },
+                        {
+                            row_key: "Company B",
+                            predicted_row_key: "Company B",
+                            row_match_score: 1.0,
+                            row_accuracy: 1.0,
+                            cell_grades: [
+                                {
+                                    row_key: "Company B",
+                                    column_header: "Board Size",
+                                    predicted_value: "9",
+                                    ground_truth_value: "9",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Company B",
+                                    column_header: "Independent Directors",
+                                    predicted_value: "6",
+                                    ground_truth_value: "6",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Company B",
+                                    column_header: "Female Directors",
+                                    predicted_value: "3 (33%)",
+                                    ground_truth_value: "3 (33%)",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        }
+                    ],
+                    missing_rows: [],
+                    extra_rows: [],
+                    structure_issues: [],
+                    reference_data_issues: [],
+                    accuracy_score: 1.0,
+                    structure_score: 1.0,
+                    reference_data_score: 1.0,
+                    annotation: "CORRECT",
+                    comment: "Cell score: 1.000 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0"
+                });
+            }
+
+            // Test: With structure issues
+            function sendWithStructureIssues() {
+                sendToRenderer("output", {
+                    table_question_id: "q_emissions_data",
+                    row_grades: [
+                        {
+                            row_key: "2023",
+                            predicted_row_key: "2023",
+                            row_match_score: 1.0,
+                            row_accuracy: 0.67,
+                            cell_grades: [
+                                {
+                                    row_key: "2023",
+                                    column_header: "Scope 1 Emissions",
+                                    predicted_value: "1,250 tCO2e",
+                                    ground_truth_value: "1,250 tCO2e",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "2023",
+                                    column_header: "Scope 2 Emissions",
+                                    predicted_value: "3,500 tCO2e",
+                                    ground_truth_value: "2,800 tCO2e",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "value_high",
+                                        rationale: "Predicted value significantly higher than ground truth."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "2023",
+                                    column_header: "Total Emissions",
+                                    predicted_value: "4,750 tCO2e",
+                                    ground_truth_value: "4,050 tCO2e",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "magnitude_off",
+                                        rationale: "Total is incorrect due to Scope 2 error propagation."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        }
+                    ],
+                    missing_rows: [],
+                    extra_rows: [],
+                    structure_issues: [
+                        {
+                            annotation: "TABLE_CONSISTENT_ISSUE",
+                            subtype: "column_inconsistent",
+                            rationale: "The Total Emissions column should equal Scope 1 + Scope 2, but the predicted values are internally inconsistent (1,250 + 3,500 = 4,750 but doesn't match expected total logic)."
+                        },
+                        {
+                            annotation: "TABLE_CONSISTENT_ISSUE",
+                            subtype: "column_dependency_violated",
+                            rationale: "Scope 2 emissions appear inflated which cascades to incorrect totals."
+                        }
+                    ],
+                    reference_data_issues: [],
+                    accuracy_score: 0.33,
+                    structure_score: 0.49,
+                    reference_data_score: 1.0,
+                    annotation: "NOT_MATCH",
+                    comment: "Cell score: 0.333 |\n Structure issues: 2 |\n Structure score: 0.490 |\n Missing rows: 0 |\n Extra rows: 0"
+                });
+            }
+
+            // Test: With reference data quality issues
+            function sendWithRefDataIssues() {
+                sendToRenderer("output", {
+                    table_question_id: "q_water_usage",
+                    row_grades: [
+                        {
+                            row_key: "Facility A",
+                            predicted_row_key: "Facility A",
+                            row_match_score: 1.0,
+                            row_accuracy: 0.5,
+                            cell_grades: [
+                                {
+                                    row_key: "Facility A",
+                                    column_header: "Water Withdrawal",
+                                    predicted_value: "50,000 m3",
+                                    ground_truth_value: "5,000 m3",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "magnitude_off",
+                                        rationale: "Predicted value is 10x higher than reference."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Facility A",
+                                    column_header: "Water Discharge",
+                                    predicted_value: "45,000 m3",
+                                    ground_truth_value: "45,000 m3",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match on discharge."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        }
+                    ],
+                    missing_rows: [],
+                    extra_rows: [],
+                    structure_issues: [],
+                    reference_data_issues: [
+                        {
+                            annotation: "REFERENCE_QUALITY",
+                            subtype: "check_reference_data_quality",
+                            rationale: "Reference data shows water withdrawal (5,000 m3) less than water discharge (45,000 m3), which is physically impossible without external water input. The reference data appears to have an error in the withdrawal figure."
+                        }
+                    ],
+                    accuracy_score: 0.5,
+                    structure_score: 1.0,
+                    reference_data_score: 0.5,
+                    check_reference_data_quality: true,
+                    annotation: "USEFUL",
+                    comment: "Cell score: 0.500 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 0 |\n Extra rows: 0"
+                });
+            }
+
+            // Test: Mixed grades with various annotation types
+            function sendMixedGrades() {
+                sendToRenderer("output", {
+                    table_question_id: "q_supply_chain",
+                    row_grades: [
+                        {
+                            row_key: "Supplier 1",
+                            predicted_row_key: "Supplier 1",
+                            row_match_score: 1.0,
+                            row_accuracy: 0.6,
+                            cell_grades: [
+                                {
+                                    row_key: "Supplier 1",
+                                    column_header: "Country",
+                                    predicted_value: "China",
+                                    ground_truth_value: "China",
+                                    evaluation: {
+                                        annotation: "CORRECT",
+                                        subtype: "fact_exact",
+                                        rationale: "Exact match."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Supplier 1",
+                                    column_header: "Risk Level",
+                                    predicted_value: "Medium",
+                                    ground_truth_value: "High",
+                                    evaluation: {
+                                        annotation: "NOT_MATCH",
+                                        subtype: "wrong_choice",
+                                        rationale: "Predicted Medium risk but reference indicates High risk."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Supplier 1",
+                                    column_header: "Audit Date",
+                                    predicted_value: "2023-06",
+                                    ground_truth_value: "June 2023",
+                                    evaluation: {
+                                        annotation: "FORMAT",
+                                        subtype: "repr_diff",
+                                        rationale: "Same date, different representation format."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Supplier 1",
+                                    column_header: "Certifications",
+                                    predicted_value: "ISO 14001",
+                                    ground_truth_value: "ISO 14001, SA8000",
+                                    evaluation: {
+                                        annotation: "USEFUL",
+                                        subtype: "partial_fact",
+                                        rationale: "Correctly identified ISO 14001 but missed SA8000 certification."
+                                    },
+                                    row_match_score: 1.0
+                                },
+                                {
+                                    row_key: "Supplier 1",
+                                    column_header: "Employees",
+                                    predicted_value: "5000",
+                                    ground_truth_value: "Not disclosed",
+                                    evaluation: {
+                                        annotation: "MISSING",
+                                        subtype: "gen_invents_value",
+                                        rationale: "Predicted provides specific employee count when reference indicates not disclosed."
+                                    },
+                                    row_match_score: 1.0
+                                }
+                            ]
+                        }
+                    ],
+                    missing_rows: ["Supplier 2", "Supplier 3"],
+                    extra_rows: [],
+                    structure_issues: [],
+                    reference_data_issues: [],
+                    accuracy_score: 0.6,
+                    structure_score: 1.0,
+                    reference_data_score: 1.0,
+                    annotation: "USEFUL",
+                    comment: "Cell score: 0.600 |\n Structure issues: 0 |\n Structure score: 1.000 |\n Missing rows: 2 |\n Extra rows: 0"
+                });
+            }
+
+            // Test: Non-TableGradeResult (should show JSON fallback)
+            function sendNonTableGradeResult() {
+                sendToRenderer("output", {
+                    response_text: "This is a regular EQA response, not a TableGradeResult.",
+                    choices: [
+                        { label: "Yes", is_selected: true },
+                        { label: "No", is_selected: false }
+                    ],
+                    reasoning: "Based on the analysis of the provided documents..."
+                });
+            }
+        </script>
+    </body>
+</html>
