@@ -62,7 +62,10 @@ async function fetchPdf(
                 error: "Workspace ID is required. Please configure it in extension settings.",
             };
         }
-        const url = `${config.apiBaseUrl}/workspaces/${config.workspaceId}/files/${fileId}`;
+        // The /files/{id} endpoint returns metadata, need /files/{id}/content for actual file
+        const url = `${config.apiBaseUrl}/workspaces/${config.workspaceId}/files/${fileId}/content`;
+
+        console.log("Fetching PDF from:", url);
 
         const response = await fetch(url, {
             method: "GET",
@@ -71,11 +74,30 @@ async function fetchPdf(
             },
         });
 
+        console.log("Response status:", response.status);
+        console.log("Content-Type:", response.headers.get("Content-Type"));
+
         if (!response.ok) {
             const errorText = await response.text();
             return {
                 success: false,
                 error: `Failed to fetch PDF: ${response.status} - ${errorText}`,
+            };
+        }
+
+        // Check if response is actually a PDF
+        const contentType = response.headers.get("Content-Type");
+        if (
+            contentType &&
+            !contentType.includes("pdf") &&
+            !contentType.includes("octet-stream")
+        ) {
+            // API might return JSON with download URL instead of raw PDF
+            const text = await response.text();
+            console.log("Response body (not PDF):", text.substring(0, 500));
+            return {
+                success: false,
+                error: `Unexpected content type: ${contentType}. Response: ${text.substring(0, 200)}`,
             };
         }
 
