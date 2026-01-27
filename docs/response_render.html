@@ -232,6 +232,19 @@
                 width: 100%;
             }
 
+            .table-shape {
+                display: inline-block;
+                font-size: 10px;
+                color: var(--text-muted);
+                margin-bottom: 6px;
+                padding: 3px 8px;
+                background-color: rgba(138, 180, 248, 0.1);
+                border: 1px solid rgba(138, 180, 248, 0.2);
+                border-radius: 4px;
+                font-family: "Monaco", "Menlo", monospace;
+                letter-spacing: 0.3px;
+            }
+
             table {
                 width: 100%;
                 min-width: max-content;
@@ -1030,6 +1043,15 @@
                 const hasReasoning =
                     hasReasoningData(output) || hasReasoningData(reference);
                 const sourceDocuments = getSourceDocuments(output, reference);
+                const outputRows = output.rows || [];
+                const refRows = reference.rows || [];
+                const outputHeaders = output.column_headers || [];
+                const refHeaders = reference.column_headers || [];
+                const rowCount = Math.max(outputRows.length, refRows.length);
+                const colCount = Math.max(
+                    outputHeaders.length,
+                    refHeaders.length,
+                );
 
                 return `
                 <div class="panel">
@@ -1070,6 +1092,7 @@
                             <div class="legend-item"><div class="legend-color missing"></div> Missing/Extra</div>
                         </div>
                         <div class="table-container">
+                            <div class="table-shape">rows x columns: [${rowCount} x ${colCount}]</div>
                             ${renderMergedTable(output, reference, sourceDocuments.length)}
                         </div>
                     </div>
@@ -1631,6 +1654,8 @@
                     type === "output" ? "badge-output" : "badge-reference";
                 const sourceDocuments = data.source_documents || [];
                 const srcCount = sourceDocuments.length;
+                const rowCount = (data.rows || []).length;
+                const colCount = (data.column_headers || []).length;
 
                 return `
                 <div class="panel">
@@ -1645,6 +1670,7 @@
                     <div class="tab-content active" data-tab-content="answers">
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
                         <div class="table-container">
+                            <div class="table-shape">rows x columns: [${rowCount} x ${colCount}]</div>
                             ${renderSingleMergedTable(data, srcCount)}
                         </div>
                     </div>

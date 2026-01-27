@@ -297,6 +297,19 @@
                 width: 100%;
             }
 
+            .table-shape {
+                display: inline-block;
+                font-size: 10px;
+                color: var(--text-muted);
+                margin-bottom: 6px;
+                padding: 3px 8px;
+                background-color: rgba(138, 180, 248, 0.1);
+                border: 1px solid rgba(138, 180, 248, 0.2);
+                border-radius: 4px;
+                font-family: "Monaco", "Menlo", monospace;
+                letter-spacing: 0.3px;
+            }
+
             .grade-table {
                 width: 100%;
                 border-collapse: collapse;
@@ -740,8 +753,10 @@
                     return '<div class="empty-state">No cell grades available</div>';
                 }
 
-                let html =
-                    '<div class="table-container"><table class="grade-table">';
+                const rowCount = rowGrades.length;
+                const colCount = columns.length;
+
+                let html = `<div class="table-container"><div class="table-shape">rows x columns: [${rowCount} x ${colCount}]</div><table class="grade-table">`;
 
                 // Header row
                 html += "<thead><tr>";
