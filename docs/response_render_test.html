@@ -109,6 +109,9 @@
                 <button onclick="sendLLMTextResponse()">
                     LLM Text (Markdown)
                 </button>
+                <button onclick="sendLLMTextResponseTopLevel()">
+                    LLM Text (Top-Level Tokens)
+                </button>
                 <button onclick="clearRenderer()">Clear</button>
             </div>
 
@@ -1110,6 +1113,71 @@ Now complete the table following all rules above.`,
                             completion_tokens: 1903,
                             prompt_tokens: 1969,
                             total_tokens: 3872,
+                        },
+                    },
+                    run: null,
+                    type: "LLMResult",
+                });
+            }
+
+            // Test: LLM Text Response with top-level token fields (no nested token_usage)
+            function sendLLMTextResponseTopLevel() {
+                sendToRenderer("output", {
+                    generations: [
+                        [
+                            {
+                                generation_info: {
+                                    finish_reason: "stop",
+                                    model_name: "gpt-4o-2024-08-06",
+                                },
+                                message: {
+                                    id: [
+                                        "langchain",
+                                        "schema",
+                                        "messages",
+                                        "AIMessage",
+                                    ],
+                                    kwargs: {
+                                        content: "",
+                                        tool_calls: [],
+                                    },
+                                },
+                                text: `# Analysis Results
+
+## Summary
+
+The document contains **key findings** related to sustainability metrics.
+
+### Metrics Overview
+
+| Metric | Value | Change |
+| --- | --- | --- |
+| Carbon Emissions | 1,234 tCO2e | -15% |
+| Water Usage | 50,000 m³ | -8% |
+| Waste Recycled | 85% | +12% |
+
+### Conclusion
+
+Overall performance has improved compared to the previous reporting period.`,
+                                type: "ChatGeneration",
+                            },
+                        ],
+                    ],
+                    llm_output: {
+                        id: "chatcmpl-AyJipWVLPqHgWXz3EXAMPLE",
+                        model_name: "gpt-4o-2024-08-06",
+                        completion_tokens: 458,
+                        prompt_tokens: 2156,
+                        total_tokens: 2614,
+                        prompt_tokens_details: {
+                            audio_tokens: 0,
+                            cached_tokens: 1920,
+                        },
+                        completion_tokens_details: {
+                            accepted_prediction_tokens: 0,
+                            audio_tokens: 0,
+                            reasoning_tokens: 0,
+                            rejected_prediction_tokens: 0,
                         },
                     },
                     run: null,

@@ -1388,6 +1388,32 @@
                                 typeof text === "string" &&
                                 text.trim().length > 0
                             ) {
+                                // Token usage can be in token_usage or at top level of llm_output
+                                let tokenUsage =
+                                    data.llm_output?.token_usage || null;
+                                if (!tokenUsage && data.llm_output) {
+                                    // Check if token fields are at top level of llm_output
+                                    if (
+                                        data.llm_output.total_tokens ||
+                                        data.llm_output.completion_tokens
+                                    ) {
+                                        tokenUsage = {
+                                            total_tokens:
+                                                data.llm_output.total_tokens,
+                                            prompt_tokens:
+                                                data.llm_output.prompt_tokens,
+                                            completion_tokens:
+                                                data.llm_output
+                                                    .completion_tokens,
+                                            prompt_tokens_details:
+                                                data.llm_output
+                                                    .prompt_tokens_details,
+                                            completion_tokens_details:
+                                                data.llm_output
+                                                    .completion_tokens_details,
+                                        };
+                                    }
+                                }
                                 return {
                                     text: text,
                                     model:
@@ -1395,11 +1421,11 @@
                                         firstGen[0]?.generation_info
                                             ?.model_name ||
                                         "unknown",
-                                    tokenUsage:
-                                        data.llm_output?.token_usage || null,
+                                    tokenUsage: tokenUsage,
                                     finishReason:
                                         firstGen[0]?.generation_info
                                             ?.finish_reason || null,
+                                    id: data.llm_output?.id || null,
                                 };
                             }
                         }
@@ -2902,6 +2928,10 @@
                         metaHtml += `<div class="llm-meta-item">Model: <span class="llm-meta-value">${escapeHtml(textContent.model)}</span></div>`;
                     }
 
+                    if (textContent.id) {
+                        metaHtml += `<div class="llm-meta-item">ID: <span class="llm-meta-value">${escapeHtml(textContent.id)}</span></div>`;
+                    }
+
                     if (textContent.finishReason) {
                         metaHtml += `<div class="llm-meta-item">Finish: <span class="llm-meta-value">${escapeHtml(textContent.finishReason)}</span></div>`;
                     }
@@ -2909,7 +2939,12 @@
                     if (textContent.tokenUsage) {
                         const usage = textContent.tokenUsage;
                         if (usage.total_tokens) {
-                            metaHtml += `<div class="llm-meta-item">Tokens: <span class="llm-meta-value">${usage.prompt_tokens || 0} + ${usage.completion_tokens || 0} = ${usage.total_tokens}</span></div>`;
+                            let tokenStr = `${usage.prompt_tokens || 0} + ${usage.completion_tokens || 0} = ${usage.total_tokens}`;
+                            // Show cached tokens if available
+                            if (usage.prompt_tokens_details?.cached_tokens) {
+                                tokenStr += ` (${usage.prompt_tokens_details.cached_tokens} cached)`;
+                            }
+                            metaHtml += `<div class="llm-meta-item">Tokens: <span class="llm-meta-value">${tokenStr}</span></div>`;
                         }
                     }
 
