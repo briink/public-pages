@@ -103,6 +103,12 @@
                 <button onclick="sendEQAWithChoices()">EQA + Choices</button>
                 <button onclick="sendDocumentsList()">Documents List</button>
                 <button onclick="sendLargeTable()">Large Table (4x15)</button>
+                <button onclick="sendPerPageAnswer()">
+                    PerPageAnswer (LLM)
+                </button>
+                <button onclick="sendLLMTextResponse()">
+                    LLM Text (Markdown)
+                </button>
                 <button onclick="clearRenderer()">Clear</button>
             </div>
 
@@ -944,6 +950,171 @@
                         },
                     },
                 );
+            }
+
+            // Test: PerPageAnswer in LLM API response format
+            function sendPerPageAnswer() {
+                sendToRenderer("output", {
+                    generations: [
+                        [
+                            {
+                                generation_info: {
+                                    finish_reason: "STOP",
+                                    model_name: "gemini-2.5-pro",
+                                    safety_ratings: [],
+                                },
+                                message: {
+                                    id: [
+                                        "langchain",
+                                        "schema",
+                                        "messages",
+                                        "AIMessage",
+                                    ],
+                                    kwargs: {
+                                        additional_kwargs: {},
+                                        content: "",
+                                        id: "run--5e7d922b-19e3-488e-ac0c-d554a56d6e79-0",
+                                        invalid_tool_calls: [],
+                                        response_metadata: {},
+                                        tool_calls: [
+                                            {
+                                                args: {
+                                                    answer: 'The user wants me to fill a Markdown table based on the provided text.\n\nHere\'s my analysis and the resulting table:\n\n1. **Row**: This is fixed as "Row 1".\n2. **Process in place**: The document is an "Environmental Product Design Policy" and details "implementation frameworks," "governance," and "monitoring" processes. This confirms a process is in place. So, the answer is "Yes".\n3. **Dependencies and/or impacts evaluated in this process**: The text repeatedly mentions monitoring the "environmental footprint," "biodegradability," and "packaging intensity." These are all environmental *impacts*. The text does not describe a process for evaluating environmental *dependencies* (what the company relies on from nature). Therefore, the answer is "Impacts only".\n4. **Biodiversity impacts evaluated before the mining project development stage**: The company is L\'Oréal, which is in the cosmetics industry. The provided text is about product design. There is no indication of any mining activities. Therefore, this column is "N/A".\n5. **Primary reason for not evaluating dependencies and/or impacts**: This is applicable because the process only covers impacts, not dependencies. The text does not state a reason for this focus. Among the given options, "Not an immediate strategic priority" is the most plausible inference.',
+                                                    chunk_uuid:
+                                                        "72444162-8256-328a-ae35-b331a7969bb9",
+                                                    entity_scope:
+                                                        "whole_company",
+                                                    evidence_snippets:
+                                                        "The effective implementation of the Environmental Product Design Policy is a priority for L'Oréal.\nWe focus on establishing appropriate governance, ensuring teams have the capabilities to apply the\npolicy, and tracking the effectiveness of design efforts for each Brand and Division.\n...\nMonitoring\nWe value the importance of monitoring processes to track the policy's implementation and\nachievements. The research and innovation team monitors the improvement of the formula\nenvironmental footprint, including biodegradability. The packaging and development team monitors\nthe recycled or biobased content of packaging, the packaging intensity of our products and the level\nof packaging that is designed for recycling. At Groupe level we monitor the implementation of the\npolicy, for every new product we launch or renovate. We report our progress in our Universal\nRegistration Document each year.",
+                                                    is_useful: true,
+                                                    reasoning:
+                                                        'The user wants to know if the company has a process for identifying, assessing, and managing environmental dependencies and/or impacts.\n\n1. **Process in place**: The document is titled "Environmental Product Design Policy" and explicitly mentions "robust implementation frameworks," "governance," and "monitoring processes." This confirms a process exists.\n2. **Dependencies and/or impacts evaluated**: The "Monitoring" section details what is tracked: "formula environmental footprint, including biodegradability," "recycled or biobased content of packaging," and "packaging intensity." These are all measures of the company\'s *impacts* on the environment. The text does not mention any process for evaluating *dependencies* on environmental assets or ecosystem services.\n3. **Conclusion**: The company has a process, but based on the provided text, it focuses solely on evaluating environmental impacts.',
+                                                    reporting_period: "unknown",
+                                                    source_description:
+                                                        "environmental-product-design-policy-environment-policy-6th-may.pdf",
+                                                },
+                                                id: "e9321075-93ac-4766-94cb-3fd430225857",
+                                                name: "PerPageAnswer",
+                                                type: "tool_call",
+                                            },
+                                        ],
+                                        type: "ai",
+                                        usage_metadata: {},
+                                    },
+                                    lc: 1,
+                                    type: "constructor",
+                                },
+                                text: "",
+                                type: "ChatGeneration",
+                            },
+                        ],
+                    ],
+                    llm_output: {
+                        prompt_feedback: {
+                            block_reason: 0,
+                            safety_ratings: [],
+                        },
+                    },
+                    run: null,
+                    type: "LLMResult",
+                });
+            }
+
+            // Test: LLM text response with markdown content
+            function sendLLMTextResponse() {
+                sendToRenderer("output", {
+                    generations: [
+                        [
+                            {
+                                generation_info: {
+                                    finish_reason: "stop",
+                                    model_name: "gpt-5.1-2025-11-13",
+                                },
+                                message: {
+                                    id: [
+                                        "langchain",
+                                        "schema",
+                                        "messages",
+                                        "AIMessage",
+                                    ],
+                                    kwargs: {
+                                        content: "",
+                                        tool_calls: [],
+                                    },
+                                },
+                                text: `# Environmental Dependencies/Impacts Assessment
+
+## Compact Prompt Overview
+
+You are an expert ESG disclosure assistant. Fill a Markdown table according to the specifications, column definitions, and applicability rules provided.
+
+### Row Entity Definition
+
+- This is a **fixed-row table** with exactly one row ("Row 1").
+- "Row 1" represents the organization's overall process for identifying, assessing, and managing environmental dependencies and/or impacts.
+
+### Fixed Columns
+
+| Column | Description |
+| --- | --- |
+| Row | Fixed as "Row 1" |
+| Process in place | Whether organization has a process |
+| Dependencies and/or impacts evaluated | What is evaluated in the process |
+| Biodiversity impacts evaluated | Mining-specific evaluation |
+| Primary reason for not evaluating | Main reason if not evaluating |
+| Explanation | Detailed explanation and future plans |
+
+### Key Definitions
+
+- **Manage**: The approach adopted by an organization to address and respond
+- **Dependencies**: Aspects of environmental assets and ecosystem services that an organization relies on
+- **Impacts**: Changes in the condition of nature (quality or quantity)
+
+### Column Rules
+
+#### Column 2 – Process in place (single select)
+
+Allowed options:
+- "Yes"
+- "No, but we plan to within the next two years"
+- "No, and we do not plan to within the next two years"
+
+#### Column 3 – Dependencies and/or impacts evaluated
+
+Allowed options:
+- "Dependencies only"
+- "Impacts only"
+- "Both dependencies and impacts"
+
+> Note: If Column 2 = any "No…" option, then Column 3 should typically be "N/A".
+
+### Output Format
+
+\`\`\`markdown
+| Row | Process in place | Dependencies and/or impacts evaluated | Biodiversity impacts evaluated | Primary reason | Explanation |
+| --- | --- | --- | --- | --- | --- |
+| Row 1 |  |  |  |  |  |
+\`\`\`
+
+Now complete the table following all rules above.`,
+                                type: "ChatGeneration",
+                            },
+                        ],
+                    ],
+                    llm_output: {
+                        id: "chatcmpl-D2ikZDAa6Q6EpMMFGneX7g2ls3o1U",
+                        model_name: "gpt-5.1-2025-11-13",
+                        service_tier: "default",
+                        system_fingerprint: null,
+                        token_usage: {
+                            completion_tokens: 1903,
+                            prompt_tokens: 1969,
+                            total_tokens: 3872,
+                        },
+                    },
+                    run: null,
+                    type: "LLMResult",
+                });
             }
         </script>
     </body>

@@ -489,6 +489,278 @@
                 border: 2px solid #f0f !important;
             }
 
+            /* Tool Call / PerPageAnswer styles */
+            .tool-call-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 12px;
+            }
+
+            .tool-call-name {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--accent-color);
+                padding: 4px 10px;
+                background-color: rgba(138, 180, 248, 0.15);
+                border-radius: 4px;
+                font-family: monospace;
+            }
+
+            .tool-call-id {
+                font-size: 10px;
+                color: var(--text-muted);
+                font-family: monospace;
+            }
+
+            .per-page-answer {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .ppa-field {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .ppa-field-label {
+                font-size: 10px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-muted);
+            }
+
+            .ppa-field-value {
+                font-size: 13px;
+                line-height: 1.5;
+                color: var(--text-color);
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+
+            .ppa-answer-box {
+                background-color: rgba(129, 201, 149, 0.1);
+                border-left: 3px solid var(--success-color);
+                padding: 12px;
+                border-radius: 0 6px 6px 0;
+            }
+
+            .ppa-reasoning-box {
+                background-color: rgba(139, 92, 246, 0.1);
+                border-left: 3px solid #a78bfa;
+                padding: 12px;
+                border-radius: 0 6px 6px 0;
+            }
+
+            .ppa-evidence-box {
+                background-color: rgba(138, 180, 248, 0.1);
+                border-left: 3px solid var(--accent-color);
+                padding: 12px;
+                border-radius: 0 6px 6px 0;
+            }
+
+            .ppa-meta-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 12px;
+                padding: 12px;
+                background-color: #2d3136;
+                border-radius: 6px;
+            }
+
+            .ppa-meta-item {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .ppa-meta-label {
+                font-size: 10px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            .ppa-meta-value {
+                font-size: 12px;
+                color: var(--text-color);
+                font-family: monospace;
+                word-break: break-all;
+            }
+
+            .ppa-useful-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            .ppa-useful-badge.useful {
+                background-color: rgba(129, 201, 149, 0.2);
+                color: var(--success-color);
+            }
+
+            .ppa-useful-badge.not-useful {
+                background-color: rgba(242, 139, 130, 0.2);
+                color: var(--error-color);
+            }
+
+            /* LLM Text Response / Markdown styles */
+            .llm-response-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                padding: 10px 14px;
+                background-color: #2d3136;
+                border-bottom: 1px solid var(--border-color);
+                font-size: 11px;
+            }
+
+            .llm-meta-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: var(--text-muted);
+            }
+
+            .llm-meta-value {
+                color: var(--text-color);
+                font-family: monospace;
+            }
+
+            .markdown-content {
+                padding: 16px;
+                font-size: 14px;
+                line-height: 1.6;
+                color: var(--text-color);
+            }
+
+            .markdown-content h1,
+            .markdown-content h2,
+            .markdown-content h3,
+            .markdown-content h4,
+            .markdown-content h5,
+            .markdown-content h6 {
+                margin-top: 1.5em;
+                margin-bottom: 0.5em;
+                font-weight: 600;
+                color: var(--text-color);
+            }
+
+            .markdown-content h1 {
+                font-size: 1.5em;
+            }
+            .markdown-content h2 {
+                font-size: 1.3em;
+            }
+            .markdown-content h3 {
+                font-size: 1.15em;
+            }
+            .markdown-content h4 {
+                font-size: 1em;
+            }
+
+            .markdown-content p {
+                margin: 0.8em 0;
+            }
+
+            .markdown-content ul,
+            .markdown-content ol {
+                margin: 0.8em 0;
+                padding-left: 1.5em;
+            }
+
+            .markdown-content li {
+                margin: 0.3em 0;
+            }
+
+            .markdown-content code {
+                background-color: rgba(138, 180, 248, 0.15);
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: "Monaco", "Menlo", monospace;
+                font-size: 0.9em;
+            }
+
+            .markdown-content pre {
+                background-color: #1a1d21;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 12px;
+                overflow-x: auto;
+                margin: 1em 0;
+            }
+
+            .markdown-content pre code {
+                background: none;
+                padding: 0;
+                font-size: 12px;
+            }
+
+            .markdown-content blockquote {
+                border-left: 3px solid var(--accent-color);
+                margin: 1em 0;
+                padding: 0.5em 1em;
+                background-color: rgba(138, 180, 248, 0.05);
+                color: var(--text-muted);
+            }
+
+            .markdown-content table {
+                border-collapse: collapse;
+                width: auto;
+                min-width: 0;
+                margin: 1em 0;
+                font-size: 13px;
+                table-layout: auto;
+            }
+
+            .markdown-content th,
+            .markdown-content td {
+                border: 1px solid var(--border-color);
+                padding: 8px 12px;
+                text-align: left;
+                min-width: 0;
+                max-width: none;
+                width: auto;
+                white-space: normal;
+            }
+
+            .markdown-content th {
+                background-color: #2d3136;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .markdown-content hr {
+                border: none;
+                border-top: 1px solid var(--border-color);
+                margin: 1.5em 0;
+            }
+
+            .markdown-content a {
+                color: var(--accent-color);
+                text-decoration: none;
+            }
+
+            .markdown-content a:hover {
+                text-decoration: underline;
+            }
+
+            .markdown-content strong {
+                font-weight: 600;
+                color: var(--text-color);
+            }
+
+            .markdown-content em {
+                font-style: italic;
+            }
+
             .reasoning-table th {
                 background-color: rgba(139, 92, 246, 0.25);
                 color: #c4b5fd;
@@ -845,7 +1117,81 @@
             let metadata = null;
             let rawMessage = null;
 
-            // Unwrap data if nested in an "output" key
+            // Extract tool calls from LLM API response structures
+            // Supports: LangChain LLMResult, direct tool_calls arrays, etc.
+            function extractToolCalls(data) {
+                if (!data || typeof data !== "object") return null;
+
+                // Direct tool_calls array
+                if (
+                    Array.isArray(data.tool_calls) &&
+                    data.tool_calls.length > 0
+                ) {
+                    return data.tool_calls;
+                }
+
+                // LangChain LLMResult structure: generations[0][0].message.kwargs.tool_calls
+                if (data.generations && Array.isArray(data.generations)) {
+                    try {
+                        const firstGen = data.generations[0];
+                        if (Array.isArray(firstGen) && firstGen.length > 0) {
+                            const message = firstGen[0]?.message;
+                            const kwargs = message?.kwargs;
+                            if (
+                                kwargs?.tool_calls &&
+                                Array.isArray(kwargs.tool_calls) &&
+                                kwargs.tool_calls.length > 0
+                            ) {
+                                return kwargs.tool_calls;
+                            }
+                        }
+                    } catch (e) {
+                        // Continue to other extraction methods
+                    }
+                }
+
+                // OpenAI-style: choices[0].message.tool_calls
+                if (
+                    data.choices &&
+                    Array.isArray(data.choices) &&
+                    data.choices.length > 0
+                ) {
+                    const toolCalls = data.choices[0]?.message?.tool_calls;
+                    if (Array.isArray(toolCalls) && toolCalls.length > 0) {
+                        return toolCalls;
+                    }
+                }
+
+                return null;
+            }
+
+            // Find a specific tool call by name from extracted tool calls
+            function findToolCallByName(toolCalls, name) {
+                if (!toolCalls || !Array.isArray(toolCalls)) return null;
+                return toolCalls.find(
+                    (tc) => tc.name === name || tc.function?.name === name,
+                );
+            }
+
+            // Get tool call args (handles different formats)
+            function getToolCallArgs(toolCall) {
+                if (!toolCall) return null;
+                // LangChain format: args directly on object
+                if (toolCall.args && typeof toolCall.args === "object") {
+                    return toolCall.args;
+                }
+                // OpenAI format: function.arguments as JSON string
+                if (toolCall.function?.arguments) {
+                    try {
+                        return JSON.parse(toolCall.function.arguments);
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+
+            // Unwrap data if nested in an "output" key or LLM API response
             function unwrapData(data) {
                 if (!data || typeof data !== "object") return data;
 
@@ -866,6 +1212,27 @@
                     if (isTableResponse || isEQAAnswer) {
                         return nested;
                     }
+                }
+
+                // Check for LLM API response with tool calls
+                const toolCalls = extractToolCalls(data);
+                if (toolCalls && toolCalls.length > 0) {
+                    // Return a wrapper that preserves both the original data and extracted tool calls
+                    return {
+                        _isLLMToolCallResponse: true,
+                        _originalData: data,
+                        _toolCalls: toolCalls,
+                    };
+                }
+
+                // Check for LLM API response with text content (no tool calls)
+                const textContent = extractLLMTextContent(data);
+                if (textContent) {
+                    return {
+                        _isLLMTextResponse: true,
+                        _originalData: data,
+                        _textContent: textContent,
+                    };
                 }
 
                 return data;
@@ -902,34 +1269,68 @@
 
                 // Render main content
                 let contentHtml = "";
-                switch (dataType) {
-                    case "table_response":
-                        contentHtml = renderTableResponse(
+
+                // Check for tool call types first
+                if (dataType.startsWith("tool_call:")) {
+                    const toolName = dataType.replace("tool_call:", "");
+                    const registry = TOOL_CALL_REGISTRY[toolName];
+                    if (registry && registry.render) {
+                        contentHtml = registry.render(
                             outputData,
                             referenceData,
                             metadata,
                         );
-                        break;
-                    case "eqa_answer":
-                        contentHtml = renderEQAAnswer(
+                    } else {
+                        contentHtml = renderToolCallGeneric(
                             outputData,
                             referenceData,
                             metadata,
                         );
-                        break;
-                    case "documents_list":
-                        contentHtml = renderDocumentsList(
-                            outputData,
-                            referenceData,
-                            metadata,
-                        );
-                        break;
-                    default:
-                        contentHtml = renderGenericJson(
-                            outputData,
-                            referenceData,
-                            metadata,
-                        );
+                    }
+                } else {
+                    switch (dataType) {
+                        case "table_response":
+                            contentHtml = renderTableResponse(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        case "eqa_answer":
+                            contentHtml = renderEQAAnswer(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        case "documents_list":
+                            contentHtml = renderDocumentsList(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        case "tool_call_generic":
+                            contentHtml = renderToolCallGeneric(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        case "llm_text_response":
+                            contentHtml = renderLLMTextResponse(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        default:
+                            contentHtml = renderGenericJson(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                    }
                 }
                 contentContainer.innerHTML = contentHtml;
 
@@ -955,8 +1356,116 @@
                 `;
             }
 
+            // Registry of known tool call types and their detection functions
+            // Add new tool types here to extend support
+            const TOOL_CALL_REGISTRY = {
+                PerPageAnswer: {
+                    detect: (args) =>
+                        "answer" in args &&
+                        "reasoning" in args &&
+                        "chunk_uuid" in args,
+                    render: renderPerPageAnswer,
+                },
+                // Add more tool types here as needed:
+                // "OtherToolName": {
+                //     detect: (args) => "some_field" in args,
+                //     render: renderOtherTool
+                // }
+            };
+
+            // Extract text content from LLM API response
+            function extractLLMTextContent(data) {
+                if (!data || typeof data !== "object") return null;
+
+                // LangChain LLMResult: generations[0][0].text
+                if (data.generations && Array.isArray(data.generations)) {
+                    try {
+                        const firstGen = data.generations[0];
+                        if (Array.isArray(firstGen) && firstGen.length > 0) {
+                            const text = firstGen[0]?.text;
+                            if (
+                                text &&
+                                typeof text === "string" &&
+                                text.trim().length > 0
+                            ) {
+                                return {
+                                    text: text,
+                                    model:
+                                        data.llm_output?.model_name ||
+                                        firstGen[0]?.generation_info
+                                            ?.model_name ||
+                                        "unknown",
+                                    tokenUsage:
+                                        data.llm_output?.token_usage || null,
+                                    finishReason:
+                                        firstGen[0]?.generation_info
+                                            ?.finish_reason || null,
+                                };
+                            }
+                        }
+                    } catch (e) {
+                        // Continue
+                    }
+                }
+
+                // OpenAI-style: choices[0].message.content
+                if (
+                    data.choices &&
+                    Array.isArray(data.choices) &&
+                    data.choices.length > 0
+                ) {
+                    const content = data.choices[0]?.message?.content;
+                    if (
+                        content &&
+                        typeof content === "string" &&
+                        content.trim().length > 0
+                    ) {
+                        return {
+                            text: content,
+                            model: data.model || "unknown",
+                            tokenUsage: data.usage || null,
+                            finishReason:
+                                data.choices[0]?.finish_reason || null,
+                        };
+                    }
+                }
+
+                return null;
+            }
+
             function detectDataType(data) {
                 if (!data) return "unknown";
+
+                // Check for LLM text response wrapper
+                if (data._isLLMTextResponse && data._textContent) {
+                    return "llm_text_response";
+                }
+
+                // Check for LLM tool call response wrapper
+                if (data._isLLMToolCallResponse && data._toolCalls) {
+                    // Check each tool call against the registry
+                    for (const toolCall of data._toolCalls) {
+                        const toolName =
+                            toolCall.name || toolCall.function?.name;
+                        const args = getToolCallArgs(toolCall);
+
+                        // First check by explicit name
+                        if (toolName && TOOL_CALL_REGISTRY[toolName]) {
+                            return `tool_call:${toolName}`;
+                        }
+
+                        // Then check by structure detection
+                        for (const [registeredName, config] of Object.entries(
+                            TOOL_CALL_REGISTRY,
+                        )) {
+                            if (args && config.detect(args)) {
+                                return `tool_call:${registeredName}`;
+                            }
+                        }
+                    }
+                    // Has tool calls but no known renderer - show as tool_call_generic
+                    return "tool_call_generic";
+                }
 
                 // Check for documents array (document list output)
                 if (
@@ -2021,6 +2530,424 @@
                 if (doc) {
                     doc.classList.toggle("expanded");
                 }
+            }
+
+            // Render PerPageAnswer tool call
+            function renderPerPageAnswer(output, reference, meta) {
+                let html = "";
+
+                const renderSinglePerPageAnswer = (data, title, type) => {
+                    if (!data || !data._isLLMToolCallResponse) return "";
+
+                    const toolCalls = data._toolCalls || [];
+                    const badgeClass =
+                        type === "output" ? "badge-output" : "badge-reference";
+
+                    let panelHtml = `
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span>${title}</span>
+                                <span class="badge ${badgeClass}">${type}</span>
+                            </div>
+                            <div class="panel-content">
+                    `;
+
+                    toolCalls.forEach((toolCall, idx) => {
+                        const toolName =
+                            toolCall.name ||
+                            toolCall.function?.name ||
+                            "Unknown";
+                        const toolId = toolCall.id || "";
+                        const args = getToolCallArgs(toolCall);
+
+                        if (!args) return;
+
+                        panelHtml += `
+                            <div class="tool-call-header">
+                                <span class="tool-call-name">${escapeHtml(toolName)}</span>
+                                ${toolId ? `<span class="tool-call-id">${escapeHtml(toolId)}</span>` : ""}
+                                <span class="ppa-useful-badge ${args.is_useful ? "useful" : "not-useful"}">
+                                    ${args.is_useful ? "&#10003; Useful" : "&#10007; Not Useful"}
+                                </span>
+                            </div>
+                            <div class="per-page-answer">
+                        `;
+
+                        // Answer
+                        if (args.answer) {
+                            panelHtml += `
+                                <div class="ppa-field">
+                                    <div class="ppa-field-label">Answer</div>
+                                    <div class="ppa-answer-box">
+                                        <div class="ppa-field-value">${escapeHtml(args.answer)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // Reasoning
+                        if (args.reasoning) {
+                            panelHtml += `
+                                <div class="ppa-field">
+                                    <div class="ppa-field-label">Reasoning</div>
+                                    <div class="ppa-reasoning-box">
+                                        <div class="ppa-field-value">${escapeHtml(args.reasoning)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        // Evidence Snippets
+                        if (args.evidence_snippets) {
+                            const snippets = Array.isArray(
+                                args.evidence_snippets,
+                            )
+                                ? args.evidence_snippets
+                                : [args.evidence_snippets];
+
+                            if (snippets.length > 0 && snippets[0]) {
+                                panelHtml += `
+                                    <div class="ppa-field">
+                                        <div class="ppa-field-label">Evidence Snippets</div>
+                                        <div class="ppa-evidence-box">
+                                            <div class="ppa-field-value">${escapeHtml(snippets.join("\n\n---\n\n"))}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        // Metadata grid
+                        panelHtml += `<div class="ppa-meta-grid">`;
+
+                        if (args.source_description) {
+                            panelHtml += `
+                                <div class="ppa-meta-item">
+                                    <div class="ppa-meta-label">Source</div>
+                                    <div class="ppa-meta-value">${escapeHtml(args.source_description)}</div>
+                                </div>
+                            `;
+                        }
+
+                        if (args.chunk_uuid) {
+                            panelHtml += `
+                                <div class="ppa-meta-item">
+                                    <div class="ppa-meta-label">Chunk UUID</div>
+                                    <div class="ppa-meta-value">${escapeHtml(args.chunk_uuid)}</div>
+                                </div>
+                            `;
+                        }
+
+                        if (args.entity_scope) {
+                            panelHtml += `
+                                <div class="ppa-meta-item">
+                                    <div class="ppa-meta-label">Entity Scope</div>
+                                    <div class="ppa-meta-value">${escapeHtml(args.entity_scope)}</div>
+                                </div>
+                            `;
+                        }
+
+                        if (args.reporting_period) {
+                            panelHtml += `
+                                <div class="ppa-meta-item">
+                                    <div class="ppa-meta-label">Reporting Period</div>
+                                    <div class="ppa-meta-value">${escapeHtml(args.reporting_period)}</div>
+                                </div>
+                            `;
+                        }
+
+                        panelHtml += `</div></div>`;
+
+                        if (idx < toolCalls.length - 1) {
+                            panelHtml += `<hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">`;
+                        }
+                    });
+
+                    panelHtml += `</div></div>`;
+                    return panelHtml;
+                };
+
+                if (output) {
+                    html += renderSinglePerPageAnswer(
+                        output,
+                        "Per-Page Answer",
+                        "output",
+                    );
+                }
+
+                if (reference) {
+                    html += renderSinglePerPageAnswer(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                }
+
+                return html;
+            }
+
+            // Render generic tool calls (for unknown tool types)
+            function renderToolCallGeneric(output, reference, meta) {
+                let html = "";
+
+                const renderSingleToolCall = (data, title, type) => {
+                    if (!data || !data._isLLMToolCallResponse) return "";
+
+                    const toolCalls = data._toolCalls || [];
+                    const badgeClass =
+                        type === "output" ? "badge-output" : "badge-reference";
+
+                    let panelHtml = `
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span>${title}</span>
+                                <span class="badge ${badgeClass}">${type}</span>
+                            </div>
+                            <div class="panel-content">
+                    `;
+
+                    toolCalls.forEach((toolCall, idx) => {
+                        const toolName =
+                            toolCall.name ||
+                            toolCall.function?.name ||
+                            "Unknown";
+                        const toolId = toolCall.id || "";
+                        const args = getToolCallArgs(toolCall);
+
+                        panelHtml += `
+                            <div class="tool-call-header">
+                                <span class="tool-call-name">${escapeHtml(toolName)}</span>
+                                ${toolId ? `<span class="tool-call-id">${escapeHtml(toolId)}</span>` : ""}
+                            </div>
+                        `;
+
+                        // Render args as JSON
+                        if (args) {
+                            const containerId = `tool-args-${Math.random().toString(36).substr(2, 9)}`;
+                            setTimeout(() => {
+                                const container =
+                                    document.getElementById(containerId);
+                                if (container) {
+                                    renderjson.set_show_to_level(2);
+                                    renderjson.set_icons("+", "-");
+                                    container.appendChild(renderjson(args));
+                                }
+                            }, 0);
+
+                            panelHtml += `<div class="json-fallback" id="${containerId}"></div>`;
+                        }
+
+                        if (idx < toolCalls.length - 1) {
+                            panelHtml += `<hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">`;
+                        }
+                    });
+
+                    panelHtml += `</div></div>`;
+                    return panelHtml;
+                };
+
+                if (output) {
+                    html += renderSingleToolCall(
+                        output,
+                        "Tool Call Output",
+                        "output",
+                    );
+                }
+
+                if (reference) {
+                    html += renderSingleToolCall(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                }
+
+                return html;
+            }
+
+            // Simple markdown to HTML converter
+            function parseMarkdown(text) {
+                if (!text) return "";
+
+                let html = escapeHtml(text);
+
+                // Code blocks (must be first to avoid interference)
+                html = html.replace(
+                    /```(\w*)\n([\s\S]*?)```/g,
+                    (match, lang, code) => {
+                        return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
+                    },
+                );
+
+                // Inline code
+                html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+                // Headers
+                html = html.replace(/^######\s+(.+)$/gm, "<h6>$1</h6>");
+                html = html.replace(/^#####\s+(.+)$/gm, "<h5>$1</h5>");
+                html = html.replace(/^####\s+(.+)$/gm, "<h4>$1</h4>");
+                html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+                html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+                html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+
+                // Bold and italic
+                html = html.replace(
+                    /\*\*\*(.+?)\*\*\*/g,
+                    "<strong><em>$1</em></strong>",
+                );
+                html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+                html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+                // Blockquotes
+                html = html.replace(
+                    /^&gt;\s+(.+)$/gm,
+                    "<blockquote>$1</blockquote>",
+                );
+
+                // Horizontal rules
+                html = html.replace(/^---$/gm, "<hr>");
+                html = html.replace(/^\*\*\*$/gm, "<hr>");
+
+                // Tables - parse markdown tables properly
+                html = html.replace(/(\|.+\|\n)+/g, (tableMatch) => {
+                    const lines = tableMatch.trim().split("\n");
+                    if (lines.length < 2) return tableMatch;
+
+                    let tableHtml = "<table>";
+                    let inBody = false;
+                    let hasHeader = false;
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        const cells = line
+                            .split("|")
+                            .slice(1, -1)
+                            .map((c) => c.trim());
+
+                        // Check if this is a separator row (| --- | --- |)
+                        if (cells.every((c) => /^[-:]+$/.test(c))) {
+                            // The previous row was the header
+                            hasHeader = true;
+                            tableHtml += "</thead><tbody>";
+                            inBody = true;
+                            continue;
+                        }
+
+                        if (!inBody && !hasHeader) {
+                            // First row - assume it's header until we see separator
+                            tableHtml += `<thead><tr>${cells.map((c) => `<th>${c}</th>`).join("")}</tr>`;
+                        } else {
+                            // Data rows
+                            tableHtml += `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
+                        }
+                    }
+
+                    if (!inBody) {
+                        // No separator found, close thead and add empty tbody
+                        tableHtml += "</thead><tbody>";
+                    }
+                    tableHtml += "</tbody></table>";
+                    return tableHtml;
+                });
+
+                // Unordered lists
+                html = html.replace(/^[-*]\s+(.+)$/gm, "<li>$1</li>");
+                html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, "<ul>$1</ul>");
+
+                // Ordered lists
+                html = html.replace(/^\d+\.\s+(.+)$/gm, "<li>$1</li>");
+
+                // Links
+                html = html.replace(
+                    /\[([^\]]+)\]\(([^)]+)\)/g,
+                    '<a href="$2" target="_blank">$1</a>',
+                );
+
+                // Paragraphs - wrap remaining text blocks
+                html = html
+                    .split("\n\n")
+                    .map((block) => {
+                        block = block.trim();
+                        if (!block) return "";
+                        // Don't wrap if already wrapped in HTML tags
+                        if (
+                            /^<(h[1-6]|ul|ol|li|table|tr|th|td|pre|blockquote|hr)/.test(
+                                block,
+                            )
+                        ) {
+                            return block;
+                        }
+                        return `<p>${block.replace(/\n/g, "<br>")}</p>`;
+                    })
+                    .join("\n");
+
+                return html;
+            }
+
+            // Render LLM text response with markdown
+            function renderLLMTextResponse(output, reference, meta) {
+                let html = "";
+
+                const renderSingleTextResponse = (data, title, type) => {
+                    if (!data || !data._isLLMTextResponse || !data._textContent)
+                        return "";
+
+                    const textContent = data._textContent;
+                    const badgeClass =
+                        type === "output" ? "badge-output" : "badge-reference";
+
+                    let metaHtml = '<div class="llm-response-meta">';
+
+                    if (textContent.model && textContent.model !== "unknown") {
+                        metaHtml += `<div class="llm-meta-item">Model: <span class="llm-meta-value">${escapeHtml(textContent.model)}</span></div>`;
+                    }
+
+                    if (textContent.finishReason) {
+                        metaHtml += `<div class="llm-meta-item">Finish: <span class="llm-meta-value">${escapeHtml(textContent.finishReason)}</span></div>`;
+                    }
+
+                    if (textContent.tokenUsage) {
+                        const usage = textContent.tokenUsage;
+                        if (usage.total_tokens) {
+                            metaHtml += `<div class="llm-meta-item">Tokens: <span class="llm-meta-value">${usage.prompt_tokens || 0} + ${usage.completion_tokens || 0} = ${usage.total_tokens}</span></div>`;
+                        }
+                    }
+
+                    metaHtml += "</div>";
+
+                    const markdownHtml = parseMarkdown(textContent.text);
+
+                    return `
+                        <div class="panel">
+                            <div class="panel-header">
+                                <span>${title}</span>
+                                <span class="badge ${badgeClass}">${type}</span>
+                            </div>
+                            ${metaHtml}
+                            <div class="markdown-content">
+                                ${markdownHtml}
+                            </div>
+                        </div>
+                    `;
+                };
+
+                if (output) {
+                    html += renderSingleTextResponse(
+                        output,
+                        "LLM Response",
+                        "output",
+                    );
+                }
+
+                if (reference) {
+                    html += renderSingleTextResponse(
+                        reference,
+                        "Reference",
+                        "reference",
+                    );
+                }
+
+                return html;
             }
 
             function renderGenericJson(output, reference, meta) {
