@@ -103,6 +103,8 @@
                 <button onclick="sendEQAWithChoices()">EQA + Choices</button>
                 <button onclick="sendDocumentsList()">Documents List</button>
                 <button onclick="sendLargeTable()">Large Table (4x15)</button>
+                <button onclick="sendTableWithAssessment()">Table + Assessment</button>
+                <button onclick="sendEQAWithAssessment()">EQA + Assessment</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1118,6 +1120,123 @@ Now complete the table following all rules above.`,
                     run: null,
                     type: "LLMResult",
                 });
+            }
+
+            // Test: Table with no_evidence, not_applicable_cells, not_applicable_columns, table_has_no_evidence
+            function sendTableWithAssessment() {
+                sendToRenderer(
+                    "output",
+                    {
+                        column_headers: [
+                            "Row",
+                            "Scope 2, location-based",
+                            "Scope 2, market-based",
+                            "Comment",
+                        ],
+                        rows: [
+                            ["<<Row 1>>", "<<We are reporting a Scope 2, location-based figure>>", "<<We are reporting a Scope 2, market-based figure>>", "We calculate Scope 2 emissions in line with the GHG Protocol."],
+                            ["<<Row 1>>", "<<We are reporting a Scope 2, location-based figure>>", "<<We are reporting a Scope 2, market-based figure>>", "We report both location-based and market-based Scope 2 figures."],
+                            ["<<Row 1>>", "<<We are reporting a Scope 2, location-based figure>>", "<<We are reporting a Scope 2, market-based figure>>", "We quantify market-based Scope 2 using contractual instruments."],
+                        ],
+                        reasoning: [
+                            ["Only one row is required.", "Sources show location-based methodology [^0^]", "Sources show market-based approach [^0^]", "Consolidated from sources describing GHG Protocol methods."],
+                            ["Only one row is required.", "Evidence states the company applies Scope 2 Guidance [^1^]", "Evidence states a market-based approach is used [^1^]", "From the basis of preparation."],
+                            ["Only one row is required.", "Evidence includes disclosure of both figures [^0^] [^1^]", "Evidence includes both figures and explains market-based method [^0^]", "From the climate change metrics section."],
+                        ],
+                        no_evidence: [
+                            [false, true, true, true],
+                            [false, true, true, true],
+                            [false, false, false, false],
+                        ],
+                        not_applicable_cells: [
+                            [false, false, false, false],
+                            [false, false, false, true],
+                            [false, false, true, false],
+                        ],
+                        not_applicable_columns: [3],
+                        table_has_no_evidence: true,
+                        source_documents: [
+                            {
+                                page_content: "Total assets 53,753 53,773",
+                                metadata: {
+                                    file_name: "sustainability-report.pdf",
+                                    page: 84,
+                                    file_id: "sust-scope2-001",
+                                },
+                            },
+                            {
+                                page_content: "Scope 2 emissions calculated per GHG Protocol Corporate Standard.",
+                                metadata: {
+                                    file_name: "ghg-methodology.pdf",
+                                    page: 12,
+                                    file_id: "ghg-method-001",
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            table_question: {
+                                text: "Scope 2 emissions reporting methodology",
+                                cell_questions: [
+                                    { text: "Row identifier", data_type: "text" },
+                                    { text: "Location-based reporting", data_type: "choice", choices: [{ label: "We are reporting", description: "Reporting figure" }, { label: "Not reporting", description: "Not reporting" }] },
+                                    { text: "Market-based reporting", data_type: "choice", choices: [{ label: "We are reporting", description: "Reporting figure" }, { label: "Not reporting", description: "Not reporting" }] },
+                                    { text: "Comment", data_type: "text" },
+                                ],
+                            },
+                        },
+                    },
+                );
+            }
+
+            // Test: EQA Answer with ai_assessment_state at response and choice level
+            function sendEQAWithAssessment() {
+                sendToRenderer(
+                    "output",
+                    {
+                        ai_assessment_state: "no_evidence",
+                        response_text: "€53,753 million",
+                        reasoning:
+                            "Four sources consistently report total consolidated assets as €53,753 million for the 2025 reporting period [^0^] [^1^].",
+                        choices: [
+                            { label: "Yes, disclosed", is_selected: true, ai_assessment_state: "no_evidence" },
+                            { label: "No, not disclosed", is_selected: false, ai_assessment_state: null },
+                            { label: "Not applicable", is_selected: false, ai_assessment_state: "not_applicable" },
+                        ],
+                        response_objects: {
+                            metrics: {
+                                full_string_answers: "€53,753 million",
+                                structured_data: [
+                                    { full_response: "€53,753 million", metric_name: "Total Assets", time_period: "2025", unit: "€ million", value: 53753 },
+                                ],
+                            },
+                        },
+                        source_documents: [
+                            {
+                                page_content: "Total assets 53,753 53,773",
+                                metadata: { file_name: "annual-report-2025.pdf", page: 84, file_id: "ar-2025-assets" },
+                            },
+                            {
+                                page_content: "(in € million) 2025 2024\nTotal assets 53,753 53,773",
+                                metadata: { file_name: "financial-statements.pdf", page: 50, file_id: "fs-2025-bal" },
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            question: {
+                                text: "What is the total value of your organization's assets?",
+                                data_type: "choice",
+                                choices: [
+                                    { label: "Yes, disclosed", description: "Total assets are disclosed" },
+                                    { label: "No, not disclosed", description: "Total assets not found" },
+                                    { label: "Not applicable", description: "Not applicable to this organization" },
+                                ],
+                            },
+                        },
+                    },
+                );
             }
 
             // Test: LLM Text Response with top-level token fields (no nested token_usage)

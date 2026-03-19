@@ -80,6 +80,49 @@
                 color: #000;
             }
 
+            .badge-no-evidence {
+                background-color: var(--error-color);
+                color: #000;
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .badge-not-applicable {
+                background-color: var(--text-muted);
+                color: #000;
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .cell-no-evidence {
+                background-color: rgba(242, 139, 130, 0.12) !important;
+            }
+
+            .cell-not-applicable {
+                background-color: rgba(154, 160, 166, 0.12) !important;
+                font-style: italic;
+            }
+
+            .table-no-evidence-banner {
+                background-color: rgba(242, 139, 130, 0.15);
+                color: var(--error-color);
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
             .panel-content {
                 padding: 16px;
             }
@@ -2039,10 +2082,14 @@
                 const refReasoningRows = reference.reasoning || [];
                 const maxRows = Math.max(outputRows.length, refRows.length);
                 const srcCount = sourceCount || 0;
+                const noEvidence = output.no_evidence || [];
+                const notApplicableCells = output.not_applicable_cells || [];
+                const notApplicableColumns = output.not_applicable_columns || [];
 
                 let html = '<table class="diff-table"><thead><tr><th>#</th>';
-                headers.forEach((h) => {
-                    html += `<th>${escapeHtml(h)}</th>`;
+                headers.forEach((h, idx) => {
+                    const isNACol = notApplicableColumns.includes(idx) || notApplicableColumns.includes(h);
+                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">N/A</span>' : ""}</th>`;
                 });
                 html += "</tr></thead><tbody>";
 
@@ -2059,8 +2106,18 @@
                         const outReasoning = outReasoningRow[j] || "";
                         const refReasoning = refReasoningRow[j] || "";
                         const cellClass = getCellDiffClass(outCell, refCell);
+                        const isNoEvidence = noEvidence[i] && noEvidence[i][j] === true;
+                        const isNotApplicable = notApplicableCells[i] && notApplicableCells[i][j] === true;
+                        const extraClasses = [];
+                        if (isNoEvidence) extraClasses.push("cell-no-evidence");
+                        if (isNotApplicable) extraClasses.push("cell-not-applicable");
+                        const allClasses = [cellClass, ...extraClasses].filter(Boolean).join(" ");
 
-                        html += `<td class="${cellClass}">`;
+                        let badges = "";
+                        if (isNoEvidence) badges += ' <span class="badge-no-evidence">no evidence</span>';
+                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">N/A</span>';
+
+                        html += `<td class="${allClasses}">`;
                         html += `<div class="split-cell">`;
 
                         // Value part (left)
@@ -2074,6 +2131,7 @@
                         } else {
                             html += formatResponseText(outCell || "", srcCount);
                         }
+                        html += badges;
                         html += `</div>`;
 
                         // Reasoning part (right)
@@ -2206,6 +2264,7 @@
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
                         <div class="table-container">
                             <div class="table-shape">rows x columns: [${rowCount} x ${colCount}]</div>
+                            ${data.table_has_no_evidence ? '<div class="table-no-evidence-banner">No Evidence — entire table lacks supporting evidence</div>' : ""}
                             ${renderSingleMergedTable(data, srcCount)}
                         </div>
                     </div>
@@ -2220,10 +2279,14 @@
                 const headers = data.column_headers || [];
                 const rows = data.rows || [];
                 const reasoningRows = data.reasoning || [];
+                const noEvidence = data.no_evidence || [];
+                const notApplicableCells = data.not_applicable_cells || [];
+                const notApplicableColumns = data.not_applicable_columns || [];
 
                 let html = "<table><thead><tr><th>#</th>";
-                headers.forEach((h) => {
-                    html += `<th>${escapeHtml(h)}</th>`;
+                headers.forEach((h, idx) => {
+                    const isNACol = notApplicableColumns.includes(idx) || notApplicableColumns.includes(h);
+                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">N/A</span>' : ""}</th>`;
                 });
                 html += "</tr></thead><tbody>";
 
@@ -2235,9 +2298,19 @@
                     for (let j = 0; j < headers.length; j++) {
                         const cell = row[j] || "";
                         const reasoning = reasoningRow[j] || "";
+                        const isNoEvidence = noEvidence[i] && noEvidence[i][j] === true;
+                        const isNotApplicable = notApplicableCells[i] && notApplicableCells[i][j] === true;
+                        const cellClasses = [];
+                        if (isNoEvidence) cellClasses.push("cell-no-evidence");
+                        if (isNotApplicable) cellClasses.push("cell-not-applicable");
+                        const tdClass = cellClasses.length ? ` class="${cellClasses.join(" ")}"` : "";
 
-                        html += `<td><div class="split-cell">`;
-                        html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}</div>`;
+                        let badges = "";
+                        if (isNoEvidence) badges += ' <span class="badge-no-evidence">no evidence</span>';
+                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">N/A</span>';
+
+                        html += `<td${tdClass}><div class="split-cell">`;
+                        html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}${badges}</div>`;
                         html += `<div class="split-cell-reasoning">${reasoning ? processInlineReferences(reasoning, srcCount) : ""}</div>`;
                         html += `</div></td>`;
                     }
@@ -2307,11 +2380,18 @@
                 return html;
             }
 
+            function renderAssessmentBadge(state) {
+                if (state === "no_evidence") return ' <span class="badge-no-evidence">no evidence</span>';
+                if (state === "not_applicable") return ' <span class="badge-not-applicable">N/A</span>';
+                return "";
+            }
+
             function renderSingleEQAAnswer(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
                 const sourceDocuments = data.source_documents || [];
                 const srcCount = sourceDocuments.length;
+                const assessmentBadge = renderAssessmentBadge(data.ai_assessment_state);
 
                 let answerContent = "";
 
@@ -2339,7 +2419,7 @@
                         <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
                             <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
                             <div class="choice-content">
-                                <div class="choice-label">${escapeHtml(choice.label || "")}</div>
+                                <div class="choice-label">${escapeHtml(choice.label || "")}${renderAssessmentBadge(choice.ai_assessment_state)}</div>
                                 ${choice.reasoning ? `<div class="choice-reasoning">${processInlineReferences(choice.reasoning, srcCount)}</div>` : ""}
                             </div>
                         </div>
@@ -2361,7 +2441,7 @@
                 return `
                 <div class="panel">
                     <div class="panel-header">
-                        <span>${title}</span>
+                        <span>${title}${assessmentBadge}</span>
                         <span class="badge ${badgeClass}">${type}</span>
                     </div>
                     <div class="tabs">
