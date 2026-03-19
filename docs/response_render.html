@@ -2089,7 +2089,7 @@
                 let html = '<table class="diff-table"><thead><tr><th>#</th>';
                 headers.forEach((h, idx) => {
                     const isNACol = notApplicableColumns.includes(idx) || notApplicableColumns.includes(h);
-                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">N/A</span>' : ""}</th>`;
+                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">not_applicable</span>' : ""}</th>`;
                 });
                 html += "</tr></thead><tbody>";
 
@@ -2115,7 +2115,7 @@
 
                         let badges = "";
                         if (isNoEvidence) badges += ' <span class="badge-no-evidence">no evidence</span>';
-                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">N/A</span>';
+                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">not_applicable</span>';
 
                         html += `<td class="${allClasses}">`;
                         html += `<div class="split-cell">`;
@@ -2286,7 +2286,7 @@
                 let html = "<table><thead><tr><th>#</th>";
                 headers.forEach((h, idx) => {
                     const isNACol = notApplicableColumns.includes(idx) || notApplicableColumns.includes(h);
-                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">N/A</span>' : ""}</th>`;
+                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">not_applicable</span>' : ""}</th>`;
                 });
                 html += "</tr></thead><tbody>";
 
@@ -2307,7 +2307,7 @@
 
                         let badges = "";
                         if (isNoEvidence) badges += ' <span class="badge-no-evidence">no evidence</span>';
-                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">N/A</span>';
+                        if (isNotApplicable) badges += ' <span class="badge-not-applicable">not_applicable</span>';
 
                         html += `<td${tdClass}><div class="split-cell">`;
                         html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}${badges}</div>`;
@@ -2382,7 +2382,7 @@
 
             function renderAssessmentBadge(state) {
                 if (state === "no_evidence") return ' <span class="badge-no-evidence">no evidence</span>';
-                if (state === "not_applicable") return ' <span class="badge-not-applicable">N/A</span>';
+                if (state === "not_applicable") return ' <span class="badge-not-applicable">not_applicable</span>';
                 return "";
             }
 
