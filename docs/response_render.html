@@ -2381,8 +2381,10 @@
             }
 
             function renderAssessmentBadge(state) {
-                if (state === "no_evidence") return ' <span class="badge-no-evidence">no_evidence</span>';
-                if (state === "not_applicable") return ' <span class="badge-not-applicable">not_applicable</span>';
+                if (!state) return "";
+                const s = state.toLowerCase();
+                if (s === "no_evidence") return ' <span class="badge-no-evidence">no_evidence</span>';
+                if (s === "not_applicable") return ' <span class="badge-not-applicable">not_applicable</span>';
                 return "";
             }
 
