@@ -106,6 +106,7 @@
                 <button onclick="sendTableWithAssessment()">Table + Assessment</button>
                 <button onclick="sendEQAWithAssessment()">EQA + Assessment</button>
                 <button onclick="sendCandidateAssessment()">Candidate Assessment</button>
+                <button onclick="sendCandidateSimple()">Candidate Simple</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1346,6 +1347,15 @@ Overall performance has improved compared to the previous reporting period.`,
                         "0339932a-6735-3409-9b64-c2020d1be669",
                         "92ca9eaa-a645-3c59-80e4-b035597e96a2"
                     ],
+                    source_consistency: true
+                });
+            }
+
+            function sendCandidateSimple() {
+                sendToRenderer("output", {
+                    confidence: "high",
+                    final_answer: "We have not formally captured the racial and ethnic identities of our board members at this time.",
+                    reasoning: "The source indicates that the racial and ethnic identity data for our board members has not been formally captured [^d21ea0d7-5482-36a7-a15d-62fb97dfb4cd^]. Therefore, we are unable to provide a breakdown of these identities.",
                     source_consistency: true
                 });
             }

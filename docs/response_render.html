@@ -1624,8 +1624,9 @@
                 }
 
                 if (
-                    "ids_candidates_used" in data &&
-                    Array.isArray(data.ids_candidates_used)
+                    ("ids_candidates_used" in data &&
+                    Array.isArray(data.ids_candidates_used)) ||
+                    ("final_answer" in data && "confidence" in data)
                 ) {
                     return "candidate_assessment";
                 }
@@ -2654,9 +2655,35 @@
                 return html;
             }
 
+            function extractUuidsFromData(data) {
+                // Extract unique UUIDs from all text fields when ids_candidates_used is absent
+                const uuidPattern = /\[\^([a-f0-9-]{36})\^\]/g;
+                const seen = new Set();
+                const result = [];
+                const texts = [
+                    data.response_text,
+                    data.final_answer,
+                    data.reasoning,
+                    ...(data.choices || []).map(c => c.reasoning),
+                ];
+                for (const text of texts) {
+                    if (!text) continue;
+                    let match;
+                    while ((match = uuidPattern.exec(text)) !== null) {
+                        if (!seen.has(match[1])) {
+                            seen.add(match[1]);
+                            result.push(match[1]);
+                        }
+                    }
+                }
+                return result;
+            }
+
             function renderSingleCandidateAssessment(data, title, type) {
                 const badgeClass = type === "output" ? "badge-output" : "badge-reference";
-                const candidateIds = data.ids_candidates_used || [];
+                const candidateIds = (data.ids_candidates_used && data.ids_candidates_used.length > 0)
+                    ? data.ids_candidates_used
+                    : extractUuidsFromData(data);
 
                 // Build header badges
                 let headerBadges = "";
@@ -2672,8 +2699,13 @@
 
                 let answerContent = "";
 
-                if (data.response_text) {
-                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processUuidReferences(data.response_text, candidateIds)}</div></div>`;
+                const responseText = data.response_text || data.final_answer;
+                if (responseText) {
+                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processUuidReferences(responseText, candidateIds)}</div></div>`;
+                }
+
+                if (data.reasoning && typeof data.reasoning === "string") {
+                    answerContent += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${processUuidReferences(data.reasoning, candidateIds)}</div></div>`;
                 }
 
                 if (data.choices && data.choices.length > 0) {
