@@ -105,6 +105,7 @@
                 <button onclick="sendLargeTable()">Large Table (4x15)</button>
                 <button onclick="sendTableWithAssessment()">Table + Assessment</button>
                 <button onclick="sendEQAWithAssessment()">EQA + Assessment</button>
+                <button onclick="sendCandidateAssessment()">Candidate Assessment</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1301,6 +1302,51 @@ Overall performance has improved compared to the previous reporting period.`,
                     },
                     run: null,
                     type: "LLMResult",
+                });
+            }
+            function sendCandidateAssessment() {
+                sendToRenderer("output", {
+                    choices: [
+                        {
+                            label: "Climate change: based on previous question, the company report that it has performed a forma materiality assessment.",
+                            is_selected: true,
+                            reasoning: "Strong support across multiple pages that the company conducted a (double) materiality assessment and that climate-change-related topics are included among material/high-priority topics [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^111574f7-de41-3fe8-a987-7df3ef22f637^] [^ed4cf467-9a7d-3a93-b9bb-783c2188e987^] [^9a39882c-2db5-3618-8780-f3c8d6756b81^]."
+                        },
+                        {
+                            label: "Energy consumption",
+                            is_selected: true,
+                            reasoning: "Supported by the company's materiality/priority topic disclosures that include energy-related themes such as 'Energy efficiency and renewable production' [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^ed4cf467-9a7d-3a93-b9bb-783c2188e987^] [^d5f4313b-bd3c-35a0-879b-e6209a844593^]."
+                        },
+                        {
+                            label: "Water management [Manufacturing, Mining, Agriculture only]",
+                            is_selected: true,
+                            reasoning: "Supported by multiple pages identifying 'Sustainable use of water resources' as a material/priority topic [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^ed4cf467-9a7d-3a93-b9bb-783c2188e987^] [^d5f4313b-bd3c-35a0-879b-e6209a844593^] [^acd5d0c0-411e-32cd-9be1-ade21bf28b8b^]."
+                        },
+                        {
+                            label: "Biodiversity and land use [Agriculture, Mining, Forestry only]",
+                            is_selected: true,
+                            reasoning: "Supported by repeated inclusion of 'Biodiversity' among the company's material/high-priority topics [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^cd633f4a-5546-3867-986f-655516787c07^] [^0339932a-6735-3409-9b64-c2020d1be669^]."
+                        },
+                        {
+                            label: "Tailings dam safety [Mining only]",
+                            is_selected: false,
+                            reasoning: "No supporting evidence across the provided pages; all relevant pages are neutral and do not mention tailings, dams, or mining tailings dam safety [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^cd633f4a-5546-3867-986f-655516787c07^] [^92ca9eaa-a645-3c59-80e4-b035597e96a2^]."
+                        }
+                    ],
+                    response_text: "Across the cited sustainability/materiality disclosures, the company reports conducting a (double) materiality assessment and identifies climate change, energy-related topics, water management, and biodiversity as material/high-priority topics [^0ecce466-3caa-3707-95e6-7c0a187c2f99^] [^ed4cf467-9a7d-3a93-b9bb-783c2188e987^] [^9a39882c-2db5-3618-8780-f3c8d6756b81^]. There is no evidence that tailings dam safety is a material topic for this entity.",
+                    confidence: "high",
+                    ids_candidates_used: [
+                        "0ecce466-3caa-3707-95e6-7c0a187c2f99",
+                        "cd633f4a-5546-3867-986f-655516787c07",
+                        "111574f7-de41-3fe8-a987-7df3ef22f637",
+                        "ed4cf467-9a7d-3a93-b9bb-783c2188e987",
+                        "9a39882c-2db5-3618-8780-f3c8d6756b81",
+                        "d5f4313b-bd3c-35a0-879b-e6209a844593",
+                        "acd5d0c0-411e-32cd-9be1-ade21bf28b8b",
+                        "0339932a-6735-3409-9b64-c2020d1be669",
+                        "92ca9eaa-a645-3c59-80e4-b035597e96a2"
+                    ],
+                    source_consistency: true
                 });
             }
         </script>

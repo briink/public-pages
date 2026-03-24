@@ -123,6 +123,68 @@
                 margin-bottom: 8px;
             }
 
+            .badge-confidence {
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .badge-confidence.high {
+                background-color: var(--success-color);
+                color: #000;
+            }
+
+            .badge-confidence.medium {
+                background-color: #fdd663;
+                color: #000;
+            }
+
+            .badge-confidence.low {
+                background-color: var(--error-color);
+                color: #000;
+            }
+
+            .badge-consistency {
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .badge-consistency.consistent {
+                background-color: var(--success-color);
+                color: #000;
+            }
+
+            .badge-consistency.inconsistent {
+                background-color: var(--error-color);
+                color: #000;
+            }
+
+            .candidate-ids {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                margin-top: 6px;
+            }
+
+            .candidate-id-chip {
+                font-size: 10px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background-color: rgba(138, 180, 248, 0.15);
+                color: var(--link-color);
+                font-family: monospace;
+                cursor: default;
+            }
+
             .panel-content {
                 padding: 16px;
             }
@@ -1346,6 +1408,13 @@
                                 metadata,
                             );
                             break;
+                        case "candidate_assessment":
+                            contentHtml = renderCandidateAssessment(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
                         case "documents_list":
                             contentHtml = renderDocumentsList(
                                 outputData,
@@ -1552,6 +1621,13 @@
                     ("reasoning" in data && Array.isArray(data.reasoning))
                 ) {
                     return "table_response";
+                }
+
+                if (
+                    "ids_candidates_used" in data &&
+                    Array.isArray(data.ids_candidates_used)
+                ) {
+                    return "candidate_assessment";
                 }
 
                 if (
@@ -2538,6 +2614,101 @@
                                 <span class="stat-label">Choices</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            `;
+            }
+
+            function processUuidReferences(text, candidateIds) {
+                if (!text) return escapeHtml(text || "");
+                const div = document.createElement("div");
+                div.textContent = text;
+                let escaped = div.innerHTML;
+
+                // Replace [^uuid^] with numbered chips mapped from candidateIds
+                escaped = escaped.replace(/\[\^([a-f0-9-]+)\^\]/g, (match, uuid) => {
+                    const idx = candidateIds.indexOf(uuid);
+                    if (idx >= 0) {
+                        return `<span class="ref-bubble" title="${uuid}">${idx + 1}</span>`;
+                    }
+                    // Show truncated UUID if not in candidates list
+                    return `<span class="ref-bubble invalid" title="${uuid}">${uuid.substring(0, 6)}</span>`;
+                });
+                return escaped;
+            }
+
+            function renderCandidateAssessment(output, reference, meta) {
+                let html = "";
+
+                if (output && reference) {
+                    html += `<div class="side-by-side">`;
+                    html += renderSingleCandidateAssessment(output, "Output", "output");
+                    html += renderSingleCandidateAssessment(reference, "Reference", "reference");
+                    html += `</div>`;
+                } else if (output) {
+                    html += renderSingleCandidateAssessment(output, "Output", "output");
+                } else if (reference) {
+                    html += renderSingleCandidateAssessment(reference, "Reference", "reference");
+                }
+
+                return html;
+            }
+
+            function renderSingleCandidateAssessment(data, title, type) {
+                const badgeClass = type === "output" ? "badge-output" : "badge-reference";
+                const candidateIds = data.ids_candidates_used || [];
+
+                // Build header badges
+                let headerBadges = "";
+                if (data.confidence) {
+                    const level = data.confidence.toLowerCase();
+                    headerBadges += ` <span class="badge-confidence ${level}">${escapeHtml(data.confidence)}</span>`;
+                }
+                if (typeof data.source_consistency === "boolean") {
+                    const cls = data.source_consistency ? "consistent" : "inconsistent";
+                    const label = data.source_consistency ? "consistent" : "inconsistent";
+                    headerBadges += ` <span class="badge-consistency ${cls}">${label}</span>`;
+                }
+
+                let answerContent = "";
+
+                if (data.response_text) {
+                    answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${processUuidReferences(data.response_text, candidateIds)}</div></div>`;
+                }
+
+                if (data.choices && data.choices.length > 0) {
+                    answerContent += `<div class="answer-section"><div class="question-label">Choices</div><div class="choices-list">`;
+                    data.choices.forEach((choice) => {
+                        const reasoningHtml = choice.reasoning ? processUuidReferences(choice.reasoning, candidateIds) : "";
+                        answerContent += `
+                        <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
+                            <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
+                            <div class="choice-content">
+                                <div class="choice-label">${escapeHtml(choice.label || "")}</div>
+                                ${reasoningHtml ? `<div class="choice-reasoning">${reasoningHtml}</div>` : ""}
+                            </div>
+                        </div>`;
+                    });
+                    answerContent += `</div></div>`;
+                }
+
+                // Show candidate IDs
+                if (candidateIds.length > 0) {
+                    answerContent += `<div class="answer-section"><div class="question-label">Source Candidates (${candidateIds.length})</div><div class="candidate-ids">`;
+                    candidateIds.forEach((id, idx) => {
+                        answerContent += `<span class="candidate-id-chip" title="${escapeHtml(id)}"><span class="ref-bubble" style="margin-right:3px;cursor:default;">${idx + 1}</span>${escapeHtml(id.substring(0, 8))}…</span>`;
+                    });
+                    answerContent += `</div></div>`;
+                }
+
+                return `
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>${title}${headerBadges}</span>
+                        <span class="badge ${badgeClass}">${type}</span>
+                    </div>
+                    <div class="panel-content">
+                        ${answerContent}
                     </div>
                 </div>
             `;
