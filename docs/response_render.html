@@ -210,22 +210,6 @@
                 color: #000;
             }
 
-            .chunk-uuid {
-                font-size: 11px;
-                font-family: monospace;
-                color: var(--text-muted);
-                background-color: rgba(138, 180, 248, 0.1);
-                padding: 2px 6px;
-                border-radius: 4px;
-            }
-
-            .source-description-text {
-                font-size: 13px;
-                color: var(--text-muted);
-                font-style: italic;
-                line-height: 1.5;
-            }
-
             .panel-content {
                 padding: 16px;
             }
@@ -2713,59 +2697,72 @@
             function renderSingleChunkAssessment(data, title, type) {
                 const badgeClass = type === "output" ? "badge-output" : "badge-reference";
 
-                // Header badges: is_useful
-                let headerBadges = "";
-                if (typeof data.is_useful === "boolean") {
-                    const cls = data.is_useful ? "consistent" : "inconsistent";
-                    const label = data.is_useful ? "useful" : "not useful";
-                    headerBadges += ` <span class="badge-consistency ${cls}">${label}</span>`;
-                }
+                let panelHtml = `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>${title}</span>
+                            <span class="badge ${badgeClass}">${type}</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="tool-call-header">
+                                <span class="tool-call-name">Chunk Assessment</span>
+                                ${data.chunk_uuid ? `<span class="tool-call-id">${escapeHtml(data.chunk_uuid)}</span>` : ""}
+                                ${typeof data.is_useful === "boolean" ? `<span class="ppa-useful-badge ${data.is_useful ? "useful" : "not-useful"}">${data.is_useful ? "&#10003; Useful" : "&#10007; Not Useful"}</span>` : ""}
+                            </div>
+                            <div class="per-page-answer">
+                `;
 
-                let content = "";
-
-                // Chunk UUID
-                if (data.chunk_uuid) {
-                    content += `<div class="answer-section"><div class="question-label">Chunk</div><span class="chunk-uuid">${escapeHtml(data.chunk_uuid)}</span></div>`;
-                }
-
-                // Source description
-                if (data.source_description) {
-                    content += `<div class="answer-section"><div class="question-label">Source Description</div><div class="source-description-text">${escapeHtml(data.source_description)}</div></div>`;
-                }
-
-                // Choice assessments
+                // Choice assessments as answer box
                 if (data.choice_assessments && data.choice_assessments.length > 0) {
-                    content += `<div class="answer-section"><div class="question-label">Choice Assessments</div><div class="choices-list">`;
-                    data.choice_assessments.forEach((ca) => {
+                    const choiceLines = data.choice_assessments.map((ca) => {
                         const stance = (ca.stance || "").toLowerCase();
                         const stanceBadge = stance ? ` <span class="badge-stance ${stance}">${escapeHtml(ca.stance)}</span>` : "";
-                        content += `
-                        <div class="choice-item ${stance === "supports" ? "selected" : "not-selected"}">
-                            <div class="choice-indicator ${stance === "supports" ? "selected" : "not-selected"}">${stance === "supports" ? "&#10003;" : ""}</div>
-                            <div class="choice-content">
-                                <div class="choice-label">${escapeHtml(ca.label || "")}${stanceBadge}</div>
-                            </div>
-                        </div>`;
-                    });
-                    content += `</div></div>`;
+                        return `<div style="display:flex;align-items:center;gap:6px;">${escapeHtml(ca.label || "")}${stanceBadge}</div>`;
+                    }).join("");
+
+                    panelHtml += `
+                        <div class="ppa-field">
+                            <div class="ppa-field-label">Choice Assessments</div>
+                            <div class="ppa-answer-box">${choiceLines}</div>
+                        </div>
+                    `;
                 }
 
                 // Reasoning
                 if (data.reasoning) {
-                    content += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${escapeHtml(data.reasoning)}</div></div>`;
+                    panelHtml += `
+                        <div class="ppa-field">
+                            <div class="ppa-field-label">Reasoning</div>
+                            <div class="ppa-reasoning-box">
+                                <div class="ppa-field-value">${escapeHtml(data.reasoning)}</div>
+                            </div>
+                        </div>
+                    `;
                 }
 
-                return `
-                <div class="panel">
-                    <div class="panel-header">
-                        <span>${title}${headerBadges}</span>
-                        <span class="badge ${badgeClass}">${type}</span>
-                    </div>
-                    <div class="panel-content">
-                        ${content}
-                    </div>
-                </div>
-            `;
+                // Metadata grid
+                panelHtml += `<div class="ppa-meta-grid">`;
+
+                if (data.source_description) {
+                    panelHtml += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">Source</div>
+                            <div class="ppa-meta-value">${escapeHtml(data.source_description)}</div>
+                        </div>
+                    `;
+                }
+
+                if (data.chunk_uuid) {
+                    panelHtml += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">Chunk UUID</div>
+                            <div class="ppa-meta-value">${escapeHtml(data.chunk_uuid)}</div>
+                        </div>
+                    `;
+                }
+
+                panelHtml += `</div></div></div></div>`;
+                return panelHtml;
             }
 
             function renderCandidateAssessment(output, reference, meta) {
