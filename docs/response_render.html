@@ -1338,8 +1338,15 @@
                         "response_text" in nested ||
                         "choices" in nested ||
                         "response_objects" in nested;
+                    const isChunkAssessment =
+                        "chunk_uuid" in nested ||
+                        "choice_assessments" in nested;
+                    const isCandidateAssessment =
+                        ("ids_candidates_used" in nested &&
+                            Array.isArray(nested.ids_candidates_used)) ||
+                        ("final_answer" in nested && "confidence" in nested);
 
-                    if (isTableResponse || isEQAAnswer) {
+                    if (isTableResponse || isEQAAnswer || isChunkAssessment || isCandidateAssessment) {
                         return nested;
                     }
                 }
