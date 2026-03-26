@@ -107,6 +107,7 @@
                 <button onclick="sendEQAWithAssessment()">EQA + Assessment</button>
                 <button onclick="sendCandidateAssessment()">Candidate Assessment</button>
                 <button onclick="sendCandidateSimple()">Candidate Simple</button>
+                <button onclick="sendChunkAssessment()">Chunk Assessment</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1357,6 +1358,17 @@ Overall performance has improved compared to the previous reporting period.`,
                     final_answer: "We have not formally captured the racial and ethnic identities of our board members at this time.",
                     reasoning: "The source indicates that the racial and ethnic identity data for our board members has not been formally captured [^d21ea0d7-5482-36a7-a15d-62fb97dfb4cd^]. Therefore, we are unable to provide a breakdown of these identities.",
                     source_consistency: true
+                });
+            }
+            function sendChunkAssessment() {
+                sendToRenderer("output", {
+                    choice_assessments: [
+                        { label: "No information", stance: "supports" }
+                    ],
+                    is_useful: true,
+                    chunk_uuid: "f822363c-0a9c-3204-aa4d-264b95c2a920",
+                    source_description: "Sustainability section focused on GHG emissions (Scopes 1–2 validation; Scope 3 reduction strategy) and mentions raw materials like aluminum and steel.",
+                    reasoning: "The page discusses emissions accounting and a Scope 3 strategy around sourcing/recycling and mentions raw materials (aluminum, steel), but it does not describe any explicit sustainability assessment of critical natural resources (e.g., water, forests, rare earth minerals). It focuses on GHG calculations/validation (\"validate the calculations of greenhouse gas emissions (Scope 1 and Scope 2)\") rather than critical natural resource assessments."
                 });
             }
         </script>

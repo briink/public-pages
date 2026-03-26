@@ -185,6 +185,47 @@
                 cursor: default;
             }
 
+            .badge-stance {
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+                vertical-align: middle;
+            }
+
+            .badge-stance.supports {
+                background-color: var(--success-color);
+                color: #000;
+            }
+
+            .badge-stance.contradicts {
+                background-color: var(--error-color);
+                color: #000;
+            }
+
+            .badge-stance.neutral {
+                background-color: var(--text-muted);
+                color: #000;
+            }
+
+            .chunk-uuid {
+                font-size: 11px;
+                font-family: monospace;
+                color: var(--text-muted);
+                background-color: rgba(138, 180, 248, 0.1);
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+
+            .source-description-text {
+                font-size: 13px;
+                color: var(--text-muted);
+                font-style: italic;
+                line-height: 1.5;
+            }
+
             .panel-content {
                 padding: 16px;
             }
@@ -1408,6 +1449,13 @@
                                 metadata,
                             );
                             break;
+                        case "chunk_assessment":
+                            contentHtml = renderChunkAssessment(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
                         case "candidate_assessment":
                             contentHtml = renderCandidateAssessment(
                                 outputData,
@@ -1621,6 +1669,13 @@
                     ("reasoning" in data && Array.isArray(data.reasoning))
                 ) {
                     return "table_response";
+                }
+
+                if (
+                    "chunk_uuid" in data ||
+                    ("choice_assessments" in data && Array.isArray(data.choice_assessments))
+                ) {
+                    return "chunk_assessment";
                 }
 
                 if (
@@ -2636,6 +2691,81 @@
                     return `<span class="ref-bubble invalid" title="${uuid}">${uuid.substring(0, 6)}</span>`;
                 });
                 return escaped;
+            }
+
+            function renderChunkAssessment(output, reference, meta) {
+                let html = "";
+
+                if (output && reference) {
+                    html += `<div class="side-by-side">`;
+                    html += renderSingleChunkAssessment(output, "Output", "output");
+                    html += renderSingleChunkAssessment(reference, "Reference", "reference");
+                    html += `</div>`;
+                } else if (output) {
+                    html += renderSingleChunkAssessment(output, "Output", "output");
+                } else if (reference) {
+                    html += renderSingleChunkAssessment(reference, "Reference", "reference");
+                }
+
+                return html;
+            }
+
+            function renderSingleChunkAssessment(data, title, type) {
+                const badgeClass = type === "output" ? "badge-output" : "badge-reference";
+
+                // Header badges: is_useful
+                let headerBadges = "";
+                if (typeof data.is_useful === "boolean") {
+                    const cls = data.is_useful ? "consistent" : "inconsistent";
+                    const label = data.is_useful ? "useful" : "not useful";
+                    headerBadges += ` <span class="badge-consistency ${cls}">${label}</span>`;
+                }
+
+                let content = "";
+
+                // Chunk UUID
+                if (data.chunk_uuid) {
+                    content += `<div class="answer-section"><div class="question-label">Chunk</div><span class="chunk-uuid">${escapeHtml(data.chunk_uuid)}</span></div>`;
+                }
+
+                // Source description
+                if (data.source_description) {
+                    content += `<div class="answer-section"><div class="question-label">Source Description</div><div class="source-description-text">${escapeHtml(data.source_description)}</div></div>`;
+                }
+
+                // Choice assessments
+                if (data.choice_assessments && data.choice_assessments.length > 0) {
+                    content += `<div class="answer-section"><div class="question-label">Choice Assessments</div><div class="choices-list">`;
+                    data.choice_assessments.forEach((ca) => {
+                        const stance = (ca.stance || "").toLowerCase();
+                        const stanceBadge = stance ? ` <span class="badge-stance ${stance}">${escapeHtml(ca.stance)}</span>` : "";
+                        content += `
+                        <div class="choice-item ${stance === "supports" ? "selected" : "not-selected"}">
+                            <div class="choice-indicator ${stance === "supports" ? "selected" : "not-selected"}">${stance === "supports" ? "&#10003;" : ""}</div>
+                            <div class="choice-content">
+                                <div class="choice-label">${escapeHtml(ca.label || "")}${stanceBadge}</div>
+                            </div>
+                        </div>`;
+                    });
+                    content += `</div></div>`;
+                }
+
+                // Reasoning
+                if (data.reasoning) {
+                    content += `<div class="answer-section"><div class="question-label">Reasoning</div><div class="response-text">${escapeHtml(data.reasoning)}</div></div>`;
+                }
+
+                return `
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>${title}${headerBadges}</span>
+                        <span class="badge ${badgeClass}">${type}</span>
+                    </div>
+                    <div class="panel-content">
+                        ${content}
+                    </div>
+                </div>
+            `;
             }
 
             function renderCandidateAssessment(output, reference, meta) {
