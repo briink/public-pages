@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Briink Search Actions Renderer</title>
+        <script src="https://cdn.jsdelivr.net/npm/renderjson@1.4.0/renderjson.min.js"></script>
+        <style>
+            :root {
+                --bg-color: #1a1d21;
+                --card-bg: #22262b;
+                --text-color: #e8eaed;
+                --text-secondary: #bdc1c6;
+                --text-muted: #9aa0a6;
+                --border-color: #3c4043;
+                --accent-color: #8ab4f8;
+                --success-color: #81c995;
+                --warning-color: #fdd663;
+                --error-color: #f28b82;
+                --link-color: #8ab4f8;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .panel {
+                background-color: var(--card-bg);
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid var(--border-color);
+            }
+
+            .panel-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 16px;
+                background-color: rgba(0, 0, 0, 0.2);
+                font-weight: 600;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .panel-content {
+                padding: 16px;
+            }
+
+            .badge {
+                font-size: 11px;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-weight: 500;
+            }
+
+            .badge-output {
+                background-color: var(--accent-color);
+                color: #000;
+            }
+
+            .badge-reference {
+                background-color: var(--success-color);
+                color: #000;
+            }
+
+            /* Context section */
+            .context-section {
+                margin-bottom: 16px;
+            }
+
+            .context-label {
+                font-size: 10px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+            }
+
+            .context-value {
+                font-size: 13px;
+                color: var(--text-color);
+            }
+
+            .context-value.folder {
+                font-weight: 600;
+                color: var(--accent-color);
+            }
+
+            .context-value.question {
+                font-style: italic;
+                color: var(--text-secondary);
+            }
+
+            /* Stats bar */
+            .stats-bar {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 16px;
+                padding: 8px 14px;
+                background: rgba(138, 180, 248, 0.06);
+                border-radius: 6px;
+                border: 1px solid rgba(138, 180, 248, 0.1);
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .stat-num {
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--accent-color);
+            }
+
+            .stat-text {
+                font-size: 11px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+            }
+
+            /* File cards */
+            .file-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .file-card {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                overflow: hidden;
+                transition: border-color 0.15s;
+            }
+
+            .file-card:hover {
+                border-color: rgba(138, 180, 248, 0.3);
+            }
+
+            .file-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 14px;
+                background: rgba(0, 0, 0, 0.15);
+                cursor: default;
+            }
+
+            .file-index {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 22px;
+                height: 22px;
+                border-radius: 4px;
+                background-color: var(--accent-color);
+                color: #1a1d21;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            .file-name {
+                font-size: 12px;
+                font-family: monospace;
+                color: var(--link-color);
+                word-break: break-all;
+                flex: 1;
+            }
+
+            .file-id {
+                font-size: 10px;
+                font-family: monospace;
+                color: var(--text-muted);
+                word-break: break-all;
+            }
+
+            .badge-doc-type {
+                font-size: 9px;
+                padding: 1px 6px;
+                border-radius: 8px;
+                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            .badge-doc-type.website_page {
+                background-color: rgba(129, 201, 149, 0.2);
+                color: var(--success-color);
+            }
+
+            .badge-doc-type.error_page {
+                background-color: rgba(242, 139, 130, 0.2);
+                color: var(--error-color);
+            }
+
+            .badge-doc-type.unknown {
+                background-color: rgba(154, 160, 166, 0.2);
+                color: var(--text-muted);
+            }
+
+            .badge-doc-type.pdf,
+            .badge-doc-type.annual_report,
+            .badge-doc-type.sustainability_report {
+                background-color: rgba(138, 180, 248, 0.2);
+                color: var(--accent-color);
+            }
+
+            .file-meta {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-left: auto;
+                flex-shrink: 0;
+            }
+
+            .file-pages {
+                font-size: 10px;
+                color: var(--text-muted);
+                white-space: nowrap;
+            }
+
+            .file-year {
+                font-size: 10px;
+                padding: 1px 5px;
+                border-radius: 6px;
+                background: rgba(253, 214, 99, 0.15);
+                color: var(--warning-color);
+                font-weight: 600;
+            }
+
+            .file-body {
+                padding: 10px 14px;
+            }
+
+            .queries-label {
+                font-size: 10px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-muted);
+                margin-bottom: 6px;
+            }
+
+            .queries-columns {
+                display: flex;
+                gap: 12px;
+            }
+
+            .queries-column {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                min-width: 0;
+            }
+
+            .query-chip {
+                font-size: 10px;
+                padding: 3px 8px;
+                border-radius: 10px;
+                background-color: rgba(138, 180, 248, 0.1);
+                color: var(--text-secondary);
+                font-family: monospace;
+                border: 1px solid rgba(138, 180, 248, 0.18);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Targeted files section */
+            .targeted-files {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                margin-top: 4px;
+            }
+
+            .targeted-chip {
+                font-size: 10px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                background-color: rgba(138, 180, 248, 0.12);
+                color: var(--link-color);
+                font-family: monospace;
+            }
+
+            .targeted-chip.active {
+                background-color: rgba(129, 201, 149, 0.15);
+                color: var(--success-color);
+                border: 1px solid rgba(129, 201, 149, 0.25);
+            }
+
+            .targeted-chip.inactive {
+                opacity: 0.5;
+            }
+
+            /* Side-by-side */
+            .side-by-side {
+                display: flex;
+                gap: 12px;
+            }
+
+            .side-by-side > * {
+                flex: 1;
+                min-width: 0;
+            }
+
+            @media (max-width: 900px) {
+                .side-by-side {
+                    flex-direction: column;
+                }
+            }
+
+            /* JSON fallback */
+            .json-fallback {
+                background-color: #2d3136;
+                border-radius: 6px;
+                padding: 12px;
+                overflow-x: auto;
+                font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+                font-size: 12px;
+                line-height: 1.6;
+            }
+
+            .json-fallback .renderjson a {
+                text-decoration: none;
+                color: var(--accent-color);
+            }
+
+            .json-fallback .disclosure {
+                color: var(--accent-color);
+                font-weight: bold;
+                cursor: pointer;
+                padding: 0 4px;
+            }
+
+            .json-fallback .string { color: #f9a825; }
+            .json-fallback .number { color: #8ab4f8; }
+            .json-fallback .boolean { color: #c4b5fd; }
+            .json-fallback .key { color: #4fc3f7; }
+            .json-fallback .null { color: var(--text-muted); }
+
+            .loading {
+                text-align: center;
+                color: var(--text-muted);
+                padding: 40px;
+                font-size: 14px;
+            }
+
+            .debug-panel {
+                opacity: 0.7;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="content">
+                <div class="loading">Waiting for data from LangSmith...</div>
+            </div>
+            <div id="debug-container" style="display: none"></div>
+        </div>
+
+        <button
+            id="debug-toggle"
+            style="
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                background: #2d3136;
+                color: #9aa0a6;
+                border: 1px solid #3c4043;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                z-index: 1000;
+            "
+        >
+            Show Debug
+        </button>
+
+        <script>
+            let debugVisible = false;
+            document
+                .getElementById("debug-toggle")
+                .addEventListener("click", function () {
+                    debugVisible = !debugVisible;
+                    const debugContainer =
+                        document.getElementById("debug-container");
+                    debugContainer.style.display = debugVisible
+                        ? "block"
+                        : "none";
+                    this.textContent = debugVisible
+                        ? "Hide Debug"
+                        : "Show Debug";
+                    this.style.background = debugVisible
+                        ? "#4a235a"
+                        : "#2d3136";
+                });
+
+            let outputData = null;
+            let referenceData = null;
+            let metadata = null;
+            let rawMessage = null;
+
+            function unwrapData(data) {
+                if (!data || typeof data !== "object") return data;
+                if (data.output && typeof data.output === "object") {
+                    const n = data.output;
+                    if ("search_actions" in n || "actions" in n) return n;
+                }
+                return data;
+            }
+
+            window.addEventListener("message", (event) => {
+                const message = event.data;
+                if (!message || typeof message !== "object") return;
+                rawMessage = message;
+
+                if (message.type === "output") {
+                    outputData = unwrapData(message.data);
+                    metadata = message.metadata;
+                } else if (message.type === "reference") {
+                    referenceData = unwrapData(message.data);
+                }
+
+                renderContent();
+            });
+
+            function renderContent() {
+                const contentContainer = document.getElementById("content");
+                const debugContainer =
+                    document.getElementById("debug-container");
+
+                if (!outputData && !referenceData) return;
+
+                let html = "";
+
+                if (outputData && referenceData) {
+                    html += '<div class="side-by-side">';
+                    html += renderPanel(outputData, "Output", "output");
+                    html += renderPanel(referenceData, "Reference", "reference");
+                    html += "</div>";
+                } else if (outputData) {
+                    html += renderPanel(outputData, "Output", "output");
+                } else {
+                    html += renderPanel(referenceData, "Reference", "reference");
+                }
+
+                contentContainer.innerHTML = html;
+
+                debugContainer.innerHTML = `
+                    <div class="panel debug-panel">
+                        <div class="panel-header"><span>DEBUG INFO</span></div>
+                        <div class="panel-content">
+                            <div><strong>Has outputData:</strong> ${!!outputData}</div>
+                            <div><strong>Has referenceData:</strong> ${!!referenceData}</div>
+                            <div><strong>outputData keys:</strong> ${outputData ? Object.keys(outputData).join(", ") : "N/A"}</div>
+                            <div style="margin-top: 10px;"><strong>Raw message.data:</strong></div>
+                            <pre style="font-size: 11px; max-height: 150px; overflow: auto; background: #1a1d21; padding: 8px; border-radius: 4px;">${escapeHtml(JSON.stringify(rawMessage?.data, null, 2))}</pre>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderPanel(data, title, type) {
+                const badgeClass =
+                    type === "output" ? "badge-output" : "badge-reference";
+                const actions = data.search_actions || data.actions || [];
+                const filesTargeted = data.files_targeted || [];
+                const folderName = data.folder_name || "";
+                const questionText = data.question_text || "";
+                const totalActions = data.total_actions || actions.length;
+                const totalQueries =
+                    data.total_queries ||
+                    actions.reduce((s, a) => s + (a.queries || []).length, 0);
+
+                // Build set of file_ids that have actions
+                const actionFileIds = new Set(actions.map((a) => a.file_id));
+
+                // Context section
+                let contextHtml = "";
+                if (folderName) {
+                    contextHtml += `
+                        <div class="context-section">
+                            <div class="context-label">Entity</div>
+                            <div class="context-value folder">${escapeHtml(folderName)}</div>
+                        </div>
+                    `;
+                }
+                if (questionText) {
+                    contextHtml += `
+                        <div class="context-section">
+                            <div class="context-label">Question</div>
+                            <div class="context-value question">${escapeHtml(questionText)}</div>
+                        </div>
+                    `;
+                }
+
+                // Targeted files
+                let targetedHtml = "";
+                if (filesTargeted.length > 0) {
+                    const chips = filesTargeted
+                        .map((fid) => {
+                            const isActive = actionFileIds.has(fid);
+                            const cls = isActive ? "active" : "inactive";
+                            const short = fid.substring(0, 8);
+                            return `<span class="targeted-chip ${cls}" title="${escapeHtml(fid)}">${short}...</span>`;
+                        })
+                        .join("");
+                    targetedHtml = `
+                        <div class="context-section">
+                            <div class="context-label">Files Targeted (${filesTargeted.length})</div>
+                            <div class="targeted-files">${chips}</div>
+                        </div>
+                    `;
+                }
+
+                // File cards
+                let cardsHtml = "";
+                actions.forEach((action, idx) => {
+                    const queries = action.queries || [];
+                    const fileName = action.file_name || "";
+                    const fileId = action.file_id || "";
+                    const docType = action.document_type || "";
+                    const pages = action.page_numbers || [];
+                    const year = action.reporting_year;
+
+                    // Doc type badge
+                    const docTypeCls = docType.replace(/\s+/g, "_").toLowerCase() || "unknown";
+                    const docTypeBadge = docType
+                        ? `<span class="badge-doc-type ${docTypeCls}">${escapeHtml(docType)}</span>`
+                        : "";
+
+                    // Meta items
+                    let metaHtml = "";
+                    if (year) metaHtml += `<span class="file-year">${escapeHtml(String(year))}</span>`;
+                    if (pages.length > 0) metaHtml += `<span class="file-pages">pp. ${pages.join(", ")}</span>`;
+
+                    // Split queries into columns of max 5
+                    const maxPerCol = 5;
+                    const leftCol = queries.slice(0, maxPerCol);
+                    const rightCol = queries.slice(maxPerCol, maxPerCol * 2);
+
+                    const renderCol = (items) =>
+                        items.map((q) => `<span class="query-chip" title="${escapeHtml(q)}">${escapeHtml(q)}</span>`).join("");
+
+                    let columnsHtml = `<div class="queries-columns">`;
+                    columnsHtml += `<div class="queries-column">${renderCol(leftCol)}</div>`;
+                    if (rightCol.length > 0) {
+                        columnsHtml += `<div class="queries-column">${renderCol(rightCol)}</div>`;
+                    }
+                    columnsHtml += `</div>`;
+
+                    cardsHtml += `
+                        <div class="file-card">
+                            <div class="file-header">
+                                <span class="file-index">${idx + 1}</span>
+                                <div style="flex: 1; min-width: 0;">
+                                    ${fileName ? `<div class="file-name">${escapeHtml(fileName)}</div>` : ""}
+                                    <div class="file-id">${escapeHtml(fileId)}</div>
+                                </div>
+                                <div class="file-meta">
+                                    ${docTypeBadge}
+                                    ${metaHtml}
+                                </div>
+                            </div>
+                            <div class="file-body">
+                                <div class="queries-label">Queries (${queries.length})</div>
+                                ${columnsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                return `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Search Actions</span>
+                            <span class="badge ${badgeClass}">${type}</span>
+                        </div>
+                        <div class="panel-content">
+                            ${contextHtml}
+                            ${targetedHtml}
+                            <div class="stats-bar">
+                                <div class="stat">
+                                    <span class="stat-num">${totalActions}</span>
+                                    <span class="stat-text">Files</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-num">${totalQueries}</span>
+                                    <span class="stat-text">Queries</span>
+                                </div>
+                            </div>
+                            <div class="file-list">${cardsHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function escapeHtml(str) {
+                if (typeof str !== "string") return String(str);
+                const div = document.createElement("div");
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        </script>
+    </body>
+</html>

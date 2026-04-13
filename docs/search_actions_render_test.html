@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Search Actions Renderer - Test Page</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                background: #f5f5f5;
+                margin: 0;
+                padding: 16px;
+            }
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+                padding: 12px;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .controls button {
+                padding: 6px 14px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: #fff;
+                cursor: pointer;
+                font-size: 13px;
+            }
+            .controls button:hover {
+                background: #e8f0fe;
+                border-color: #8ab4f8;
+            }
+            iframe {
+                width: 100%;
+                height: 700px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #1a1d21;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="controls">
+            <button onclick="sendFullExample()">Full Example</button>
+            <button onclick="sendMinimalExample()">Minimal (actions only)</button>
+            <button onclick="sendWithPages()">With Page Numbers</button>
+        </div>
+
+        <iframe
+            id="renderer"
+            src="search_actions_render.html"
+        ></iframe>
+
+        <script>
+            function sendToRenderer(type, data, metadata) {
+                const iframe = document.getElementById("renderer");
+                iframe.contentWindow.postMessage(
+                    { type, data, metadata: metadata || null },
+                    "*",
+                );
+            }
+
+            function sendFullExample() {
+                sendToRenderer("output", {
+                    files_targeted: [
+                        "3452a895-3913-452e-abbf-e95b5078cb9a",
+                        "3a5ff0ba-bd0a-441e-81a7-630b9293fce9",
+                        "19fb0806-6e59-44b3-82eb-12e0ac104dc2",
+                        "b60b454b-27ea-4bc0-85bb-92c7a0c1a73b",
+                        "f1596d85-ce92-4550-9664-d446b580e941"
+                    ],
+                    folder_name: "AtomicJar, Inc.",
+                    question_text: "Please disclose the internal carbon prices (in \u20ac/tCO2e) used for the covered carbon emissions.",
+                    search_actions: [
+                        {
+                            document_type: "unknown",
+                            file_id: "3452a895-3913-452e-abbf-e95b5078cb9a",
+                            file_name: "https://www.atomicjar.com/blog/",
+                            page_numbers: [],
+                            queries: [
+                                "internal carbon price \u20ac/tCO2e",
+                                "internal carbon pricing (ICP) \u20ac per tonne CO2e",
+                                "shadow carbon price \u20ac/tCO2e",
+                                "carbon price used for investment decisions \u20ac/tCO2e",
+                                "carbon pricing assumptions (EUR/tCO2e)"
+                            ],
+                            reporting_year: null
+                        },
+                        {
+                            document_type: "unknown",
+                            file_id: "3a5ff0ba-bd0a-441e-81a7-630b9293fce9",
+                            file_name: "https://www.atomicjar.com/about-us/",
+                            page_numbers: [],
+                            queries: [
+                                "internal carbon price \u20ac per tCO2e",
+                                "carbon pricing strategy internal price \u20ac/tCO2e",
+                                "shadow price of carbon \u20ac/tCO2e"
+                            ],
+                            reporting_year: null
+                        },
+                        {
+                            document_type: "error_page",
+                            file_id: "19fb0806-6e59-44b3-82eb-12e0ac104dc2",
+                            file_name: "https://www.atomicjar.com/2023/12/atomicjar-is-now-part-of-docker/",
+                            page_numbers: [],
+                            queries: [
+                                "internal carbon price \u20ac/tCO2e",
+                                "carbon price assumptions \u20ac per tCO2e",
+                                "carbon pricing (internal) for emissions",
+                                "covered carbon emissions internal price"
+                            ],
+                            reporting_year: null
+                        },
+                        {
+                            document_type: "website_page",
+                            file_id: "b60b454b-27ea-4bc0-85bb-92c7a0c1a73b",
+                            file_name: "https://www.atomicjar.com/2022/08/testcontainers-and-junit-integration/",
+                            page_numbers: [],
+                            queries: [
+                                "internal carbon price \u20ac/tCO2e",
+                                "shadow carbon price",
+                                "carbon pricing \u20ac per tCO2e",
+                                "carbon offset price \u20ac/tCO2e",
+                                "emissions cost \u20ac per tCO2e"
+                            ],
+                            reporting_year: null
+                        },
+                        {
+                            document_type: "unknown",
+                            file_id: "f1596d85-ce92-4550-9664-d446b580e941",
+                            file_name: "https://www.atomicjar.com/category/docker/",
+                            page_numbers: [],
+                            queries: [
+                                "internal carbon price \u20ac/tCO2e",
+                                "internal carbon pricing",
+                                "shadow price carbon",
+                                "carbon tax internal price \u20ac/tCO2e"
+                            ],
+                            reporting_year: null
+                        }
+                    ],
+                    total_actions: 5,
+                    total_queries: 21
+                });
+            }
+
+            function sendMinimalExample() {
+                sendToRenderer("output", {
+                    actions: [
+                        {
+                            file_id: "868c7303-680d-458d-bd9c-d846b2808b34",
+                            queries: ["net-zero target", "\"net zero\"", "\"net-zero\"", "\"science-based\" OR SBTi net-zero"]
+                        },
+                        {
+                            file_id: "dcef69a0-9094-4387-9fd4-a03a0c4b34fb",
+                            queries: ["net-zero target", "\"net zero\" commitment", "\"carbon neutral\" commitment"]
+                        }
+                    ]
+                });
+            }
+
+            function sendWithPages() {
+                sendToRenderer("output", {
+                    folder_name: "Heineken N.V.",
+                    question_text: "Describe Scope 2 emissions reporting methodology.",
+                    search_actions: [
+                        {
+                            document_type: "sustainability_report",
+                            file_id: "9e7fce13-9eb5-4b86-b1ff-75015aad9301",
+                            file_name: "heineken-sustainability-report-2025.pdf",
+                            page_numbers: [50, 84, 91],
+                            queries: [
+                                "Scope 2 location-based",
+                                "Scope 2 market-based",
+                                "GHG Protocol Scope 2 Guidance"
+                            ],
+                            reporting_year: 2025
+                        },
+                        {
+                            document_type: "annual_report",
+                            file_id: "4d3fee7f-5a4b-479f-9767-a1be7f998eb6",
+                            file_name: "heineken-annual-report-2025.pdf",
+                            page_numbers: [112, 135, 137],
+                            queries: [
+                                "Scope 2 emissions",
+                                "renewable energy certificates",
+                                "market-based emissions methodology"
+                            ],
+                            reporting_year: 2025
+                        }
+                    ],
+                    total_actions: 2,
+                    total_queries: 6
+                });
+            }
+        </script>
+    </body>
+</html>
