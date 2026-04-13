@@ -108,6 +108,7 @@
                 <button onclick="sendCandidateAssessment()">Candidate Assessment</button>
                 <button onclick="sendCandidateSimple()">Candidate Simple</button>
                 <button onclick="sendChunkAssessment()">Chunk Assessment</button>
+                <button onclick="sendSearchActions()">Search Actions</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1370,6 +1371,30 @@ Overall performance has improved compared to the previous reporting period.`,
                     chunk_uuid: "f822363c-0a9c-3204-aa4d-264b95c2a920",
                     source_description: "Sustainability section focused on GHG emissions (Scopes 1–2 validation; Scope 3 reduction strategy) and mentions raw materials like aluminum and steel.",
                     reasoning: "The page discusses emissions accounting and a Scope 3 strategy around sourcing/recycling and mentions raw materials (aluminum, steel), but it does not describe any explicit sustainability assessment of critical natural resources (e.g., water, forests, rare earth minerals). It focuses on GHG calculations/validation (\"validate the calculations of greenhouse gas emissions (Scope 1 and Scope 2)\") rather than critical natural resource assessments."
+                });
+            }
+
+            function sendSearchActions() {
+                sendToRenderer("output", {
+                    actions: [
+                        {
+                            file_id: "868c7303-680d-458d-bd9c-d846b2808b34",
+                            queries: ["net-zero target", "\"net zero\"", "\"net-zero\"", "\"net zero\" by 20", "\"net zero\" by 2030 OR 2040 OR 2050", "\"carbon neutral\" OR \"carbon neutrality\"", "\"climate neutral\" OR \"climate neutrality\"", "\"GHG\" net zero target", "\"science-based\" OR SBTi net-zero"]
+                        },
+                        {
+                            file_id: "dcef69a0-9094-4387-9fd4-a03a0c4b34fb",
+                            queries: ["net-zero target", "\"net zero\" commitment", "\"carbon neutral\" commitment", "\"climate\" target OR \"decarbonization\" target", "\"greenhouse gas\" target OR emissions target", "\"Scope 1\" OR \"Scope 2\" OR \"Scope 3\" net zero"],
+                            page_numbers: [1, 5, 12]
+                        },
+                        {
+                            file_id: "b826e095-c968-464a-9118-a6a451402db9",
+                            queries: ["net-zero target", "\"net zero\"", "\"carbon neutral\"", "ESG targets OR sustainability targets", "emissions reduction targets AND net zero", "\"decarbonization\" roadmap OR strategy"]
+                        },
+                        {
+                            file_id: "73c909ed-5e3b-44ae-ada4-e7348636a858",
+                            queries: ["Accordion net-zero target", "\"net zero\" OR \"net-zero\" target", "\"carbon neutral\" OR \"carbon neutrality\" target", "\"climate neutral\" target", "\"greenhouse gas\" (GHG) reduction target", "\"Scope 1\" \"Scope 2\" \"Scope 3\" targets", "SBTi OR \"science-based targets\" OR \"Paris-aligned\" OR \"1.5°C\""]
+                        }
+                    ]
                 });
             }
         </script>

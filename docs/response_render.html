@@ -232,6 +232,54 @@
                 color: #000;
             }
 
+            .search-actions-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .search-action-card {
+                background: rgba(138, 180, 248, 0.06);
+                border: 1px solid rgba(138, 180, 248, 0.15);
+                border-radius: 8px;
+                padding: 10px 14px;
+            }
+            .search-action-file {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 8px;
+            }
+            .search-action-file-icon {
+                font-size: 14px;
+                opacity: 0.7;
+            }
+            .search-action-file-id {
+                font-size: 11px;
+                font-family: monospace;
+                color: var(--link-color);
+                word-break: break-all;
+            }
+            .search-action-pages {
+                font-size: 10px;
+                color: var(--text-muted);
+                margin-left: auto;
+                white-space: nowrap;
+            }
+            .search-action-queries {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .search-query-chip {
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 10px;
+                background-color: rgba(138, 180, 248, 0.12);
+                color: var(--text-secondary);
+                font-family: monospace;
+                border: 1px solid rgba(138, 180, 248, 0.2);
+            }
+
             .panel-content {
                 padding: 16px;
             }
@@ -1360,6 +1408,11 @@
                         "response_text" in nested ||
                         "choices" in nested ||
                         "response_objects" in nested;
+                    const isSearchActions =
+                        "actions" in nested &&
+                        Array.isArray(nested.actions) &&
+                        nested.actions.length > 0 &&
+                        nested.actions[0].queries !== undefined;
                     const isChunkAssessment =
                         "chunk_uuid" in nested ||
                         "choice_assessments" in nested;
@@ -1368,7 +1421,7 @@
                             Array.isArray(nested.ids_candidates_used)) ||
                         ("final_answer" in nested && "confidence" in nested);
 
-                    if (isTableResponse || isEQAAnswer || isChunkAssessment || isCandidateAssessment) {
+                    if (isTableResponse || isEQAAnswer || isSearchActions || isChunkAssessment || isCandidateAssessment) {
                         return nested;
                     }
                 }
@@ -1457,6 +1510,13 @@
                             break;
                         case "eqa_answer":
                             contentHtml = renderEQAAnswer(
+                                outputData,
+                                referenceData,
+                                metadata,
+                            );
+                            break;
+                        case "search_actions":
+                            contentHtml = renderSearchActions(
                                 outputData,
                                 referenceData,
                                 metadata,
@@ -1682,6 +1742,15 @@
                     ("reasoning" in data && Array.isArray(data.reasoning))
                 ) {
                     return "table_response";
+                }
+
+                if (
+                    "actions" in data &&
+                    Array.isArray(data.actions) &&
+                    data.actions.length > 0 &&
+                    data.actions[0].queries !== undefined
+                ) {
+                    return "search_actions";
                 }
 
                 if (
@@ -2716,6 +2785,63 @@
                     return `<span class="ref-bubble invalid" title="${uuid}">${uuid.substring(0, 6)}</span>`;
                 });
                 return escaped;
+            }
+
+            function renderSearchActions(output, reference, meta) {
+                let html = "";
+                if (output) html += renderSingleSearchActions(output, "Output", "output");
+                if (reference) html += renderSingleSearchActions(reference, "Reference", "reference");
+                return html;
+            }
+
+            function renderSingleSearchActions(data, title, type) {
+                const badgeClass = type === "output" ? "badge-output" : "badge-reference";
+                const actions = data.actions || [];
+                const totalQueries = actions.reduce((sum, a) => sum + (a.queries || []).length, 0);
+
+                let cardsHtml = "";
+                actions.forEach((action, idx) => {
+                    const queries = action.queries || [];
+                    const pages = action.page_numbers || [];
+                    const pagesLabel = pages.length > 0 ? `pages: ${pages.join(", ")}` : "";
+
+                    const queryChips = queries.map(q =>
+                        `<span class="search-query-chip">${escapeHtml(q)}</span>`
+                    ).join("");
+
+                    cardsHtml += `
+                        <div class="search-action-card">
+                            <div class="search-action-file">
+                                <span class="search-action-file-icon">&#128196;</span>
+                                <span class="search-action-file-id">${escapeHtml(action.file_id || "")}</span>
+                                ${pagesLabel ? `<span class="search-action-pages">${escapeHtml(pagesLabel)}</span>` : ""}
+                            </div>
+                            <div class="search-action-queries">${queryChips}</div>
+                        </div>
+                    `;
+                });
+
+                return `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Search Actions ${title}</span>
+                            <span class="badge ${badgeClass}">${type}</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="metadata-grid" style="margin-bottom: 12px;">
+                                <div class="metadata-item">
+                                    <span class="metadata-key">Files</span>
+                                    <span class="metadata-value">${actions.length}</span>
+                                </div>
+                                <div class="metadata-item">
+                                    <span class="metadata-key">Total Queries</span>
+                                    <span class="metadata-value">${totalQueries}</span>
+                                </div>
+                            </div>
+                            <div class="search-actions-list">${cardsHtml}</div>
+                        </div>
+                    </div>
+                `;
             }
 
             function renderChunkAssessment(output, reference, meta) {
