@@ -1837,9 +1837,11 @@
                 const sourceDocuments = getSourceDocuments(output, reference);
                 const outputRows = output.rows || [];
                 const refRows = reference.rows || [];
+                const outputReasoningRows = output.reasoning || [];
+                const refReasoningRows = reference.reasoning || [];
                 const outputHeaders = output.column_headers || [];
                 const refHeaders = reference.column_headers || [];
-                const rowCount = Math.max(outputRows.length, refRows.length);
+                const rowCount = Math.max(outputRows.length, refRows.length, outputReasoningRows.length, refReasoningRows.length);
                 const colCount = Math.max(
                     outputHeaders.length,
                     refHeaders.length,
@@ -2295,7 +2297,7 @@
                 const refRows = reference.rows || [];
                 const outputReasoningRows = output.reasoning || [];
                 const refReasoningRows = reference.reasoning || [];
-                const maxRows = Math.max(outputRows.length, refRows.length);
+                const maxRows = Math.max(outputRows.length, refRows.length, outputReasoningRows.length, refReasoningRows.length);
                 const srcCount = sourceCount || 0;
                 const noEvidence = output.no_evidence || [];
                 const notApplicableCells = output.not_applicable_cells || [];
@@ -2462,7 +2464,9 @@
                     type === "output" ? "badge-output" : "badge-reference";
                 const sourceDocuments = data.source_documents || [];
                 const srcCount = sourceDocuments.length;
-                const rowCount = (data.rows || []).length;
+                const rows = data.rows || [];
+                const reasoningRows = data.reasoning || [];
+                const rowCount = Math.max(rows.length, reasoningRows.length);
                 const colCount = (data.column_headers || []).length;
 
                 return `
@@ -2505,6 +2509,7 @@
                 const headers = data.column_headers || [];
                 const rows = data.rows || [];
                 const reasoningRows = data.reasoning || [];
+                const totalRows = Math.max(rows.length, reasoningRows.length);
                 const noEvidence = data.no_evidence || [];
                 const notApplicableCells = data.not_applicable_cells || [];
                 const notApplicableColumns = data.not_applicable_columns || [];
@@ -2516,7 +2521,7 @@
                 });
                 html += "</tr></thead><tbody>";
 
-                for (let i = 0; i < rows.length; i++) {
+                for (let i = 0; i < totalRows; i++) {
                     const row = rows[i] || [];
                     const reasoningRow = reasoningRows[i] || [];
                     html += `<tr><td>${i + 1}</td>`;

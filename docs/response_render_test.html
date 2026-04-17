@@ -109,6 +109,7 @@
                 <button onclick="sendCandidateSimple()">Candidate Simple</button>
                 <button onclick="sendChunkAssessment()">Chunk Assessment</button>
                 <button onclick="sendSearchActions()">Search Actions</button>
+                <button onclick="sendTableReasoningOnly()">Table (Reasoning Only)</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -1372,6 +1373,50 @@ Overall performance has improved compared to the previous reporting period.`,
                     source_description: "Sustainability section focused on GHG emissions (Scopes 1–2 validation; Scope 3 reduction strategy) and mentions raw materials like aluminum and steel.",
                     reasoning: "The page discusses emissions accounting and a Scope 3 strategy around sourcing/recycling and mentions raw materials (aluminum, steel), but it does not describe any explicit sustainability assessment of critical natural resources (e.g., water, forests, rare earth minerals). It focuses on GHG calculations/validation (\"validate the calculations of greenhouse gas emissions (Scope 1 and Scope 2)\") rather than critical natural resource assessments."
                 });
+            }
+
+            // Test: Table Response with only reasoning (no rows)
+            function sendTableReasoningOnly() {
+                sendToRenderer(
+                    "output",
+                    {
+                        column_headers: [
+                            "Has Climate Target",
+                            "Target Year",
+                            "Scope Coverage",
+                        ],
+                        reasoning: [
+                            [
+                                "The company mentions a net-zero commitment on page 12 of the sustainability report.",
+                                "The target year of 2050 is referenced in the executive summary alongside interim 2030 goals.",
+                                "Scope 1 and 2 are explicitly covered; Scope 3 is mentioned but no concrete reduction target is given.",
+                            ],
+                            [
+                                "A second subsidiary also has a separate climate target outlined in Appendix B.",
+                                "This subsidiary targets 2040 for full decarbonization.",
+                                "Only Scope 1 emissions are addressed for this subsidiary.",
+                            ],
+                        ],
+                        general_reasoning: "The company group has multiple climate targets across different subsidiaries with varying scope coverage and timelines.",
+                        source_documents: [
+                            {
+                                page_content: "We are committed to achieving net-zero greenhouse gas emissions across our operations by 2050...",
+                                metadata: {
+                                    file_name: "sustainability_report_2024.pdf",
+                                    page_number: 12,
+                                    file_id: "abc-123",
+                                },
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            table_question: {
+                                text: "What climate targets does the company have?",
+                            },
+                        },
+                    },
+                );
             }
 
             function sendSearchActions() {
