@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document Intelligence Renderer - Test Page</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                background: #f5f5f5;
+                margin: 0;
+                padding: 16px;
+            }
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+                padding: 12px;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .controls button {
+                padding: 6px 14px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: #fff;
+                cursor: pointer;
+                font-size: 13px;
+            }
+            .controls button:hover {
+                background: #e8f0fe;
+                border-color: #8ab4f8;
+            }
+            .group-label {
+                width: 100%;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: #666;
+                margin-top: 4px;
+            }
+            iframe {
+                width: 100%;
+                height: 700px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #0d1117;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="controls">
+            <div class="group-label">Document intelligence</div>
+            <button onclick="sendFullDocIntel()">Full doc-intel</button>
+            <button onclick="sendMinimalDocIntel()">Minimal doc-intel</button>
+            <button onclick="sendDocIntelWithImages()">With chunk images</button>
+
+            <div class="group-label">Disclosure cross-reference tables</div>
+            <button onclick="sendGriDisclosures()">GRI disclosures</button>
+            <button onclick="sendEsrsDisclosures()">ESRS disclosures</button>
+            <button onclick="sendUrdDisclosures()">URD cross-reference</button>
+            <button onclick="sendMixedDisclosures()">Multi-framework</button>
+        </div>
+
+        <iframe id="renderer" src="doc-intel-renderer.html"></iframe>
+
+        <script>
+            function sendToRenderer(type, data, metadata) {
+                const iframe = document.getElementById("renderer");
+                iframe.contentWindow.postMessage(
+                    { type, data, metadata: metadata || null },
+                    "*",
+                );
+            }
+
+            function sendFullDocIntel() {
+                sendToRenderer(
+                    "output",
+                    {
+                        file_id: "3452a895-3913-452e-abbf-e95b5078cb9a",
+                        file_name: "lavazza-sustainability-report-2024.pdf",
+                        workspace_id: "ws_lavazza_demo",
+                        mime_type: "application/pdf",
+                        content_tags: [
+                            "sustainability",
+                            "GRI",
+                            "ESG",
+                            "annual report",
+                            "Italy",
+                            "coffee",
+                            "Lavazza",
+                        ],
+                        summary:
+                            "Lavazza Group's 2024 sustainability report covering greenhouse gas emissions, water stewardship, gender equality progress, supply chain due diligence, and disclosures aligned to GRI, ESRS, and SASB frameworks.",
+                        total_chunks: 412,
+                        total_token_size: 318420,
+                        avg_tokens_per_chunk: 773,
+                        chunk_images_path:
+                            "gs://briink-doc-intel/lavazza/2024/chunks/",
+                        platform_url:
+                            "https://platform.briink.com/ws_lavazza_demo/documents/3452a895-3913-452e-abbf-e95b5078cb9a",
+                        analysis: {
+                            language: "en",
+                            num_pages: 184,
+                            ocr_quality: "high",
+                            sections_detected: 27,
+                        },
+                        custom: {
+                            reporting_year: "2024",
+                            company: "Luigi Lavazza S.p.A.",
+                            framework_primary: "GRI",
+                            framework_secondary: "ESRS, SASB",
+                        },
+                    },
+                    {
+                        inputs: {
+                            file_id: "3452a895-3913-452e-abbf-e95b5078cb9a",
+                            file_name: "lavazza-sustainability-report-2024.pdf",
+                            workspace_id: "ws_lavazza_demo",
+                            gcs_path:
+                                "gs://briink-uploads/lavazza/2024/sustainability-report.pdf",
+                        },
+                    },
+                );
+            }
+
+            function sendMinimalDocIntel() {
+                sendToRenderer("output", {
+                    file_id: "868c7303-680d-458d-bd9c-d846b2808b34",
+                    file_name: "short-policy.pdf",
+                    total_chunks: 12,
+                    total_token_size: 3450,
+                    avg_tokens_per_chunk: 287,
+                    mime_type: "application/pdf",
+                    content_tags: ["policy", "internal"],
+                });
+            }
+
+            function sendDocIntelWithImages() {
+                sendToRenderer("output", {
+                    file_id: "9e7fce13-9eb5-4b86-b1ff-75015aad9301",
+                    file_name: "heineken-annual-report-2025.pdf",
+                    workspace_id: "ws_heineken_demo",
+                    mime_type: "application/pdf",
+                    content_tags: ["annual report", "ESG", "Heineken", "FY2025"],
+                    summary:
+                        "Heineken N.V. FY2025 annual report including financial statements, risk factors, and a combined sustainability statement aligned to ESRS.",
+                    total_chunks: 287,
+                    total_token_size: 198400,
+                    avg_tokens_per_chunk: 691,
+                    chunk_image_urls: [
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+1",
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+2",
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+3",
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+4",
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+5",
+                        "https://placehold.co/180x240/161b22/79c0ff?text=p.+6",
+                    ],
+                });
+            }
+
+            function sendGriDisclosures() {
+                sendToRenderer(
+                    "output",
+                    {
+                        file_id: "3452a895-3913-452e-abbf-e95b5078cb9a",
+                        file_name: "lavazza-sustainability-report-2024.pdf",
+                        disclosure_tables: [
+                            {
+                                framework: "gri",
+                                page: 109,
+                                disclosures: [
+                                    {
+                                        description:
+                                            "Percentage of employees receiving regular performance and career development reviews",
+                                        disclosure_id: "404-3",
+                                        framework: "gri",
+                                        notes: "See paragraph “Lavazza’s commitment to developing and training its people” in chapter “Goal 5: Gender Equality”",
+                                        pages: [],
+                                        value: null,
+                                    },
+                                    {
+                                        description:
+                                            "Diversity of governance bodies and employees",
+                                        disclosure_id: "405-1",
+                                        framework: "gri",
+                                        notes: "See paragraph “Lavazza people: key figures” in chapter “Goal 5: Gender Equality”",
+                                        pages: [],
+                                        value: null,
+                                    },
+                                    {
+                                        description:
+                                            "Ratio of basic salary and remuneration of women to men",
+                                        disclosure_id: "405-2",
+                                        framework: "gri",
+                                        notes: "",
+                                        pages: [112, 113],
+                                        value: "0.96",
+                                    },
+                                    {
+                                        description:
+                                            "Incidents of discrimination and corrective actions taken",
+                                        disclosure_id: "406-1",
+                                        framework: "gri",
+                                        notes: "No incidents reported in FY2024",
+                                        pages: [115],
+                                        value: 0,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            file_id: "3452a895-3913-452e-abbf-e95b5078cb9a",
+                            file_name: "lavazza-sustainability-report-2024.pdf",
+                        },
+                    },
+                );
+            }
+
+            function sendEsrsDisclosures() {
+                sendToRenderer("output", {
+                    disclosure_tables: [
+                        {
+                            framework: "esrs",
+                            page: 215,
+                            disclosures: [
+                                {
+                                    description: "Targets related to pollution",
+                                    disclosure_id: "E2-3",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [215],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Pollution of air, water and soil",
+                                    disclosure_id: "E2-4",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [216, 217],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Substances of concern and substances of very high concern",
+                                    disclosure_id: "E2-5",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [218],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Policies related to water and marine resources",
+                                    disclosure_id: "E3-1",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [222],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Actions and resources related to water and marine resources",
+                                    disclosure_id: "E3-2",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [225, 226],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Targets related to water and marine resources",
+                                    disclosure_id: "E3-3",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [227],
+                                    value: null,
+                                },
+                                {
+                                    description: "Water consumption",
+                                    disclosure_id: "E3-4",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [229],
+                                    value: "12.4 ML",
+                                },
+                                {
+                                    description:
+                                        "Transition plan and consideration of biodiversity and ecosystems in strategy and business model",
+                                    disclosure_id: "E4-1",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [233, 234, 235],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Policies related to biodiversity and ecosystems",
+                                    disclosure_id: "E4-2",
+                                    framework: "esrs",
+                                    notes: "",
+                                    pages: [239],
+                                    value: null,
+                                },
+                            ],
+                        },
+                    ],
+                });
+            }
+
+            function sendUrdDisclosures() {
+                sendToRenderer("output", {
+                    disclosure_tables: [
+                        {
+                            framework: "urd",
+                            page: 7,
+                            disclosures: [
+                                {
+                                    description:
+                                        "Evolution and result of activities",
+                                    disclosure_id: "7.1.1",
+                                    framework: "urd",
+                                    notes: "Chapter 5, section 5.7",
+                                    pages: [567, 568, 569, 570, 571, 572, 573],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Future expected development of the activities and R&D activities",
+                                    disclosure_id: "7.1.2",
+                                    framework: "urd",
+                                    notes: "Integrated Report",
+                                    pages: [19],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Significant factors affecting the income from operations",
+                                    disclosure_id: "7.2.1",
+                                    framework: "urd",
+                                    notes: "Integrated Report; Chapter 5, section 5.7",
+                                    pages: [13, 14, 15, 16, 17, 18, 567, 568, 569, 570, 571, 572, 573],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Reasons for material changes in net sales or revenues",
+                                    disclosure_id: "7.2.2",
+                                    framework: "urd",
+                                    notes: "Integrated Report; Chapter 5, section 5.7",
+                                    pages: [13, 14, 568, 569],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Information concerning capital resources (short and long term)",
+                                    disclosure_id: "8.1",
+                                    framework: "urd",
+                                    notes: "Chapter 5, sections 5.4 and 5.5",
+                                    pages: [509, 537, 538, 539, 540],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Sources, amounts, and description of cash flows",
+                                    disclosure_id: "8.2",
+                                    framework: "urd",
+                                    notes: "Chapter 5, sections 5.2 and 5.7",
+                                    pages: [506, 572, 573],
+                                    value: null,
+                                },
+                                {
+                                    description:
+                                        "Information on borrowing conditions and financing structure",
+                                    disclosure_id: "8.3",
+                                    framework: "urd",
+                                    notes: "Chapter 5, section 5.5; Chapter 6, section 6.3",
+                                    pages: [544, 545, 546, 547, 548, 549, 550, 551, 586, 587],
+                                    value: null,
+                                },
+                            ],
+                        },
+                    ],
+                });
+            }
+
+            function sendMixedDisclosures() {
+                sendToRenderer(
+                    "output",
+                    {
+                        file_id: "f1596d85-ce92-4550-9664-d446b580e941",
+                        file_name: "multi-framework-report.pdf",
+                        disclosure_tables: [
+                            {
+                                framework: "gri",
+                                page: 240,
+                                disclosures: [
+                                    {
+                                        description: "Direct (Scope 1) GHG emissions",
+                                        disclosure_id: "305-1",
+                                        framework: "gri",
+                                        notes: "",
+                                        pages: [241],
+                                        value: "182,400 tCO2e",
+                                    },
+                                    {
+                                        description:
+                                            "Energy indirect (Scope 2) GHG emissions",
+                                        disclosure_id: "305-2",
+                                        framework: "gri",
+                                        notes: "Market-based methodology",
+                                        pages: [241, 242],
+                                        value: "94,200 tCO2e",
+                                    },
+                                    {
+                                        description:
+                                            "Other indirect (Scope 3) GHG emissions",
+                                        disclosure_id: "305-3",
+                                        framework: "gri",
+                                        notes: "Categories 1, 4, 11 covered",
+                                        pages: [243, 244],
+                                        value: "1,402,800 tCO2e",
+                                    },
+                                ],
+                            },
+                            {
+                                framework: "sasb",
+                                page: 280,
+                                disclosures: [
+                                    {
+                                        description:
+                                            "Total fuel consumed, percentage renewable",
+                                        disclosure_id: "FB-AG-130a.1",
+                                        framework: "sasb",
+                                        notes: "",
+                                        pages: [281],
+                                        value: "62 GJ; 18% renewable",
+                                    },
+                                    {
+                                        description:
+                                            "Total water withdrawn, total water consumed in regions with high baseline water stress",
+                                        disclosure_id: "FB-AG-140a.1",
+                                        framework: "sasb",
+                                        notes: "",
+                                        pages: [282],
+                                        value: "8.1 ML withdrawn; 2.6 ML consumed",
+                                    },
+                                ],
+                            },
+                            {
+                                framework: "tcfd",
+                                page: 320,
+                                disclosures: [
+                                    {
+                                        description:
+                                            "Describe the board's oversight of climate-related risks and opportunities",
+                                        disclosure_id: "Governance-a",
+                                        framework: "tcfd",
+                                        notes: "See ESG Committee charter, Annex B",
+                                        pages: [],
+                                        value: null,
+                                    },
+                                    {
+                                        description:
+                                            "Describe management's role in assessing and managing climate-related risks and opportunities",
+                                        disclosure_id: "Governance-b",
+                                        framework: "tcfd",
+                                        notes: "Sustainability Steering Committee meets quarterly",
+                                        pages: [322],
+                                        value: null,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        inputs: {
+                            file_id: "f1596d85-ce92-4550-9664-d446b580e941",
+                            file_name: "multi-framework-report.pdf",
+                        },
+                    },
+                );
+            }
+        </script>
+    </body>
+</html>

@@ -36,6 +36,25 @@
         .kv-key { color: #7d8590; white-space: nowrap; }
         .kv-val { color: #c9d1d9; word-break: break-all; }
 
+        .disclosure-group { margin-bottom: 16px; }
+        .disclosure-group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #21262d; }
+        .framework-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(56, 139, 253, 0.15); color: #79c0ff; text-transform: uppercase; letter-spacing: 0.04em; }
+        .group-meta { font-size: 11px; color: #7d8590; }
+        .group-count { font-size: 11px; color: #7d8590; margin-left: auto; }
+
+        .disclosure-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .disclosure-table th { text-align: left; font-weight: 500; color: #7d8590; padding: 6px 8px; border-bottom: 1px solid #21262d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .disclosure-table td { padding: 6px 8px; border-bottom: 1px solid #21262d; vertical-align: top; line-height: 1.45; }
+        .disclosure-table tr:last-child td { border-bottom: none; }
+        .disclosure-table tbody tr:hover td { background: #161b22; }
+        .col-id { font-family: ui-monospace, 'SF Mono', monospace; color: #79c0ff; white-space: nowrap; font-weight: 500; }
+        .col-desc { color: #c9d1d9; min-width: 200px; }
+        .col-pages { white-space: nowrap; }
+        .col-val { color: #e6edf3; font-weight: 500; }
+        .col-notes { color: #8b949e; font-size: 11px; font-style: italic; max-width: 320px; }
+        .page-pill { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; background: #161b22; border: 1px solid #21262d; color: #58a6ff; font-family: ui-monospace, 'SF Mono', monospace; margin-right: 3px; }
+        .empty-cell { color: #484f58; }
+
         .hidden { display: none; }
         #loading { color: #484f58; font-size: 12px; }
     </style>
@@ -56,6 +75,9 @@
         });
 
         function render(data, inputs, type) {
+            const groups = getDisclosureGroups(data);
+            if (groups) return renderDisclosureTable(groups, inputs, data);
+
             const fileId = inputs.file_id || data.file_id || "";
             const fileName = inputs.file_name || data.file_name || "";
             const wsId = inputs.workspace_id || data.workspace_id || "";
@@ -143,6 +165,85 @@
 
         function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
         function ea(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+        function looksLikeDisclosureGroup(o) {
+            if (!o || typeof o !== "object") return false;
+            if (!("framework" in o)) return false;
+            for (const k of ["disclosures", "items", "entries", "rows"]) {
+                if (Array.isArray(o[k])) return true;
+            }
+            return false;
+        }
+
+        function getDisclosureGroups(data) {
+            if (!data) return null;
+            if (Array.isArray(data) && data.length && looksLikeDisclosureGroup(data[0])) return data;
+            if (typeof data !== "object") return null;
+            for (const v of Object.values(data)) {
+                if (Array.isArray(v) && v.length && looksLikeDisclosureGroup(v[0])) return v;
+            }
+            return null;
+        }
+
+        function getDisclosureItems(group) {
+            for (const k of ["disclosures", "items", "entries", "rows"]) {
+                if (Array.isArray(group[k])) return group[k];
+            }
+            return [];
+        }
+
+        function formatPages(pages) {
+            if (!Array.isArray(pages) || !pages.length) return '<span class="empty-cell">—</span>';
+            return pages.map(p => `<span class="page-pill">${esc(String(p))}</span>`).join("");
+        }
+
+        function renderDisclosureTable(groups, inputs, data) {
+            const fileId = inputs.file_id || (data && data.file_id) || "";
+            const fileName = inputs.file_name || (data && data.file_name) || "";
+
+            let h = "";
+            if (fileName || fileId) {
+                h += `<div class="file-header">
+                    <h2>${esc(fileName || fileId)}</h2>
+                    ${fileName && fileId ? `<span class="file-id">${esc(fileId)}</span>` : ""}
+                </div>`;
+            }
+
+            for (const group of groups) {
+                const framework = group.framework || "";
+                const startPage = group.page;
+                const items = getDisclosureItems(group);
+
+                const hasValue = items.some(d => d.value != null && d.value !== "");
+                const hasNotes = items.some(d => d.notes);
+                const hasPages = items.some(d => Array.isArray(d.pages) && d.pages.length);
+
+                h += `<div class="disclosure-group">
+                    <div class="disclosure-group-header">
+                        ${framework ? `<span class="framework-badge">${esc(framework)}</span>` : ""}
+                        ${startPage != null ? `<span class="group-meta">starts p. ${esc(String(startPage))}</span>` : ""}
+                        <span class="group-count">${items.length} ${items.length === 1 ? "disclosure" : "disclosures"}</span>
+                    </div>
+                    <table class="disclosure-table">
+                        <thead><tr>
+                            <th class="col-id">ID</th>
+                            <th class="col-desc">Description</th>
+                            ${hasPages ? '<th class="col-pages">Pages</th>' : ""}
+                            ${hasValue ? '<th class="col-val">Value</th>' : ""}
+                            ${hasNotes ? '<th class="col-notes">Notes</th>' : ""}
+                        </tr></thead>
+                        <tbody>${items.map(d => `<tr>
+                            <td class="col-id">${esc(d.disclosure_id || "")}</td>
+                            <td class="col-desc">${esc(d.description || "")}</td>
+                            ${hasPages ? `<td class="col-pages">${formatPages(d.pages)}</td>` : ""}
+                            ${hasValue ? `<td class="col-val">${d.value != null && d.value !== "" ? esc(String(d.value)) : '<span class="empty-cell">—</span>'}</td>` : ""}
+                            ${hasNotes ? `<td class="col-notes">${d.notes ? esc(d.notes) : '<span class="empty-cell">—</span>'}</td>` : ""}
+                        </tr>`).join("")}</tbody>
+                    </table>
+                </div>`;
+            }
+            return h;
+        }
     </script>
 </body>
 </html>
