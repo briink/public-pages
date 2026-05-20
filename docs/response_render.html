@@ -1318,9 +1318,44 @@
             let rawMessage = null;
 
             // Extract tool calls from LLM API response structures
-            // Supports: LangChain LLMResult, direct tool_calls arrays, etc.
+            // Supports: LangChain LLMResult, direct tool_calls arrays, OpenAI Responses API, etc.
             function extractToolCalls(data) {
                 if (!data || typeof data !== "object") return null;
+
+                // OpenAI Responses API: { output: [ {type:"reasoning",...}, {type:"function_call", name, arguments, call_id, status, ...} ] }
+                if (Array.isArray(data.output)) {
+                    const functionCalls = data.output.filter(
+                        (item) => item && item.type === "function_call",
+                    );
+                    if (functionCalls.length > 0) {
+                        const reasoningItems = data.output.filter(
+                            (item) => item && item.type === "reasoning",
+                        );
+                        return functionCalls.map((fc) => {
+                            let parsedArgs = null;
+                            if (typeof fc.arguments === "string") {
+                                try {
+                                    parsedArgs = JSON.parse(fc.arguments);
+                                } catch (e) {
+                                    parsedArgs = null;
+                                }
+                            } else if (
+                                fc.arguments &&
+                                typeof fc.arguments === "object"
+                            ) {
+                                parsedArgs = fc.arguments;
+                            }
+                            return {
+                                name: fc.name,
+                                id: fc.call_id || fc.id,
+                                args: parsedArgs,
+                                _status: fc.status,
+                                _reasoningItems: reasoningItems,
+                                _responsesApi: true,
+                            };
+                        });
+                    }
+                }
 
                 // Direct tool_calls array
                 if (
@@ -1598,6 +1633,16 @@
                         "reasoning" in args &&
                         "chunk_uuid" in args,
                     render: renderPerPageAnswer,
+                },
+                submit_candidate: {
+                    detect: (args) =>
+                        args &&
+                        "candidate" in args &&
+                        args.candidate &&
+                        typeof args.candidate === "object" &&
+                        ("column_headers" in args.candidate ||
+                            "rows" in args.candidate),
+                    render: renderSubmitCandidate,
                 },
                 // Add more tool types here as needed:
                 // "OtherToolName": {
@@ -3294,6 +3339,148 @@
                 }
 
                 return html;
+            }
+
+            // Build the tool-call metadata sidebar panel for submit_candidate.
+            function renderToolCallMetaSidebar(tc, type, extraArgs) {
+                const badgeClass =
+                    type === "output" ? "badge-output" : "badge-reference";
+                const toolName = tc.name || tc.function?.name || "Unknown";
+                const toolId = tc.id || "";
+                const status = tc._status || "";
+                const reasoningItems = tc._reasoningItems || [];
+
+                let metaItems = `
+                    <div class="ppa-meta-item">
+                        <div class="ppa-meta-label">Tool Name</div>
+                        <div class="ppa-meta-value">${escapeHtml(toolName)}</div>
+                    </div>
+                    <div class="ppa-meta-item">
+                        <div class="ppa-meta-label">Side</div>
+                        <div class="ppa-meta-value">${escapeHtml(type)}</div>
+                    </div>
+                `;
+                if (toolId) {
+                    metaItems += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">Call ID</div>
+                            <div class="ppa-meta-value">${escapeHtml(toolId)}</div>
+                        </div>
+                    `;
+                }
+                if (status) {
+                    metaItems += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">Status</div>
+                            <div class="ppa-meta-value">${escapeHtml(status)}</div>
+                        </div>
+                    `;
+                }
+                if (reasoningItems.length > 0) {
+                    metaItems += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">Reasoning Items</div>
+                            <div class="ppa-meta-value">${reasoningItems.length}</div>
+                        </div>
+                    `;
+                    reasoningItems.forEach((ri, idx) => {
+                        if (ri.id) {
+                            metaItems += `
+                                <div class="ppa-meta-item">
+                                    <div class="ppa-meta-label">Reasoning ${idx + 1}</div>
+                                    <div class="ppa-meta-value">${escapeHtml(ri.id)}</div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                (extraArgs || []).forEach(([k, v]) => {
+                    const display =
+                        typeof v === "object" ? JSON.stringify(v) : String(v);
+                    metaItems += `
+                        <div class="ppa-meta-item">
+                            <div class="ppa-meta-label">${escapeHtml(k)}</div>
+                            <div class="ppa-meta-value">${escapeHtml(display)}</div>
+                        </div>
+                    `;
+                });
+
+                return `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span>Tool Call</span>
+                            <span class="badge ${badgeClass}">${type}</span>
+                        </div>
+                        <div class="panel-content">
+                            <div class="ppa-meta-grid" style="grid-template-columns: 1fr;">
+                                ${metaItems}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Extract the submit_candidate args + tool-call object from a tool-call wrapper.
+            function extractSubmitCandidate(data) {
+                if (!data || !data._isLLMToolCallResponse) return null;
+                const toolCalls = data._toolCalls || [];
+                for (const tc of toolCalls) {
+                    const args = getToolCallArgs(tc);
+                    if (
+                        args &&
+                        args.candidate &&
+                        typeof args.candidate === "object"
+                    ) {
+                        return { tc, args, candidate: args.candidate };
+                    }
+                }
+                return null;
+            }
+
+            // Render submit_candidate: candidate routed through the standard table_response
+            // path so diff/comparison + question panel + sources behave identically; tool
+            // metadata (name, call_id, status, reasoning items) shown in side panels above.
+            function renderSubmitCandidate(output, reference, meta) {
+                const outputCall = extractSubmitCandidate(output);
+                const refCall = extractSubmitCandidate(reference);
+
+                const sidebars = [];
+                if (outputCall) {
+                    const extras = Object.entries(outputCall.args).filter(
+                        ([k]) => k !== "candidate",
+                    );
+                    sidebars.push(
+                        renderToolCallMetaSidebar(
+                            outputCall.tc,
+                            "output",
+                            extras,
+                        ),
+                    );
+                }
+                if (refCall) {
+                    const extras = Object.entries(refCall.args).filter(
+                        ([k]) => k !== "candidate",
+                    );
+                    sidebars.push(
+                        renderToolCallMetaSidebar(
+                            refCall.tc,
+                            "reference",
+                            extras,
+                        ),
+                    );
+                }
+
+                const sidebarHtml = sidebars.length
+                    ? `<div class="side-by-side" style="margin-bottom: 16px;">${sidebars.join("")}</div>`
+                    : "";
+
+                const tableHtml = renderTableResponse(
+                    outputCall ? outputCall.candidate : null,
+                    refCall ? refCall.candidate : null,
+                    meta,
+                );
+
+                return sidebarHtml + tableHtml;
             }
 
             // Render generic tool calls (for unknown tool types)
