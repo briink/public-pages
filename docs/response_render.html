@@ -225,6 +225,21 @@
                 color: var(--text-muted);
             }
 
+            th .cl-choice,
+            th .cl-reason,
+            th .cl-rule,
+            th .badge-cl-closed,
+            th .badge-cl-hidden,
+            th .badge-cl-not-found {
+                text-transform: none;
+                letter-spacing: normal;
+            }
+
+            th .cl-choice {
+                font-weight: 400;
+                color: var(--text-color);
+            }
+
             .cell-no-evidence {
                 background-color: rgba(242, 139, 130, 0.12) !important;
             }
@@ -2698,7 +2713,7 @@
                     cell(i, j) {
                         if (j === 0) {
                             const row = rows[i];
-                            return { cls: row ? `cell-cl-${row.state}` : "", badges: "" };
+                            return { cls: row ? `cell-cl-${row.state}` : "", badges: this.row(i) };
                         }
                         const cell = cells[`${i}:${j}`];
                         if (!cell) return { cls: "", badges: "" };
@@ -2744,7 +2759,7 @@
                     if ((dispatch.rows || []).length) {
                         body += `<div>Rows hidden at dispatch, left out of generation: ${dispatch.rows.map(escapeHtml).join(", ")}</div>`;
                     }
-                    body += `<div class="cl-muted">${(cl.rows || []).length} rows, ${(cl.cells || []).length} cells and ${(cl.choices || []).length} choices closed, hidden or rewritten.</div>`;
+                    body += `<div class="cl-muted">Closed, hidden or rewritten: rows ${(cl.rows || []).length}, cells ${(cl.cells || []).length}, choices ${(cl.choices || []).length}.</div>`;
                     const rules = Object.entries(cl.rules || {});
                     if (rules.length) {
                         body +=
@@ -2825,7 +2840,7 @@
                 for (let i = 0; i < totalRows; i++) {
                     const row = rows[i] || [];
                     const reasoningRow = reasoningRows[i] || [];
-                    html += `<tr><td>${i + 1}${cl.row(i)}</td>`;
+                    html += `<tr><td>${i + 1}</td>`;
 
                     for (let j = 0; j < headers.length; j++) {
                         const cell = row[j] || "";
