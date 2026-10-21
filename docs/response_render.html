@@ -2651,7 +2651,7 @@
             }
 
             function clChoice(cl, choice) {
-                return `<div class="cl-choice"><span class="cl-choice-label">${escapeHtml(choice.label)}</span>${clBadge(choice.state)}${clRuleChips(cl, choice.rules)}</div>`;
+                return `<div class="cl-choice"><span class="cl-choice-label">${escapeHtml(choice.label)}</span>${clBadge(choice.state, choice.reason)}${choice.reason ? `<span class="cl-reason">${escapeHtml(choice.reason)}</span>` : ""}${clRuleChips(cl, choice.rules)}</div>`;
             }
 
             function clIndex(cl) {
@@ -2686,8 +2686,12 @@
                     row(i) {
                         const row = rows[i];
                         if (!row) return "";
+                        const reason = [row.reason, row.stored === false ? "not stored" : ""]
+                            .filter(Boolean)
+                            .join("; ");
                         return (
-                            clBadge(row.state, row.stored === false ? "hidden, not stored" : "") +
+                            clBadge(row.state, reason) +
+                            (reason ? `<span class="cl-reason">${escapeHtml(reason)}</span>` : "") +
                             clRuleChips(cl, row.rules)
                         );
                     },
