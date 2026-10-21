@@ -16,6 +16,7 @@
                 --success-color: #81c995;
                 --warning-color: #fdd663;
                 --error-color: #f28b82;
+                --cl-hidden-color: #c58af9;
                 --diff-added-bg: rgba(129, 201, 149, 0.15);
                 --diff-removed-bg: rgba(242, 139, 130, 0.15);
                 --diff-added-text: #81c995;
@@ -102,6 +103,126 @@
                 margin-left: 4px;
                 white-space: nowrap;
                 vertical-align: middle;
+            }
+
+            /* Conditional logic (CL): what the EQA and TableEQA spans record under `conditional_logic` */
+            .badge-cl-closed,
+            .badge-cl-hidden,
+            .badge-cl-not-found {
+                color: #000;
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-left: 4px;
+                white-space: nowrap;
+            }
+
+            .badge-cl-closed {
+                background-color: var(--warning-color);
+            }
+
+            .badge-cl-hidden {
+                background-color: var(--cl-hidden-color);
+            }
+
+            .badge-cl-not-found {
+                background-color: var(--accent-color);
+            }
+
+            .cell-cl-closed {
+                background-color: rgba(253, 214, 99, 0.1) !important;
+            }
+
+            .cell-cl-hidden {
+                background: repeating-linear-gradient(
+                    45deg,
+                    rgba(197, 138, 249, 0.12) 0 6px,
+                    transparent 6px 12px
+                ) !important;
+            }
+
+            .cl-rule {
+                display: inline-block;
+                margin-left: 4px;
+                font-size: 10px;
+                vertical-align: top;
+            }
+
+            .cl-rule summary {
+                cursor: pointer;
+                color: var(--accent-color);
+                list-style: none;
+            }
+
+            .cl-rule summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .cl-rule-text,
+            .cl-rule-row {
+                background-color: var(--bg-color);
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                padding: 6px 8px;
+                margin-top: 4px;
+                font-size: 11px;
+                white-space: normal;
+                max-width: 420px;
+            }
+
+            .cl-rule-id {
+                color: var(--text-muted);
+                font-family: monospace;
+                font-size: 10px;
+            }
+
+            .cl-choice {
+                font-size: 11px;
+                margin-top: 2px;
+            }
+
+            .cl-choice-label {
+                text-decoration: line-through;
+                text-decoration-color: var(--text-muted);
+            }
+
+            .cl-reason {
+                color: var(--text-muted);
+                font-size: 10px;
+                margin-left: 4px;
+            }
+
+            .cl-banner {
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .cl-banner-hidden {
+                background-color: rgba(197, 138, 249, 0.15);
+                color: var(--cl-hidden-color);
+            }
+
+            .cl-banner-closed {
+                background-color: rgba(253, 214, 99, 0.15);
+                color: var(--warning-color);
+            }
+
+            .cl-panel {
+                margin-top: 16px;
+                padding: 12px;
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                font-size: 12px;
+                display: grid;
+                gap: 6px;
+            }
+
+            .cl-muted {
+                color: var(--text-muted);
             }
 
             .cell-no-evidence {
@@ -1935,6 +2056,7 @@
                             ${renderMergedTable(output, reference, sourceDocuments.length)}
                         </div>
                         ${renderGeneralReasoning(output?.general_reasoning || reference?.general_reasoning, sourceDocuments.length)}
+                        ${renderClPanel(output?.conditional_logic)}
                     </div>
                     <div class="tab-content" data-tab-content="sources">
                         ${renderSourceDocuments(sourceDocuments)}
@@ -2504,6 +2626,133 @@
                 return html;
             }
 
+            // Conditional logic (CL): the `conditional_logic` key the EQA and TableEQA spans add to
+            // their outputs (briink_ai.conditional_logic.trace_view). The rules listed for a part are
+            // those targeting it; the evaluator does not record which one decided it.
+            function clRuleChips(cl, ruleIds) {
+                if (!cl || !ruleIds || ruleIds.length === 0) return "";
+                return ruleIds
+                    .map((id) => {
+                        const rule = (cl.rules || {})[id];
+                        if (!rule) return "";
+                        return `<details class="cl-rule"><summary>rule</summary><div class="cl-rule-text"><div><b>IF</b> ${escapeHtml(rule.if)}</div><div><b>THEN</b> ${escapeHtml(rule.then.join("; "))}</div><div class="cl-rule-id">${escapeHtml(id)}</div></div></details>`;
+                    })
+                    .join("");
+            }
+
+            function clBadge(state, reason) {
+                const cls =
+                    state === "hidden"
+                        ? "badge-cl-hidden"
+                        : state === "not found"
+                          ? "badge-cl-not-found"
+                          : "badge-cl-closed";
+                return ` <span class="${cls}" title="${escapeHtml(reason || "conditional logic")}">CL ${escapeHtml(state)}</span>`;
+            }
+
+            function clChoice(cl, choice) {
+                return `<div class="cl-choice"><span class="cl-choice-label">${escapeHtml(choice.label)}</span>${clBadge(choice.state)}${clRuleChips(cl, choice.rules)}</div>`;
+            }
+
+            function clIndex(cl) {
+                const none = {
+                    column: () => "",
+                    row: () => "",
+                    cell: () => ({ cls: "", badges: "" }),
+                    choices: () => "",
+                };
+                if (!cl || cl.kind !== "table") return none;
+                const cells = {};
+                const rows = {};
+                const choices = {};
+                (cl.cells || []).forEach((cell) => (cells[`${cell.row}:${cell.col}`] = cell));
+                (cl.rows || []).forEach((row) => (rows[row.index] = row));
+                (cl.choices || []).forEach((choice) => {
+                    const key = `${choice.row}:${choice.col}`;
+                    choices[key] = (choices[key] || []).concat(choice);
+                });
+                const columns = cl.columns || [];
+                return {
+                    column(j) {
+                        const column = columns[j];
+                        if (!column) return "";
+                        let html =
+                            column.state !== "open"
+                                ? clBadge(column.state) + clRuleChips(cl, column.rules)
+                                : "";
+                        (column.choices || []).forEach((choice) => (html += clChoice(cl, choice)));
+                        return html;
+                    },
+                    row(i) {
+                        const row = rows[i];
+                        if (!row) return "";
+                        return (
+                            clBadge(row.state, row.stored === false ? "hidden, not stored" : "") +
+                            clRuleChips(cl, row.rules)
+                        );
+                    },
+                    cell(i, j) {
+                        if (j === 0) {
+                            const row = rows[i];
+                            return { cls: row ? `cell-cl-${row.state}` : "", badges: "" };
+                        }
+                        const cell = cells[`${i}:${j}`];
+                        if (!cell) return { cls: "", badges: "" };
+                        return {
+                            cls: cell.state === "not found" ? "" : `cell-cl-${cell.state}`,
+                            badges:
+                                clBadge(cell.state, cell.reason) +
+                                (cell.reason ? `<span class="cl-reason">${escapeHtml(cell.reason)}</span>` : "") +
+                                clRuleChips(cl, cell.rules),
+                        };
+                    },
+                    choices(i, j) {
+                        const list = choices[`${i}:${j}`];
+                        if (!list) return "";
+                        return list.map((choice) => clChoice(cl, choice)).join("");
+                    },
+                };
+            }
+
+            function renderClTableBanner(cl) {
+                if (!cl || cl.kind !== "table" || !cl.table || cl.table.state === "open") return "";
+                return `<div class="cl-banner cl-banner-${escapeHtml(cl.table.state)}">Table ${escapeHtml(cl.table.state)} by conditional logic${cl.table.reason ? ` (${escapeHtml(cl.table.reason)})` : ""}${clRuleChips(cl, cl.table.rules)}</div>`;
+            }
+
+            function renderClPanel(cl) {
+                if (!cl) return "";
+                let body = "";
+                if (cl.kind === "question") {
+                    body += `<div>Question <b>${escapeHtml(cl.state)}</b>${cl.reason ? ` (${escapeHtml(cl.reason)})` : ""}</div>`;
+                    (cl.choices || []).forEach((choice) => (body += clChoice(cl, choice)));
+                    if ((cl.choices || []).length === 0 && cl.state === "open") {
+                        body += '<div class="cl-muted">Nothing closed or hidden.</div>';
+                    }
+                } else {
+                    const dispatch = cl.hidden_at_dispatch || {};
+                    if (cl.evaluated === false) {
+                        body +=
+                            '<div class="cl-muted">Not evaluated: the table was dispatched without what evaluating it takes.</div>';
+                    }
+                    if ((dispatch.columns || []).length) {
+                        body += `<div>Columns hidden at dispatch, left out of generation: ${dispatch.columns.map(escapeHtml).join(", ")}</div>`;
+                    }
+                    if ((dispatch.rows || []).length) {
+                        body += `<div>Rows hidden at dispatch, left out of generation: ${dispatch.rows.map(escapeHtml).join(", ")}</div>`;
+                    }
+                    body += `<div class="cl-muted">${(cl.rows || []).length} rows, ${(cl.cells || []).length} cells and ${(cl.choices || []).length} choices closed, hidden or rewritten.</div>`;
+                    const rules = Object.entries(cl.rules || {});
+                    if (rules.length) {
+                        body +=
+                            '<div class="question-label">Rules targeting what is closed or hidden</div>';
+                        rules.forEach(([id, rule]) => {
+                            body += `<div class="cl-rule-row"><div><b>IF</b> ${escapeHtml(rule.if)}</div><div><b>THEN</b> ${escapeHtml(rule.then.join("; "))}</div><div class="cl-rule-id">${escapeHtml(id)}</div></div>`;
+                        });
+                    }
+                }
+                return `<div class="cl-panel"><div class="general-reasoning-label">Conditional logic</div>${body}</div>`;
+            }
+
             function renderSingleTable(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
@@ -2528,10 +2777,12 @@
                         ${data.question_text ? `<div class="question-section"><div class="question-label">Question</div><div class="question-text">${escapeHtml(data.question_text)}</div></div>` : ""}
                         <div class="table-container">
                             <div class="table-shape">rows x columns: [${rowCount} x ${colCount}]</div>
+                            ${renderClTableBanner(data.conditional_logic)}
                             ${data.table_has_no_evidence ? '<div class="table-no-evidence-banner">No Evidence — entire table lacks supporting evidence</div>' : ""}
                             ${renderSingleMergedTable(data, srcCount)}
                         </div>
                         ${renderGeneralReasoning(data.general_reasoning, srcCount)}
+                        ${renderClPanel(data.conditional_logic)}
                     </div>
                     <div class="tab-content" data-tab-content="sources">
                         ${renderSourceDocuments(sourceDocuments)}
@@ -2558,35 +2809,39 @@
                 const noEvidence = data.no_evidence || [];
                 const notApplicableCells = data.not_applicable_cells || [];
                 const notApplicableColumns = data.not_applicable_columns || [];
+                const cl = clIndex(data.conditional_logic);
 
                 let html = "<table><thead><tr><th>#</th>";
                 headers.forEach((h, idx) => {
                     const isNACol = notApplicableColumns.includes(idx) || notApplicableColumns.includes(h);
-                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">not_applicable</span>' : ""}</th>`;
+                    html += `<th>${escapeHtml(h)}${isNACol ? ' <span class="badge-not-applicable">not_applicable</span>' : ""}${cl.column(idx)}</th>`;
                 });
                 html += "</tr></thead><tbody>";
 
                 for (let i = 0; i < totalRows; i++) {
                     const row = rows[i] || [];
                     const reasoningRow = reasoningRows[i] || [];
-                    html += `<tr><td>${i + 1}</td>`;
+                    html += `<tr><td>${i + 1}${cl.row(i)}</td>`;
 
                     for (let j = 0; j < headers.length; j++) {
                         const cell = row[j] || "";
                         const reasoning = reasoningRow[j] || "";
                         const isNoEvidence = noEvidence[i] && noEvidence[i][j] === true;
                         const isNotApplicable = notApplicableCells[i] && notApplicableCells[i][j] === true;
+                        const clCell = cl.cell(i, j);
                         const cellClasses = [];
                         if (isNoEvidence) cellClasses.push("cell-no-evidence");
                         if (isNotApplicable) cellClasses.push("cell-not-applicable");
+                        if (clCell.cls) cellClasses.push(clCell.cls);
                         const tdClass = cellClasses.length ? ` class="${cellClasses.join(" ")}"` : "";
 
                         let badges = "";
                         if (isNoEvidence) badges += ' <span class="badge-no-evidence">no_evidence</span>';
                         if (isNotApplicable) badges += ' <span class="badge-not-applicable">not_applicable</span>';
+                        badges += clCell.badges;
 
                         html += `<td${tdClass}><div class="split-cell">`;
-                        html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}${badges}</div>`;
+                        html += `<div class="split-cell-value">${formatResponseText(cell, srcCount)}${badges}${cl.choices(i, j)}</div>`;
                         html += `<div class="split-cell-reasoning">${reasoning ? processInlineReferences(reasoning, srcCount) : ""}</div>`;
                         html += `</div></td>`;
                     }
@@ -2636,6 +2891,7 @@
                     );
                 }
 
+                html += renderClPanel(output?.conditional_logic);
                 return html;
             }
 

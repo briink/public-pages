@@ -110,6 +110,8 @@
                 <button onclick="sendChunkAssessment()">Chunk Assessment</button>
                 <button onclick="sendSearchActions()">Search Actions</button>
                 <button onclick="sendTableReasoningOnly()">Table (Reasoning Only)</button>
+                <button onclick="sendTableWithConditionalLogic()">Table + Conditional Logic</button>
+                <button onclick="sendEQAWithConditionalLogic()">EQA + Conditional Logic</button>
                 <button onclick="sendPerPageAnswer()">
                     PerPageAnswer (LLM)
                 </button>
@@ -148,6 +150,611 @@
             }
 
             // Test: Table Response with choice-type questions (including multi-select)
+            // TableEQA and EQA outputs with the `conditional_logic` key, as briink_ai records them
+            function sendTableWithConditionalLogic() {
+                sendToRenderer(
+                    "output",
+                    {
+                    "conditional_logic": {
+                        "kind": "table",
+                        "label": "Emissions by scope",
+                        "evaluated": true,
+                        "table": {
+                            "state": "open",
+                            "reason": null,
+                            "rules": []
+                        },
+                        "columns": [
+                            {
+                                "index": 0,
+                                "id": "00000000-0000-0000-0000-000000000067",
+                                "label": "Scope",
+                                "state": "open",
+                                "rules": []
+                            },
+                            {
+                                "index": 1,
+                                "id": "00000000-0000-0000-0000-000000000068",
+                                "label": "Emissions",
+                                "state": "open",
+                                "rules": []
+                            },
+                            {
+                                "index": 2,
+                                "id": "00000000-0000-0000-0000-000000000069",
+                                "label": "Kind",
+                                "state": "open",
+                                "rules": []
+                            }
+                        ],
+                        "hidden_at_dispatch": {
+                            "columns": [],
+                            "rows": []
+                        },
+                        "rows": [
+                            {
+                                "index": 1,
+                                "label": "Scope 2",
+                                "state": "closed",
+                                "rules": [
+                                    "00000000-0000-0000-0000-000000000385"
+                                ]
+                            }
+                        ],
+                        "cells": [
+                            {
+                                "row": 0,
+                                "col": 2,
+                                "state": "hidden",
+                                "reason": null,
+                                "rules": [
+                                    "00000000-0000-0000-0000-000000000398"
+                                ]
+                            },
+                            {
+                                "row": 1,
+                                "col": 1,
+                                "state": "closed",
+                                "reason": "its row is closed",
+                                "rules": []
+                            },
+                            {
+                                "row": 1,
+                                "col": 2,
+                                "state": "closed",
+                                "reason": "its row is closed",
+                                "rules": []
+                            }
+                        ],
+                        "choices": [
+                            {
+                                "row": 2,
+                                "col": 2,
+                                "id": "00000000-0000-0000-0000-00000000007a",
+                                "label": "Gas",
+                                "state": "closed",
+                                "rules": [
+                                    "00000000-0000-0000-0000-0000000003a2"
+                                ]
+                            }
+                        ],
+                        "rules": {
+                            "00000000-0000-0000-0000-000000000398": {
+                                "if": "column “Emissions” = '0'",
+                                "then": [
+                                    "hide column “Kind”"
+                                ]
+                            },
+                            "00000000-0000-0000-0000-000000000385": {
+                                "if": "question 00000000 = 'no'",
+                                "then": [
+                                    "close column “Scope” in row “Scope 2”"
+                                ]
+                            },
+                            "00000000-0000-0000-0000-0000000003a2": {
+                                "if": "column “Emissions” = '7'",
+                                "then": [
+                                    "close choice “Gas” of column “Kind”"
+                                ]
+                            }
+                        }
+                    },
+                    "question_text": "",
+                    "column_headers": [
+                        "Scope",
+                        "Emissions",
+                        "Kind"
+                    ],
+                    "rows": [
+                        [
+                            "Scope 1",
+                            "0",
+                            ""
+                        ],
+                        [
+                            "Scope 2",
+                            "40",
+                            "<<Gas>>"
+                        ],
+                        [
+                            "Scope 3",
+                            "7",
+                            "<<Oil>>"
+                        ]
+                    ],
+                    "reasoning": [
+                        [
+                            "why Scope 1",
+                            "why 0",
+                            "why <<Oil>>"
+                        ],
+                        [
+                            "why Scope 2",
+                            "Not applicable under this questionnaire's conditional logic\n\nwhy 40",
+                            "Not applicable under this questionnaire's conditional logic\n\nwhy <<Gas>>"
+                        ],
+                        [
+                            "why Scope 3",
+                            "why 7",
+                            "why <<Oil>>"
+                        ]
+                    ],
+                    "no_evidence": [],
+                    "not_applicable_cells": [],
+                    "table_has_no_evidence": false,
+                    "general_reasoning": "",
+                    "source_documents": [],
+                    "sources": [],
+                    "ids_candidates_used": [],
+                    "row_checked": false,
+                    "not_applicable_columns": [],
+                    "closed_by_conditional_logic": false,
+                    "hidden_by_conditional_logic": false,
+                    "columns_closed_before_generation": [],
+                    "conditional_closing": {
+                        "evaluated": true,
+                        "table_closed": false,
+                        "cells": [
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                true,
+                                true,
+                                true
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ]
+                        ],
+                        "row_keys": [
+                            "00000000-0000-0000-0000-00000000000b",
+                            "00000000-0000-0000-0000-00000000000c",
+                            "00000000-0000-0000-0000-000000000193"
+                        ],
+                        "row_choice_ids": [
+                            "00000000-0000-0000-0000-00000000006f",
+                            "00000000-0000-0000-0000-000000000070",
+                            "00000000-0000-0000-0000-000000000071"
+                        ],
+                        "unstored_rows": [],
+                        "table_hidden": false,
+                        "derived_table_hidden": false,
+                        "hidden": [
+                            [
+                                false,
+                                false,
+                                true
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ]
+                        ],
+                        "derived_cells": [
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ]
+                        ],
+                        "derived_hidden": [
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ]
+                        ],
+                        "choices": [
+                            {
+                                "row": 0,
+                                "col": 2,
+                                "closed": [],
+                                "hidden": [
+                                    "00000000-0000-0000-0000-000000000079",
+                                    "00000000-0000-0000-0000-00000000007a"
+                                ]
+                            },
+                            {
+                                "row": 2,
+                                "col": 2,
+                                "closed": [
+                                    "00000000-0000-0000-0000-00000000007a"
+                                ],
+                                "hidden": []
+                            }
+                        ],
+                        "not_found": [
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ],
+                            [
+                                false,
+                                false,
+                                false
+                            ]
+                        ]
+                    },
+                    "data_shape_is_align": true
+                },
+                    { inputs: {
+                    "question": {
+                        "data_type": "Table",
+                        "parent_question": {
+                            "id": "00000000-0000-0000-0000-000000000002",
+                            "custom_id": "",
+                            "data_type": "Table",
+                            "text": "Emissions by scope",
+                            "choices": [],
+                            "question_context": null,
+                            "template_guidance": null,
+                            "screening_guidance": null,
+                            "question_guidance": null,
+                            "retrieval_instructions": "",
+                            "additional_rules": "",
+                            "table_filling_prompt": "",
+                            "extra_info": "",
+                            "entity_scope": null,
+                            "actor_info": {
+                                "actor_id": null,
+                                "workspace_id": null,
+                                "company_id": null,
+                                "response_id": "00000000-0000-0000-0000-0000000003e8",
+                                "execution_id": null,
+                                "file_metas": [],
+                                "question_id": null,
+                                "questionnaire_id": null
+                            }
+                        },
+                        "cell_questions": [
+                            {
+                                "id": "00000000-0000-0000-0000-000000000067",
+                                "custom_id": "",
+                                "data_type": "row",
+                                "text": "Scope",
+                                "choices": [
+                                    {
+                                        "id": "00000000-0000-0000-0000-00000000006f",
+                                        "label": "Scope 1",
+                                        "description": null,
+                                        "closed_by_conditional_logic": false,
+                                        "hidden_by_conditional_logic": false
+                                    },
+                                    {
+                                        "id": "00000000-0000-0000-0000-000000000070",
+                                        "label": "Scope 2",
+                                        "description": null,
+                                        "closed_by_conditional_logic": false,
+                                        "hidden_by_conditional_logic": false
+                                    },
+                                    {
+                                        "id": "00000000-0000-0000-0000-000000000071",
+                                        "label": "Scope 3",
+                                        "description": null,
+                                        "closed_by_conditional_logic": false,
+                                        "hidden_by_conditional_logic": false
+                                    }
+                                ],
+                                "question_context": null,
+                                "template_guidance": null,
+                                "screening_guidance": null,
+                                "question_guidance": null,
+                                "retrieval_instructions": "",
+                                "additional_rules": "",
+                                "table_filling_prompt": "",
+                                "extra_info": "",
+                                "entity_scope": null,
+                                "actor_info": null
+                            },
+                            {
+                                "id": "00000000-0000-0000-0000-000000000068",
+                                "custom_id": "",
+                                "data_type": "Text Long",
+                                "text": "Emissions",
+                                "choices": [],
+                                "question_context": null,
+                                "template_guidance": null,
+                                "screening_guidance": null,
+                                "question_guidance": null,
+                                "retrieval_instructions": "",
+                                "additional_rules": "",
+                                "table_filling_prompt": "",
+                                "extra_info": "",
+                                "entity_scope": null,
+                                "actor_info": null
+                            },
+                            {
+                                "id": "00000000-0000-0000-0000-000000000069",
+                                "custom_id": "",
+                                "data_type": "Single Select",
+                                "text": "Kind",
+                                "choices": [
+                                    {
+                                        "id": "00000000-0000-0000-0000-000000000079",
+                                        "label": "Oil",
+                                        "description": null,
+                                        "closed_by_conditional_logic": false,
+                                        "hidden_by_conditional_logic": false
+                                    },
+                                    {
+                                        "id": "00000000-0000-0000-0000-00000000007a",
+                                        "label": "Gas",
+                                        "description": null,
+                                        "closed_by_conditional_logic": false,
+                                        "hidden_by_conditional_logic": false
+                                    }
+                                ],
+                                "question_context": null,
+                                "template_guidance": null,
+                                "screening_guidance": null,
+                                "question_guidance": null,
+                                "retrieval_instructions": "",
+                                "additional_rules": "",
+                                "table_filling_prompt": "",
+                                "extra_info": "",
+                                "entity_scope": null,
+                                "actor_info": null
+                            }
+                        ],
+                        "choose_applicable_row_choices": false,
+                        "question_context": "",
+                        "template_guidance": null,
+                        "screening_guidance": null,
+                        "conditional_layout": {
+                            "table_question_id": "00000000-0000-0000-0000-000000000002",
+                            "column_ids": {
+                                "00000000-0000-0000-0000-000000000067": "00000000-0000-0000-0000-000000000003",
+                                "00000000-0000-0000-0000-000000000068": "00000000-0000-0000-0000-000000000004",
+                                "00000000-0000-0000-0000-000000000069": "00000000-0000-0000-0000-000000000005"
+                            },
+                            "choice_ids": {
+                                "00000000-0000-0000-0000-00000000006f": "00000000-0000-0000-0000-00000000000b",
+                                "00000000-0000-0000-0000-000000000070": "00000000-0000-0000-0000-00000000000c",
+                                "00000000-0000-0000-0000-000000000071": "00000000-0000-0000-0000-00000000000d",
+                                "00000000-0000-0000-0000-000000000079": "00000000-0000-0000-0000-000000000015",
+                                "00000000-0000-0000-0000-00000000007a": "00000000-0000-0000-0000-000000000016"
+                            },
+                            "row_choice_ids": [
+                                "00000000-0000-0000-0000-00000000000b",
+                                "00000000-0000-0000-0000-00000000000c"
+                            ],
+                            "rows": {
+                                "0": {
+                                    "execution_row_id": "00000000-0000-0000-0000-000000000191",
+                                    "row_key": "00000000-0000-0000-0000-00000000000b"
+                                },
+                                "1": {
+                                    "execution_row_id": "00000000-0000-0000-0000-000000000192",
+                                    "row_key": "00000000-0000-0000-0000-00000000000c"
+                                },
+                                "2": {
+                                    "execution_row_id": "00000000-0000-0000-0000-000000000193",
+                                    "row_key": "00000000-0000-0000-0000-000000000193"
+                                }
+                            },
+                            "hidden_row_choice_ids": [],
+                            "hidden_column_ids": [],
+                            "column_defaults": {},
+                            "choice_defaults": {}
+                        },
+                        "closed_column_ids": [],
+                        "conditional_guidance": null,
+                        "template_and_screening_guidance": "",
+                        "actor_info": {
+                            "actor_id": null,
+                            "workspace_id": null,
+                            "company_id": null,
+                            "response_id": "00000000-0000-0000-0000-0000000003e8",
+                            "execution_id": null,
+                            "file_metas": [],
+                            "question_id": null,
+                            "questionnaire_id": null
+                        },
+                        "id": "00000000-0000-0000-0000-000000000002",
+                        "custom_id": "",
+                        "text": "Emissions by scope",
+                        "row_question": {
+                            "id": "00000000-0000-0000-0000-000000000067",
+                            "custom_id": "",
+                            "data_type": "row",
+                            "text": "Scope",
+                            "choices": [
+                                {
+                                    "id": "00000000-0000-0000-0000-00000000006f",
+                                    "label": "Scope 1",
+                                    "description": null,
+                                    "closed_by_conditional_logic": false,
+                                    "hidden_by_conditional_logic": false
+                                },
+                                {
+                                    "id": "00000000-0000-0000-0000-000000000070",
+                                    "label": "Scope 2",
+                                    "description": null,
+                                    "closed_by_conditional_logic": false,
+                                    "hidden_by_conditional_logic": false
+                                },
+                                {
+                                    "id": "00000000-0000-0000-0000-000000000071",
+                                    "label": "Scope 3",
+                                    "description": null,
+                                    "closed_by_conditional_logic": false,
+                                    "hidden_by_conditional_logic": false
+                                }
+                            ],
+                            "question_context": null,
+                            "template_guidance": null,
+                            "screening_guidance": null,
+                            "question_guidance": null,
+                            "retrieval_instructions": "",
+                            "additional_rules": "",
+                            "table_filling_prompt": "",
+                            "extra_info": "",
+                            "entity_scope": null,
+                            "actor_info": null
+                        }
+                    }
+                } },
+                );
+            }
+
+            function sendEQAWithConditionalLogic() {
+                sendToRenderer(
+                    "output",
+                    {
+                    "id": "2f1a104d-18eb-4273-9b17-02989dc23fc1",
+                    "response_text": "",
+                    "reasoning": "Oil heating is reported for the head office.",
+                    "response_objects": {},
+                    "choices": [
+                        {
+                            "id": "6be7924c-c520-47dc-abb0-3850cba87097",
+                            "label": "Oil",
+                            "is_selected": true,
+                            "reasoning": "Head office heated with oil.",
+                            "source_indices": [],
+                            "source_documents": []
+                        },
+                        {
+                            "id": "71fbcf8a-ae72-4665-b3cc-d7a7016267c3",
+                            "label": "Gas",
+                            "is_selected": false,
+                            "reasoning": "",
+                            "source_indices": [],
+                            "source_documents": []
+                        },
+                        {
+                            "id": "4171bd1e-0c5c-4cf7-af29-95eebf9953a6",
+                            "label": "Coal",
+                            "is_selected": false,
+                            "reasoning": "",
+                            "source_indices": [],
+                            "source_documents": [],
+                            "assessment_state": "NOT_APPLICABLE"
+                        }
+                    ],
+                    "source_documents": [],
+                    "sources": [],
+                    "closed_by_conditional_logic": false,
+                    "conditional_logic": {
+                        "kind": "question",
+                        "label": "Which fuels does the company use for heating?",
+                        "state": "open",
+                        "reason": null,
+                        "choices": [
+                            {
+                                "id": "71fbcf8a-ae72-4665-b3cc-d7a7016267c3",
+                                "label": "Gas",
+                                "state": "hidden"
+                            },
+                            {
+                                "id": "4171bd1e-0c5c-4cf7-af29-95eebf9953a6",
+                                "label": "Coal",
+                                "state": "closed"
+                            }
+                        ]
+                    }
+                },
+                    { inputs: {
+                    "question": {
+                        "id": "q",
+                        "custom_id": "",
+                        "data_type": "Multi Select",
+                        "text": "Which fuels does the company use for heating?",
+                        "choices": [
+                            {
+                                "id": "6be7924c-c520-47dc-abb0-3850cba87097",
+                                "label": "Oil",
+                                "description": null,
+                                "closed_by_conditional_logic": false,
+                                "hidden_by_conditional_logic": false
+                            },
+                            {
+                                "id": "71fbcf8a-ae72-4665-b3cc-d7a7016267c3",
+                                "label": "Gas",
+                                "description": null,
+                                "closed_by_conditional_logic": false,
+                                "hidden_by_conditional_logic": true
+                            },
+                            {
+                                "id": "4171bd1e-0c5c-4cf7-af29-95eebf9953a6",
+                                "label": "Coal",
+                                "description": null,
+                                "closed_by_conditional_logic": false,
+                                "hidden_by_conditional_logic": false
+                            }
+                        ],
+                        "question_context": null,
+                        "template_guidance": null,
+                        "screening_guidance": null,
+                        "question_guidance": null,
+                        "retrieval_instructions": "",
+                        "additional_rules": "",
+                        "table_filling_prompt": "",
+                        "extra_info": "",
+                        "entity_scope": null,
+                        "actor_info": null
+                    }
+                } },
+                );
+            }
+
             function sendTableResponse() {
                 sendToRenderer(
                     "output",
