@@ -2141,9 +2141,16 @@
                 return Array.isArray(rows) && rows.length > 0;
             }
 
+            // Newer outputs leave source_documents empty and put the chunks in sources
+            function docsOf(data) {
+                return data?.source_documents?.length
+                    ? data.source_documents
+                    : data?.sources || [];
+            }
+
             function getSourceDocuments(output, reference) {
-                const outputDocs = output?.source_documents || [];
-                const refDocs = reference?.source_documents || [];
+                const outputDocs = docsOf(output);
+                const refDocs = docsOf(reference);
                 // Combine and deduplicate by some identifier if needed
                 return [...outputDocs, ...refDocs];
             }
@@ -2775,7 +2782,7 @@
             function renderSingleTable(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
-                const sourceDocuments = data.source_documents || [];
+                const sourceDocuments = docsOf(data);
                 const srcCount = sourceDocuments.length;
                 const rows = data.rows || [];
                 const reasoningRows = data.reasoning || [];
@@ -2942,7 +2949,7 @@
             function renderSingleEQAAnswer(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
-                const sourceDocuments = data.source_documents || [];
+                const sourceDocuments = docsOf(data);
                 const srcCount = sourceDocuments.length;
                 const assessmentBadge = renderAssessmentBadge(data.ai_assessment_state);
 
