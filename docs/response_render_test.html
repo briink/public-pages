@@ -121,6 +121,7 @@
                 <button onclick="sendLLMTextResponseTopLevel()">
                     LLM Text (Top-Level Tokens)
                 </button>
+                <button onclick="sendEQAMetricWithSources()">EQA Metric (sources + response objects)</button>
                 <button onclick="clearRenderer()">Clear</button>
             </div>
 
@@ -143,6 +144,59 @@
                     },
                     "*",
                 );
+            }
+
+            // An agent-alone metric run: EQAAnswer fields with `sources` (not the deprecated `source_documents`),
+            // response_objects and the extra `agent` key, plus a knowledge record source
+            function sendEQAMetricWithSources() {
+                const sources = [
+                    {
+                        source_type: "document",
+                        page_content: "Total Scope 1 emissions 2025: 12,345 t CO2e (2024: 13,010 t CO2e)",
+                        metadata: { file_id: "f-1111", file_name: "sustainability_report_2025.pdf", page: 0, chunk_uuid: "c-1" },
+                    },
+                    {
+                        source_type: "document",
+                        page_content: "Scope 1 emissions fell by 5% year on year.",
+                        metadata: { file_id: "f-1111", file_name: "sustainability_report_2025.pdf", page: 41, chunk_uuid: "c-2" },
+                    },
+                    {
+                        source_type: "knowledge_record",
+                        record_id: "r-9",
+                        custom_id: "KR-12",
+                        question_text: "What were your Scope 1 emissions?",
+                        answer: "12,345 t CO2e in 2025",
+                    },
+                ];
+                const output = {
+                    response_text: "12,345 t CO2e [^0^]",
+                    reasoning: "The report prints the 2025 total on the emissions table [^0^]; the narrative confirms the trend [^1^] and the verified record agrees [^2^].",
+                    response_objects: {
+                        source_consistency: true,
+                        metrics: {
+                            full_string_answers: "12,345 t CO2e",
+                            structured_data: [
+                                { metric_name: "Scope 1 emissions", time_period: "2025", unit: "t CO2e", value: 12345, full_response: "12,345 t CO2e" },
+                            ],
+                        },
+                    },
+                    choices: [],
+                    source_documents: [],
+                    sources,
+                    assessment_state: null,
+                    agent: {
+                        draft: { status: "found", value: 12345, unit: "t CO2e", period_label: "2025", confidence: "high", derivation: "", revision: 1, finalized: true },
+                        checks: [{ tool: "check_draft", arguments: {}, result: "ok" }],
+                        pages_read: ["f-1111:0", "f-1111:41"],
+                        images_viewed: [],
+                        usage: { total_tokens: 41234 },
+                        latency_s: 14.7,
+                    },
+                };
+                sendToRenderer("output", output, {
+                    inputs: { question: { text: "What were the company's Scope 1 emissions in 2025?", data_type: "metric" } },
+                });
+                sendToRenderer("reference", { response_text: "12,345 t CO2e", source_documents: [] });
             }
 
             function clearRenderer() {

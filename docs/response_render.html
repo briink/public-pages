@@ -751,6 +751,44 @@
                 border-top: 1px solid var(--border-color);
             }
 
+            .ro-body {
+                display: grid;
+                gap: 6px;
+            }
+
+            /* undo the global data-table sizing (fixed layout, narrow first column) */
+            table.ro-metrics {
+                width: auto;
+                min-width: 0;
+                table-layout: auto;
+                font-size: 12px;
+            }
+
+            .ro-metrics th,
+            .ro-metrics td {
+                padding: 4px 10px;
+                min-width: 0;
+                max-width: none;
+                width: auto;
+            }
+
+            .ro-metrics th {
+                color: var(--text-muted);
+                font-weight: 500;
+            }
+
+            .ro-metrics td.ro-value {
+                font-family: monospace;
+                font-weight: 600;
+            }
+
+            .ro-raw summary {
+                cursor: pointer;
+                color: var(--accent-color);
+                font-size: 12px;
+                margin-top: 6px;
+            }
+
             .metadata-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -2142,10 +2180,15 @@
             }
 
             function getSourceDocuments(output, reference) {
-                const outputDocs = output?.source_documents || [];
-                const refDocs = reference?.source_documents || [];
+                const outputDocs = answerSources(output);
+                const refDocs = answerSources(reference);
                 // Combine and deduplicate by some identifier if needed
                 return [...outputDocs, ...refDocs];
+            }
+
+            // [^N^] addresses `sources[N]`; `source_documents` is the deprecated list older outputs carry.
+            function answerSources(data) {
+                return data?.sources?.length ? data.sources : data?.source_documents || [];
             }
 
             function renderSourceDocuments(documents) {
@@ -2156,17 +2199,23 @@
                 return documents
                     .map((doc, index) => {
                         const metadata = doc.metadata || {};
-                        const pageContent = doc.page_content || "";
-                        const fileName =
-                            metadata.file_name ||
-                            metadata.filename ||
-                            metadata.source ||
-                            "Unknown file";
-                        const pageNumber =
-                            metadata.page_number ||
-                            metadata.page ||
-                            metadata.page_idx ||
-                            "-";
+                        const isRecord = doc.source_type === "knowledge_record";
+                        const pageContent = isRecord
+                            ? `Q: ${doc.question_text || ""}\n\nA: ${doc.answer || ""}`
+                            : doc.page_content || "";
+                        const fileName = isRecord
+                            ? `Knowledge record ${doc.custom_id || doc.record_id || ""}`
+                            : metadata.file_name ||
+                              metadata.filename ||
+                              metadata.source ||
+                              "Unknown file";
+                        // ?? not ||: page 0 is a real page
+                        const pageNumber = isRecord
+                            ? "-"
+                            : metadata.page_number ??
+                              metadata.page ??
+                              metadata.page_idx ??
+                              "-";
                         const fileId =
                             metadata.file_id ||
                             metadata.id ||
@@ -2775,7 +2824,7 @@
             function renderSingleTable(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
-                const sourceDocuments = data.source_documents || [];
+                const sourceDocuments = answerSources(data);
                 const srcCount = sourceDocuments.length;
                 const rows = data.rows || [];
                 const reasoningRows = data.reasoning || [];
@@ -2942,14 +2991,18 @@
             function renderSingleEQAAnswer(data, title, type) {
                 const badgeClass =
                     type === "output" ? "badge-output" : "badge-reference";
-                const sourceDocuments = data.source_documents || [];
+                const sourceDocuments = answerSources(data);
                 const srcCount = sourceDocuments.length;
-                const assessmentBadge = renderAssessmentBadge(data.ai_assessment_state);
+                const assessmentBadge = renderAssessmentBadge(data.assessment_state || data.ai_assessment_state);
 
                 let answerContent = "";
 
                 if (data.response_text) {
                     answerContent += `<div class="answer-section"><div class="question-label">Response</div><div class="response-text">${formatResponseText(data.response_text, srcCount)}</div></div>`;
+                }
+
+                if (data.response_objects && typeof data.response_objects === "object") {
+                    answerContent += renderResponseObjects(data.response_objects, srcCount);
                 }
 
                 // For choice-based questions, reasoning may contain <<Choice Label>> markers
@@ -2972,7 +3025,7 @@
                         <div class="choice-item ${choice.is_selected ? "selected" : "not-selected"}">
                             <div class="choice-indicator ${choice.is_selected ? "selected" : "not-selected"}">${choice.is_selected ? "&#10003;" : ""}</div>
                             <div class="choice-content">
-                                <div class="choice-label">${escapeHtml(choice.label || "")}${renderAssessmentBadge(choice.ai_assessment_state)}</div>
+                                <div class="choice-label">${escapeHtml(choice.label || "")}${renderAssessmentBadge(choice.assessment_state || choice.ai_assessment_state)}</div>
                                 ${choice.reasoning ? `<div class="choice-reasoning">${processInlineReferences(choice.reasoning, srcCount)}</div>` : ""}
                             </div>
                         </div>
@@ -2981,15 +3034,7 @@
                     answerContent += `</div></div>`;
                 }
 
-                if (
-                    data.response_objects &&
-                    Object.keys(data.response_objects).length > 0
-                ) {
-                    answerContent += renderResponseObjects(
-                        data.response_objects,
-                        srcCount,
-                    );
-                }
+                answerContent += renderAgentTrace(data.agent, srcCount);
 
                 return `
                 <div class="panel">
@@ -3012,39 +3057,80 @@
             }
 
             function renderResponseObjects(responseObjects, sourceCount) {
-                const srcCount = sourceCount || 0;
-                let html =
-                    '<div class="answer-section"><div class="question-label">Additional Data</div>';
+                const { metrics, source_consistency, scoring, gap_analysis, list, ...rest } = responseObjects;
+                let html = "";
 
-                if (responseObjects.metrics) {
-                    const metrics = responseObjects.metrics;
-                    html += `<div class="metadata-grid">`;
-                    if (metrics.full_string_answers) {
-                        html += `<div class="metadata-item"><span class="metadata-key">Answer: </span><span class="metadata-value">${processInlineReferences(metrics.full_string_answers, srcCount)}</span></div>`;
-                    }
-                    if (
-                        metrics.structured_data &&
-                        metrics.structured_data.length > 0
-                    ) {
-                        metrics.structured_data.forEach((m) => {
-                            html += `<div class="metadata-item"><span class="metadata-key">${escapeHtml(m.metric_name)}: </span><span class="metadata-value">${m.value} ${escapeHtml(m.unit)} ${m.time_period ? `(${escapeHtml(m.time_period)})` : ""}</span></div>`;
+                if (typeof source_consistency === "boolean") {
+                    const cls = source_consistency ? "consistent" : "inconsistent";
+                    html += `<div class="metadata-item"><span class="metadata-key">Sources: </span><span class="badge-consistency ${cls}">${cls}</span></div>`;
+                }
+
+                if (metrics) {
+                    // a metric answer's structured_data is a list; a date answer's is one object or null
+                    const rows = [].concat(metrics.structured_data || []);
+                    if (rows.length > 0) {
+                        html += `<table class="ro-metrics"><thead><tr><th>Metric</th><th>Value</th><th>Unit</th><th>Period</th></tr></thead><tbody>`;
+                        rows.forEach((m) => {
+                            const { metric_name, value, unit, time_period, full_response, ...other } = m;
+                            const extra = Object.entries(other)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(", ");
+                            html += `<tr><td>${escapeHtml(metric_name ?? "")}</td><td class="ro-value">${escapeHtml(value ?? "")}</td><td>${escapeHtml(unit ?? "")}</td><td>${escapeHtml(time_period ?? extra)}</td></tr>`;
                         });
+                        html += `</tbody></table>`;
+                    } else {
+                        html += `<div class="metadata-item"><span class="metadata-key">Metrics: </span><span class="metadata-value">none extracted</span></div>`;
                     }
-                    html += `</div>`;
+                    if (metrics.full_string_answers) {
+                        html += `<div class="metadata-item"><span class="metadata-key">Extracted answer: </span><span class="metadata-value">${processInlineReferences(metrics.full_string_answers, sourceCount)}</span></div>`;
+                    }
                 }
 
-                if (responseObjects.gap_analysis) {
-                    const ga = responseObjects.gap_analysis;
-                    html += `<div class="metadata-item"><span class="metadata-key">Gap Analysis: </span><span class="metadata-value">${processInlineReferences(ga.tag, srcCount)}</span></div>`;
+                if (scoring) {
+                    html += `<div class="metadata-item"><span class="metadata-key">Score: </span><span class="metadata-value">${escapeHtml(scoring.score)}</span>${scoring.scoring_reasoning ? `<div class="choice-reasoning">${processInlineReferences(scoring.scoring_reasoning, sourceCount)}</div>` : ""}</div>`;
                 }
 
-                if (responseObjects.scoring) {
-                    const scoring = responseObjects.scoring;
-                    html += `<div class="metadata-item"><span class="metadata-key">Score: </span><span class="metadata-value">${escapeHtml(scoring.score)}</span></div>`;
+                if (gap_analysis) {
+                    html += `<div class="metadata-item"><span class="metadata-key">Gap analysis: </span><span class="metadata-value">${processInlineReferences(gap_analysis.tag, sourceCount)}</span></div>`;
                 }
 
-                html += "</div>";
-                return html;
+                if (Array.isArray(list) && list.length > 0) {
+                    html += `<div class="metadata-item"><span class="metadata-key">List: </span><span class="metadata-value">${list.map(escapeHtml).join(" · ")}</span></div>`;
+                }
+
+                const restKeys = Object.keys(rest).filter((k) => rest[k] !== null && rest[k] !== undefined);
+                if (restKeys.length > 0) {
+                    html += `<details class="ro-raw"><summary>Other fields (${restKeys.map(escapeHtml).join(", ")})</summary><pre class="json-fallback">${escapeHtml(JSON.stringify(rest, null, 2))}</pre></details>`;
+                }
+
+                if (!html) return "";
+                return `<div class="answer-section"><div class="question-label">Response objects</div><div class="ro-body">${html}</div></div>`;
+            }
+
+            // The `agent` key the agent-alone runs add next to the EQAAnswer fields
+            function renderAgentTrace(agent, sourceCount) {
+                if (!agent || typeof agent !== "object") return "";
+                const draft = agent.draft || {};
+                const usage = agent.usage || {};
+                const items = [
+                    ["Status", draft.status],
+                    ["Confidence", draft.confidence],
+                    ["Period label", draft.period_label],
+                    ["Revisions", draft.revision],
+                    ["Total tokens", usage.total_tokens],
+                    ["Latency", agent.latency_s != null ? `${Number(agent.latency_s).toFixed(1)} s` : null],
+                    ["Pages read", (agent.pages_read || []).length],
+                    ["Images viewed", (agent.images_viewed || []).length],
+                    ["Tool checks", (agent.checks || []).length],
+                ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+                let html = `<div class="metadata-grid">${items
+                    .map(([k, v]) => `<div class="metadata-item"><span class="metadata-key">${k}: </span><span class="metadata-value">${escapeHtml(v)}</span></div>`)
+                    .join("")}</div>`;
+                if (draft.derivation) {
+                    html += `<div class="metadata-item" style="margin-top:6px"><span class="metadata-key">Derivation: </span><span class="metadata-value">${escapeHtml(draft.derivation)}</span></div>`;
+                }
+                html += `<details class="ro-raw"><summary>Full agent output</summary><pre class="json-fallback">${escapeHtml(JSON.stringify(agent, null, 2))}</pre></details>`;
+                return `<div class="answer-section"><div class="question-label">Agent</div>${html}</div>`;
             }
 
             function renderEQAComparison(output, reference) {
@@ -4088,8 +4174,9 @@
 
             // Tab switching - use event delegation
             document.addEventListener("click", function (e) {
-                if (e.target.classList.contains("tab")) {
-                    const tab = e.target;
+                // closest: a click on the tab's count badge lands on the inner span
+                const tab = e.target.closest(".tab");
+                if (tab) {
                     const tabName = tab.getAttribute("data-tab");
                     const panel = tab.closest(".panel");
 
